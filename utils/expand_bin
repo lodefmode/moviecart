@@ -1,0 +1,19 @@
+#!/bin/tcsh 
+
+# Convert input to c-style unsigned character array
+
+set output = "$1:r_data.h"
+
+rm -rf $output
+
+echo "//Automatically generated from executing:  csh " $0 >> $output
+echo >> $output
+echo "const unsigned char "$1:r"_data[] = {" >> $output
+
+foreach f ($1)
+	echo Converting $f
+	hexdump -v -e '16/1 "%d, " "\n"' $f >> $output
+end
+
+#trailing null
+echo "};" >> $output
