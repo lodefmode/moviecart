@@ -54,7 +54,7 @@ sd_openStream()
 	if (initStream)
 	{
 		initStream = false;
-		disk_stream = fopen("D:/MOVIES/CONVERT3_OUTPUT/output.dat", "rb");	
+		disk_stream = fopen("output_cronkite.dat", "rb");	
 	}
 
 	return disk_stream ? true:false;
