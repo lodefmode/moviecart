@@ -34,9 +34,9 @@ For inquires please contact:
 
 lodef.mode@gmail.com
 
-![Video](docs/screenshot.jpg)(https://www.youtube.com/watch?v=PMp-7_ekibU)
+[![Video](docs/screenshot.jpg)](https://www.youtube.com/watch?v=PMp-7_ekibU)
 
-![Video](docs/colorize.jpg)(https://youtu.be/7HMz1SYGolY)
+[![Video](docs/colorize.jpg)](https://youtu.be/7HMz1SYGolY)
 
 ![Cart](docs/inside_cart.jpg)
 ![Booklet](docs/instructions1.jpg)
