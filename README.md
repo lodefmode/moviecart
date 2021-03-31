@@ -25,7 +25,7 @@ Technical Specs:
    Joystick controls brightness, volume, and shuttle position.
    Console switches control b/w, ten second rewind and full rewind.
 
-   Each field requires the equivalent of 75.5 Combat cartridges, or over half a million cartridges to produce a full length 2 hour movie.
+   Each second requires the equivalent of 75.5 Combat cartridges, or over half a million cartridges to produce a full length 2 hour movie.
 
    Hardware consists of only 3 through-hole components, plus a few passives.
    No assembly of SMT parts are required.
