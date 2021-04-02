@@ -4,12 +4,12 @@
 #include <stdio.h>
 #include "defines.h"
 
-#define FRAME_DATA_OFFSET		1
-#define AUDIO_DATA_OFFSET		4
-#define GRAPH_DATA_OFFSET		266
-#define TIMECODE_DATA_OFFSET	1226
-#define COLOR_DATA_OFFSET		1286
-#define END_DATA_OFFSET			2246
+#define FRAME_DATA_OFFSET		4
+#define AUDIO_DATA_OFFSET		7
+#define GRAPH_DATA_OFFSET		269
+#define TIMECODE_DATA_OFFSET	1229
+#define COLOR_DATA_OFFSET		1289
+#define END_DATA_OFFSET			2249
 
 
 uint8_t		*sd_ptr_audio = 0;

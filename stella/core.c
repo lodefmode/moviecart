@@ -487,6 +487,9 @@ fill_addr_blank_lines()
 
 	// version number
 	READ_DATA();
+	READ_DATA();
+	READ_DATA();
+	READ_DATA();
 
 	// frame number
 	READ_DATA();
