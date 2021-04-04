@@ -18,6 +18,12 @@ atarimovie.sch
 	;  Could it be a tad longer to insert into connector further?
 
 
-Bom_8238251.csv
+Bom_2021_04_02.csv.csv
 	;digikey bill of materials May 4 2020
+
+
+Changes:
+
+  ; version 1.2
+	Programmer header labels increased
 	

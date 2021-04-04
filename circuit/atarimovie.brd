@@ -143,11 +143,11 @@
 <board>
 <plain>
 <text x="3.81" y="43.815" size="1.27" layer="21" font="vector" rot="R90">MOVIECART 1.1</text>
-<text x="9.017" y="77.978" size="0.254" layer="21">ICSPCLK</text>
-<text x="9.017" y="75.438" size="0.254" layer="21">ICSPDAT</text>
-<text x="9.017" y="72.898" size="0.254" layer="21">GND</text>
-<text x="9.017" y="70.358" size="0.254" layer="21">VDD</text>
-<text x="9.017" y="67.818" size="0.254" layer="21">VPP</text>
+<text x="11.176" y="78.486" size="0.762" layer="21">ICSPCLK</text>
+<text x="11.049" y="75.692" size="0.762" layer="21">ICSPDAT</text>
+<text x="11.176" y="73.152" size="0.762" layer="21">GND</text>
+<text x="11.303" y="70.612" size="0.762" layer="21">VDD</text>
+<text x="11.049" y="68.072" size="0.762" layer="21">VPP</text>
 </plain>
 <libraries>
 <library name="atari">
