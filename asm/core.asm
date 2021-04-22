@@ -2,6 +2,8 @@
 	include vcs.h
 
 
+;Loop to fill in color + audio video data, with title screen and transport controls
+;Original implementation by Rob Bairos 2017-2020
 
 ;user memory 128 to 255
 USER_TEMP			equ	$80 ; dummy cycles
@@ -54,7 +56,7 @@ GCOL9	equ $62	;purple
 ;;;;;;;;;;;;;;;;;;;
 
 ;org $F800 (page 0) title_48  	  					---1 1000 0000 0000 / 0    (128)
-;org $F880 (page 1) tranport 						---1 1000 1000 0000 / 128  (128)
+;org $F880 (page 1) unused	 						---1 1000 1000 0000 / 128  (128)
 ;org $F900 (page 2) line_right      				---1 1001 0000 0000 / 256  (128)
 ;org $F980 (page 3) line_left						---1 1001 1000 0000 / 384  (128)
 ;org $FA00 (page 4) main          					---1 1010 0000 0000 / 512  (128)
@@ -124,48 +126,9 @@ E48
 F48
 	.byte  $00, $00, $00, $00, $00, $00, $f8, $80, $80, $e0, $80, $f8
 
-
 	
-;;;;;;;;;;;;;;;;;; page 1 - transport
+;;;;;;;;;;;;;;;;;; page 1 - unused
 	org $F880
-
-transport_buttons
-	;setup console
-	lda INPT4       ; button - - - - - - -  ; even page, but A12=0
-    asl             ; carry has button
-	lda SWCHB		; a b - - color - select reset
-	rol				; b - - color - select reset button
-	and #%00010111	; 0 0 0 color 0 select reset button
-	sta TRANSPORT_DATA
-
-	; have to enter at pixel clock -50
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	nop
-
-	rts
-
-transport_direction
-	lda SWCHA			; RLDU(1) RLDU(2)	; 1111 1111 by default, so joy2 will override some console switches
-	lsr
-	lsr
-	lsr					; 000 RLDUr
-	sta TRANSPORT_DATA
-
-	; have to enter at pixel clock -50
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	sta  USER_TEMP	
-	nop
-
-	rts
-
 
 ;;;;;;;;;;;;;;;;;;; page 2 - right
 	org $F900 
@@ -174,7 +137,7 @@ transport_direction
 
 	;; needs to cross to page 3,  (same 256-byte block)
 
-	org $F94C
+	org $F946
 
 		;;;;;;;;;;;;;;;;;;;;;
 		;;
@@ -183,49 +146,71 @@ transport_direction
 		;;;;;;;;;;;;;;;;;;;;;
 
 	; enter at clock -50
+	; left_line/right_line kernel adapted by Thomas Jentzsch
 
 right_line
-		sta AUDV0		;3 cycles	; pixel clock -50
-		sta USER_TEMP	;3 cycles	; dummy
 
-		;back 8, late hmove
-		;x has 0
+    sta     WSYNC       ; 3             or 3 free cycles
+    sta     HMOVE       ; 3     @03     +8 pixel
+;---------------------------------------
+; - 0a - 1a - 0b - 1b - 0c
+set_aud_right
+	lda 	#AUD_DATA	; 2
+set_gdata9
+    ldx     #GDATA9     ; 2
+    sta     AUDV0       ; 3     @10
+set_gcol9
+    ldy     #GCOL9   	; 2
 
-		stx	HMP0
-		stx	HMP1
+set_gdata6
+    lda     #GDATA6     ; 2
+    sta     GRP1        ; 3     VDELed
+set_gcol6
+    lda     #GCOL6   	; 2
+    sta     COLUP1      ; 3
 
-		lda #GDATA0
-		sta GRP0
-		lda #GDATA1
-		sta GRP1
-		lda #GDATA2
-		sta GRP0
+set_gdata5
+    lda     #GDATA5     ; 2
+    sta     GRP0        ; 3
+set_gcol5
+    lda     #GCOL5   	; 2
+    sta     COLUP0      ; 3
 
-		lda #GDATA3
-		ldx #GDATA4
-		ldy #GCOL0
+set_gdata8
+    lda     #GDATA8     ; 2
+    sta     GRP1        ; 3     VDELed
 
-		sta GRP1	;need 1 pixel before
-		lda	#GCOL1
-		sta COLUP0
-		stx GRP0
-		lda	#GCOL2
-		sta COLUP1
-		sty COLUP0
-		sty GRP1	;arbitrary
+set_gcol7
+    lda     #GCOL7   	; 2
+    sta     COLUP0      ; 3     @42!    end of GRP0a display
+set_gdata7
+    lda     #GDATA7     ; 2
+    sta     GRP0        ; 3     @47!    end of GRP1a display
 
-		lda	#GCOL3
-		sta COLUP0
-		lda	#GCOL4
-		sta COLUP1
-		;;;;;;;;;;;;;;;;;;;;;
+set_gcol8
+    lda     #GCOL8   	; 2
+    sta     COLUP1      ; 3     @52
 
-		;needs to be on cycle 71 !!!!
-		;back 8, late hmove
+    stx     GRP0        ; 3     @55
+    sty     COLUP0      ; 3     @58     <=@60
+
+    sta     HMCLR       ; 3
+
+; free cycles
+
+		sta USER_TEMP
+		sta USER_TEMP
+		sta USER_TEMP
+
+		;back 8, late hmove ;needs to be on cycle 71
 		sta HMOVE		
+
+;;LEFT_KERNEL ; {graphics index}, {shading value}
+;;    sta     HMOVE           ; 3     @73     -8 pixel
 
 ;;;;;;;;;;;;;;;;;;; page 3 - left
 	org $F980
+
 left_line
 		;;;;;;;;;;;;;;;;;;;;;
 		;;
@@ -233,51 +218,56 @@ left_line
 		;;
 		;;;;;;;;;;;;;;;;;;;;;
 
-			ldx	#$00	; dummy
-			ldx	#$00	; dummy		(4cycles *3 = 12 pixels, 1 too short)
 
-		lda #AUD_DATA	;2 cycles
-			ldx	#$80 ;forward 8
-		sta AUDV0		;3 cycles	; pixel clock -50
+;EnterLeftKernel
+    sta     WSYNC		; 3     3 free cycles here, WSYNC used for easier kernel entering
+;---------------------------------------
+; 0a - 1a - 0b - 1b - 0c -
+set_gdata1
+    lda     #GDATA1     ; 2
+    sta     GRP1        ; 3     VDELed
 
-			stx	HMP0
-			stx	HMP1
+set_aud_left
+	lda 	#AUD_DATA	; 2
+    sta     AUDV0       ; 3     @10
+set_gdata4
+    ldx     #GDATA4     ; 2
+set_gcol4
+    ldy     #GCOL4   	; 2
 
-		lda #GDATA5
-		sta GRP0
-		lda #GDATA6
-		sta GRP1
-		lda #GDATA7
-		sta GRP0
+set_gcol1
+    lda     #GCOL1   	; 2
+    sta     COLUP1      ; 3
 
-		lda #GDATA8
-		ldx #GDATA9
-		ldy #GCOL5
+set_gdata0
+    lda     #GDATA0     ; 2
+    sta     GRP0        ; 3
+set_gcol0
+    lda     #GCOL0   	; 2
+    sta     COLUP0      ; 3
 
-		sta GRP1	;2-before on left
-		lda	#GCOL6
-		sta COLUP0
-		stx GRP0
-		lda	#GCOL7
-		sta COLUP1
-		sty COLUP0
-		sty GRP1	;arbitrary
+set_gdata3
+    lda     #GDATA3     ; 2
+    sta     GRP1        ; 3     VDELed
 
-		lda	#GCOL8
-		sta COLUP0
-		lda	#GCOL9
-		sta COLUP1
-		;;;;;;;;;;;;;;;;;;;;;
+set_gcol2
+    lda     #GCOL2   	; 2
+    sta     COLUP0      ; 3     @39!    end of GRP0a display
+set_gdata2
+    lda     #GDATA2     ; 2
+    sta     GRP0        ; 3     @44!    end of GRP1a display
 
+set_gcol3
+    lda     #GCOL3   	; 2
+    sta     COLUP1      ; 3     @49
 
+    stx     GRP0        ; 3     @52
+    sty     COLUP0      ; 3     @55     <=@57
 
-		lda #AUD_DATA	;2 cycles
+    lda     #$80        ; 2
+    sta     HMP0        ; 3
+    sta     HMP1        ; 3     @63
 
-		ldx #0			;for hmps 2 cycles
-		ldx #0			;dummy 2 cycles
-		ldx #0			;dummy 2 cyels
-		
-		sta HMOVE		;after wsync
 
 		; have to re-enter at correct cycle
 pick_continue
@@ -357,8 +347,16 @@ title_again
 	;joystick/console
 	lda #$00
 	sta COLUBK	
-	sta SWACNT
-	sta SWBCNT
+	sta VDELP0
+	sta GRP0
+
+	sta RESP0
+	nop
+	sta RESP1
+
+	sta GRP1
+	sta GRP0
+	sta GRP1
 
 	;3 copies medium
 	lda #$06
@@ -368,39 +366,9 @@ title_again
 	lda #$02
 	sta NUSIZ1
 
-;	jmp	blank_lines
-	lda #0
-	sta WSYNC
-	sta USER_TEMP
-	jmp end_lines
-
-
-;;;;;;;;;;;;;;;;;;; page 5 - end blank
-	org $FA80 
-
-end_lines
-
-    sta AUDV0
-
-	;turn off graphics
-	lda #$0
-	sta GRP0
-	sta GRP1
-	sta GRP0
-	sta GRP1
-
-	;;;;;;;;;;;;;;;;;;;;
-	;setup resp01, 2 scanlines of overscan
-
-	sta USER_TEMP
-	sta USER_TEMP
-	sta USER_TEMP
-	lda #$0	; dummy
-
-	sta RESP0	; pixel pos 34
-	nop
-	sta RESP1	; pixel pos 49
-
+	;vdelp
+	lda #1
+	sta VDELP1
 
 #if 0
 	0x70	-7	Move left indicated number of clocks
@@ -421,34 +389,48 @@ end_lines
 	0x80	+8
 #endif
 
+	; have 48, 63
+	; need 48, 64
+	; shift_graphics
 
-	; shift p0,p1;
-	; currently 48, 63
-	; need 48, 64  -> actually 51, 67
-	; then 40, 56  -> actually 43, 59
-
-;;shift_graphics
-	lda #$D0  ;#$70
+	lda #$00
 	sta HMP0
-	lda #$C0  ;#$60
+	lda #$F0
 	sta HMP1
+	sta HMOVE
 
-end_lines_audio
-	lda #AUD_DATA	;2 cycles
+	ldx	#05
+wait_cnt
+	dex
+	bne wait_cnt
+	
+    sta HMCLR
 
-	sta WSYNC		;3 cycles
-	sta HMOVE		;3 cycles
+	jmp end_lines
 
-	sta USER_TEMP	;3 cycles
-	sta AUDV0		;3 cycles	pixel clock -50
+
+;;;;;;;;;;;;;;;;;;; page 5 - end blank
+	org $FA80 
+
+end_lines
 
 	;continue overscan with audio bank memory
-
 	ldy #0
 
-	;overscan 28 (2 above)
+	sty GRP0
+	sty GRP1	;VDEL'd
+	sty GRP0
+
+	;no time to get to audio routine below, so cross to new line and setup audio now
+    lda     #0			; 2  dummy
+    lda     #0			; 2  dummy
+set_aud_endlines
+	lda 	#AUD_DATA	; 2
+    sta     AUDV0       ; 3     @10
+
+	;overscan 29;	one above
 set_overscan_size
-	ldx #28
+	ldx #29
 	jsr	wait_lines
 
 	;vsync 3
@@ -463,26 +445,37 @@ set_overscan_size
 	lda  #2
 	sta  VBLANK	
 set_vblank_size
-		ldx #37
-		jsr	wait_lines
-	ldx  #0		;dont use A, it has last audio
+	ldx	#37
+	jsr	wait_lines
+	ldx  #0
 	stx  VBLANK	
 
 pick_transport
-	jsr	transport_buttons
-;	jsr	transport_direction
+	jmp	transport_buttons
 
-last_audio
-	lda #AUD_DATA	; 2 cycles
+transport_direction
+	lda SWCHA		; RLDU(1) RLDU(2)	; 1111 1111 by default, so joy2 will override some console switches
+	lsr
+	lsr
+	lsr				; 000 RLDUr
+	jmp	transport_done
+transport_buttons
+	;setup console
+	lda INPT4       ; button - - - - - - -  ; even page, but A12=0
+    asl             ; carry has button
+	lda SWCHB		; a b - - color - select reset
+	rol				; b - - color - select reset button
+	and #%00010111	; 0 0 0 color 0 select reset button
+
+transport_done
+	sta TRANSPORT_DATA
 	jmp	right_line
 
 wait_lines
-
-	lda (AUD_BANK_LO),y	;5 cycles
-	sta WSYNC			;3 cycles
-	sta  USER_TEMP		;3 cycles
-	sta  USER_TEMP		;3 cycles
-	sta AUDV0			;3 cycles	, pixel clock -50
+	sta WSYNC			;3
+    lda #0	 			;2 dummy
+	lda (AUD_BANK_LO),y	;5
+	sta AUDV0			;3 @ 10
 
 	;dec transport count
 	;dont change X or Y !
@@ -624,43 +617,4 @@ reset_loop
 	.word main_start 		;IRQ/BRK
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; kernel 3
-;
-; frame1   40, 56  -5($50)  -4($60)
-; frame2   48, 64  +3($D0)  +4($C0)
-;
-; frame 1
-;
-;  colors:  ABCDE-
-;color                colup0          colup1          A-e1            A-e3            p0-e4           ----
-;graphic              grp0del         grp1del         gp0             A-e0            X-e2            ----
-;            40       ........        ........        ........        ........        ........        ........
-;            40       0000000?        11111111        00000000        11111111        00000000        --------
-;                             --------        --------        --------        --------        --------        ----------------
-;            38     sta---gp1+ e0
-;                            lda---sta---cl0+ e1
-;                                           stx---gp0+ e2
-;                                                    lda---sta---cl1+ e3
-;                                                                   sty---cl0+ e4
-;                                                                            sty---gp1+ e4
-; frame 1b
-;
-;  colors:  ABCDE-
-;
-;color                        colup0          colup1          A-e1            A-e3            p0-e4           A-e6
-;graphic                      grp0del         grp1del         gp0             A-e0            X-e2            Y-e4
-;            48               ........        ........        ........        ........        ........        ........
-;            48               00000000        11111111        00000000        11111111        00000000        --------
-;                                     --------        --------        --------        --------?       --------        ----------------
-;            47              sta---gp1+ e0
-;                                     lda---sta---cl0+ e1
-;                                                    stx---gp0+ e2
-;                                                             lda---sta---cl1+ e3
-;                                                                            sty---cl0+ e4
-;                                                                                     sty---gp1+ e4
-;
-;   ABCDE-  ABCDE-  -> AaBbCcDdEe--
-;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

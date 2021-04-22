@@ -20,13 +20,8 @@ class MovieCart
 
 public:
 
-	MovieCart()
-	{
-	}
-
-	~MovieCart()
-	{
-	}
+	MovieCart();
+	~MovieCart();
 
 	bool	init(const std::string& path);
 	bool	process(uint16_t address);
@@ -63,7 +58,7 @@ private:
 
 	void	stopTitleScreen();
 
-	void	writeColor(uint16_t address);
+	void	writeColor(uint16_t address, uint8_t val);
 	void	writeAudioData(uint16_t address, uint8_t val);
 	void	writeAudio(uint16_t address);
 	void	writeGraph(uint16_t address);
@@ -83,6 +78,9 @@ private:
 	// data
 
 	uint8_t			myROM[1024];
+
+	// full line of color
+	uint8_t			myColor[10];
 
 
 	// title screen state

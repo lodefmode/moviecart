@@ -24,6 +24,14 @@
 
 #define TITLE_CYCLES 		1000000
 
+MovieCart::MovieCart()
+{
+}
+
+MovieCart::~MovieCart()
+{
+}
+
 bool
 MovieCart::init(const std::string& path)
 {
@@ -76,9 +84,8 @@ MovieCart::stopTitleScreen()
 
 
 void
-MovieCart::writeColor(uint16_t address)
+MovieCart::writeColor(uint16_t address, uint8_t v)
 {
-	uint8_t	v = myStream.readColor();
 	v = (v & 0xf0) | shiftBright[(v & 0x0f) + myBright];
 
 	if (myForceColor)
@@ -312,39 +319,43 @@ update_stream:
 void
 MovieCart::fill_addr_right_line()
 {
-	writeGraph(addr_right_line +  9); // #GDATA0
-	writeGraph(addr_right_line + 13); // #GDATA1
-	writeGraph(addr_right_line + 17); // #GDATA2
-	writeGraph(addr_right_line + 21); // #GDATA3
-	writeGraph(addr_right_line + 23); // #GDATA4
+	writeAudio(addr_set_aud_right + 1);
 
-	writeColor(addr_right_line + 25); // #GCOL0
-	writeColor(addr_right_line + 29); // #GCOL1
-	writeColor(addr_right_line + 35); // #GCOL2
-	writeColor(addr_right_line + 43); // #GCOL3
-	writeColor(addr_right_line + 47); // #GCOL4
+	writeGraph(addr_set_gdata5 + 1);
+	writeGraph(addr_set_gdata6 + 1);
+	writeGraph(addr_set_gdata7 + 1);
+	writeGraph(addr_set_gdata8 + 1);
+	writeGraph(addr_set_gdata9 + 1);
+
+	writeColor(addr_set_gcol5 + 1, myColor[8]);	// col 1/9
+	writeColor(addr_set_gcol6 + 1, myColor[9]);	// col 3/9
+	writeColor(addr_set_gcol7 + 1, myColor[1]);	// col 5/9
+	writeColor(addr_set_gcol8 + 1, myColor[2]);	// col 7/9
+	writeColor(addr_set_gcol9 + 1, myColor[0]);	// col 9/9
+
 }
 
 void
 MovieCart::fill_addr_left_line(bool again)
 {
-	writeAudio(addr_left_line + 5); // #AUD_DATA
+	writeAudio(addr_set_aud_left + 1);
 
-	writeGraph(addr_left_line + 15); // #GDATA5
-	writeGraph(addr_left_line + 19); // #GDATA6
-	writeGraph(addr_left_line + 23); // #GDATA7
-	writeGraph(addr_left_line + 27); // #GDATA8
-	writeGraph(addr_left_line + 29); // #GDATA9
+	writeGraph(addr_set_gdata0 + 1);
+	writeGraph(addr_set_gdata1 + 1);
+	writeGraph(addr_set_gdata2 + 1);
+	writeGraph(addr_set_gdata3 + 1);
+	writeGraph(addr_set_gdata4 + 1);
 
-	writeColor(addr_left_line + 31); // #GCOL5
-	writeColor(addr_left_line + 35); // #GCOL6
-	writeColor(addr_left_line + 41); // #GCOL7
-	writeColor(addr_left_line + 49); // #GCOL8
-	writeColor(addr_left_line + 53); // #GCOL9
+	for (int i=0; i<10; i++)
+		myColor[i] = myStream.readColor();
 
-	writeAudio(addr_left_line + 57); // #AUD_DATA
+	writeColor(addr_set_gcol0 + 1, myColor[3]);	// col 0/9
+	writeColor(addr_set_gcol1 + 1, myColor[4]);	// col 2/9
+	writeColor(addr_set_gcol2 + 1, myColor[6]);  // col 4/9
+	writeColor(addr_set_gcol3 + 1, myColor[7]);  // col 6/9
+	writeColor(addr_set_gcol4 + 1, myColor[5]);	// col 8/9
 
-	// addr_pick_line_end = 0x0ee;
+	// addr_pick_line_end
 	//		jmp right_line
 	//		jmp end_lines
 	if (again)
@@ -363,19 +374,21 @@ MovieCart::fill_addr_left_line(bool again)
 void
 MovieCart::fill_addr_end_lines()
 {
-	writeAudio(addr_end_lines_audio + 1);
-	myFirstAudioVal = myStream.peekAudio();
+	writeAudio(addr_set_aud_endlines + 1);
 
-	// normally overscan=28, vblank=37
+	if (!myOdd)
+		myFirstAudioVal = myStream.readAudio();
+
+	// normally overscan=30, vblank=37
 	// todo: clicky noise..
 	if (myOdd)
 	{
-		writeROM(addr_set_overscan_size + 1, 28);
+		writeROM(addr_set_overscan_size + 1, 29);
 		writeROM(addr_set_vblank_size + 1, 36);
 	}
 	else
 	{
-		writeROM(addr_set_overscan_size + 1, 29);
+		writeROM(addr_set_overscan_size + 1, 30);
 		writeROM(addr_set_vblank_size + 1, 37);
 	}
 
@@ -412,7 +425,7 @@ MovieCart::fill_addr_blank_lines()
 	// make sure we're in sync with frame data
 	myOdd = (v & 1);
 
-	// 28 overscan
+	// 30 overscan
 	// 3 vsync
 	// 37 vblank
 	
@@ -427,8 +440,6 @@ MovieCart::fill_addr_blank_lines()
 		for (i = 0; i < (BLANK_LINE_SIZE -1); i++)
 			writeAudio(addr_audio_bank + i);
 	}
-
-	writeAudio(addr_last_audio + 1);
 }
 
 void
