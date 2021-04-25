@@ -84,8 +84,10 @@ MovieCart::stopTitleScreen()
 
 
 void
-MovieCart::writeColor(uint16_t address, uint8_t v)
+MovieCart::writeColor(uint16_t address)
 {
+	uint8_t v = myStream.readColor();
+
 	v = (v & 0xf0) | shiftBright[(v & 0x0f) + myBright];
 
 	if (myForceColor)
@@ -327,11 +329,11 @@ MovieCart::fill_addr_right_line()
 	writeGraph(addr_set_gdata8 + 1);
 	writeGraph(addr_set_gdata9 + 1);
 
-	writeColor(addr_set_gcol5 + 1, myColor[8]);	// col 1/9
-	writeColor(addr_set_gcol6 + 1, myColor[9]);	// col 3/9
-	writeColor(addr_set_gcol7 + 1, myColor[1]);	// col 5/9
-	writeColor(addr_set_gcol8 + 1, myColor[2]);	// col 7/9
-	writeColor(addr_set_gcol9 + 1, myColor[0]);	// col 9/9
+	writeColor(addr_set_gcol5 + 1);
+	writeColor(addr_set_gcol6 + 1);
+	writeColor(addr_set_gcol7 + 1);
+	writeColor(addr_set_gcol8 + 1);
+	writeColor(addr_set_gcol9 + 1);
 
 }
 
@@ -346,14 +348,11 @@ MovieCart::fill_addr_left_line(bool again)
 	writeGraph(addr_set_gdata3 + 1);
 	writeGraph(addr_set_gdata4 + 1);
 
-	for (int i=0; i<10; i++)
-		myColor[i] = myStream.readColor();
-
-	writeColor(addr_set_gcol0 + 1, myColor[3]);	// col 0/9
-	writeColor(addr_set_gcol1 + 1, myColor[4]);	// col 2/9
-	writeColor(addr_set_gcol2 + 1, myColor[6]);  // col 4/9
-	writeColor(addr_set_gcol3 + 1, myColor[7]);  // col 6/9
-	writeColor(addr_set_gcol4 + 1, myColor[5]);	// col 8/9
+	writeColor(addr_set_gcol0 + 1);
+	writeColor(addr_set_gcol1 + 1);
+	writeColor(addr_set_gcol2 + 1);
+	writeColor(addr_set_gcol3 + 1);
+	writeColor(addr_set_gcol4 + 1);
 
 	// addr_pick_line_end
 	//		jmp right_line

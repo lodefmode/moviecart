@@ -79,9 +79,6 @@ private:
 
 	uint8_t			myROM[1024];
 
-	// full line of color
-	uint8_t			myColor[10];
-
 
 	// title screen state
 	int				myTitleCycles;
