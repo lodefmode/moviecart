@@ -33,20 +33,20 @@ FillTOPPluginInfo(TOP_PluginInfo *info)
 	// The opType is the unique name for this TOP. It must start with a 
 	// capital A-Z character, and all the following characters must lower case
 	// or numbers (a-z, 0-9)
-	info->customOPInfo.opType->setString("Cpumemsample");
+	info->customOPInfo.opType->setString("Colorize");
 
 	// The opLabel is the text that will show up in the OP Create Dialog
-	info->customOPInfo.opLabel->setString("CPU Mem Sample");
+	info->customOPInfo.opLabel->setString("Colorize");
 
 	// Will be turned into a 3 letter icon on the nodes
-	info->customOPInfo.opIcon->setString("CPM");
+	info->customOPInfo.opIcon->setString("COL");
 
 	// Information about the author of this OP
-	info->customOPInfo.authorName->setString("Author Name");
-	info->customOPInfo.authorEmail->setString("email@email.com");
+	info->customOPInfo.authorName->setString("Lodef Mode");
+	info->customOPInfo.authorEmail->setString("lodef.mode@gmail.com");
 
 	// This TOP works with 0 or 1 inputs connected
-	info->customOPInfo.minInputs = 0;
+	info->customOPInfo.minInputs = 1;
 	info->customOPInfo.maxInputs = 1;
 }
 
@@ -628,6 +628,8 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		return;
 
 	OP_TOPInputDownloadOptions dlOptions;
+	dlOptions.downloadType = OP_TOPInputDownloadType::Instant;
+
 	const OP_TOPInput	*topInput = inputs->getInputTOP(0);
 	const uint8_t	*topMem = topInput ? (uint8_t *)inputs->getTOPDataInCPUMemory(topInput, &dlOptions) : nullptr;
 
