@@ -11,6 +11,7 @@
 #include "ColorizeTOP.h"
 
 #include <stdio.h>
+#include <string.h>
 
 
 // These functions are basic C function, which the DLL loader can find
@@ -916,7 +917,11 @@ CPUMemoryTOP::getInfoDATEntries(int32_t index,
 	if (first)
 	{
 		for (int i=0; i<256; i++)
+#ifdef _WIN32
 			sprintf_s(intBuffer[i], "%d", i);
+#else
+			snprintf(intBuffer[i], 4, "%d", i);
+#endif
 		first = false;
 	}
 
