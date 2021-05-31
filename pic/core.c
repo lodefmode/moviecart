@@ -404,17 +404,19 @@ fill_addr_right_line()
 {
 	SET_WRITE_PAGE(addr_right_line)
 
-	WRITE_GRAPH(addr_right_line +  9) // #GDATA0
-	WRITE_GRAPH(addr_right_line + 13) // #GDATA1
-	WRITE_GRAPH(addr_right_line + 17) // #GDATA2
-	WRITE_GRAPH(addr_right_line + 21) // #GDATA3
-	WRITE_GRAPH(addr_right_line + 23) // #GDATA4
+	WRITE_AUDIO(addr_set_aud_right + 1);
 
-	WRITE_COLOR(addr_right_line + 25) // #GCOL0
-	WRITE_COLOR(addr_right_line + 29) // #GCOL1
-	WRITE_COLOR(addr_right_line + 35) // #GCOL2
-	WRITE_COLOR(addr_right_line + 43) // #GCOL3
-	WRITE_COLOR(addr_right_line + 47) // #GCOL4
+	WRITE_GRAPH(addr_set_gdata5 + 1);
+	WRITE_GRAPH(addr_set_gdata6 + 1);
+	WRITE_GRAPH(addr_set_gdata7 + 1);
+	WRITE_GRAPH(addr_set_gdata8 + 1);
+	WRITE_GRAPH(addr_set_gdata9 + 1);
+
+	WRITE_COLOR(addr_set_gcol5 + 1);
+	WRITE_COLOR(addr_set_gcol6 + 1);
+	WRITE_COLOR(addr_set_gcol7 + 1);
+	WRITE_COLOR(addr_set_gcol8 + 1);
+	WRITE_COLOR(addr_set_gcol9 + 1);
 }
 
 void
@@ -422,21 +424,19 @@ fill_addr_left_line(bool again)
 {
 	SET_WRITE_PAGE(addr_left_line)
 
-	WRITE_AUDIO(addr_left_line + 5) // #AUD_DATA
+	WRITE_AUDIO(addr_set_aud_left + 1);
 
-	WRITE_GRAPH(addr_left_line + 15) // #GDATA5
-	WRITE_GRAPH(addr_left_line + 19) // #GDATA6
-	WRITE_GRAPH(addr_left_line + 23) // #GDATA7
-	WRITE_GRAPH(addr_left_line + 27) // #GDATA8
-	WRITE_GRAPH(addr_left_line + 29) // #GDATA9
+	WRITE_GRAPH(addr_set_gdata0 + 1);
+	WRITE_GRAPH(addr_set_gdata1 + 1);
+	WRITE_GRAPH(addr_set_gdata2 + 1);
+	WRITE_GRAPH(addr_set_gdata3 + 1);
+	WRITE_GRAPH(addr_set_gdata4 + 1);
 
-	WRITE_COLOR(addr_left_line + 31) // #GCOL5
-	WRITE_COLOR(addr_left_line + 35) // #GCOL6
-	WRITE_COLOR(addr_left_line + 41) // #GCOL7
-	WRITE_COLOR(addr_left_line + 49) // #GCOL8
-	WRITE_COLOR(addr_left_line + 53) // #GCOL9
-
-	WRITE_AUDIO(addr_left_line + 57) // #AUD_DATA
+	WRITE_COLOR(addr_set_gcol0 + 1);
+	WRITE_COLOR(addr_set_gcol1 + 1);
+	WRITE_COLOR(addr_set_gcol2 + 1);
+	WRITE_COLOR(addr_set_gcol3 + 1);
+	WRITE_COLOR(addr_set_gcol4 + 1);
 
 	// addr_pick_line_end = 0x0ee;
 	//		jmp right_line
@@ -459,31 +459,32 @@ fill_addr_end_lines()
 {
 	SET_WRITE_PAGE(addr_end_lines)
 
-	WRITE_AUDIO(addr_end_lines_audio + 1)
-	firstAudVal = *sd_ptr_audio;
+	WRITE_AUDIO(addr_set_aud_endlines + 1);
 
-	// normally overscan=28, vblank=37
-	// todo: clicky noise..
+	if (!odd)
+		firstAudVal = *sd_ptr_audio++;
+
+	// normally overscan=30, vblank=37
 	if (odd)
 	{
-		WRITE_DATA(addr_set_overscan_size + 1, 28)
-		WRITE_DATA(addr_set_vblank_size + 1, 36)
+		WRITE_DATA(addr_set_overscan_size + 1, 29);
+		WRITE_DATA(addr_set_vblank_size + 1, 36);
 	}
 	else
 	{
-		WRITE_DATA(addr_set_overscan_size + 1, 29)
-		WRITE_DATA(addr_set_vblank_size + 1, 37)
+		WRITE_DATA(addr_set_overscan_size + 1, 30);
+		WRITE_DATA(addr_set_vblank_size + 1, 37);
 	}
 
 	if (bufferIndex == false)
 	{
-		WRITE_DATA(addr_pick_transport + 1, LO_JUMP_BYTE(addr_transport_direction))
-		WRITE_DATA(addr_pick_transport + 2, HI_JUMP_BYTE(addr_transport_direction))
+		WRITE_DATA(addr_pick_transport + 1, LO_JUMP_BYTE(addr_transport_direction));
+		WRITE_DATA(addr_pick_transport + 2, HI_JUMP_BYTE(addr_transport_direction));
 	}
 	else
 	{
-		WRITE_DATA(addr_pick_transport + 1, LO_JUMP_BYTE(addr_transport_buttons))
-		WRITE_DATA(addr_pick_transport + 2, HI_JUMP_BYTE(addr_transport_buttons))
+		WRITE_DATA(addr_pick_transport + 1, LO_JUMP_BYTE(addr_transport_buttons));
+		WRITE_DATA(addr_pick_transport + 2, HI_JUMP_BYTE(addr_transport_buttons));
 	}
 
 }
@@ -492,7 +493,6 @@ void
 fill_addr_blank_lines()
 {
 	uint8_t	i;
-	uint8_t	lastAudVal;
 
 	// version number
 	READ_DATA();
@@ -518,27 +518,21 @@ fill_addr_blank_lines()
 
 	SET_WRITE_PAGE(addr_audio_bank)
 
-	// 28 overscan
+	// 30 overscan
 	// 3 vsync
 	// 37 vblank
-	
+
 	if (odd)
 	{
-		WRITE_AUDIO_DATA(addr_audio_bank + 0, firstAudVal)
+		WRITE_AUDIO_DATA(addr_audio_bank + 0, firstAudVal);
 		for (i = 1; i < (BLANK_LINE_SIZE + 1); i++)
-			WRITE_AUDIO(addr_audio_bank + i)
+			WRITE_AUDIO(addr_audio_bank + i);
 	}
 	else
 	{
 		for (i = 0; i < (BLANK_LINE_SIZE -1); i++)
-			WRITE_AUDIO(addr_audio_bank + i)
+			WRITE_AUDIO(addr_audio_bank + i);
 	}
-
-	lastAudVal = *sd_ptr_audio;
-	sd_ptr_audio++;
-
-	SET_WRITE_PAGE(addr_end_lines)
-	WRITE_AUDIO_DATA(addr_last_audio + 1, lastAudVal)
 }
 
 void

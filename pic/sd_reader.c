@@ -324,10 +324,12 @@ sd_openStream()
 
 	spiOpenHighSpeed();
 
-	uint32_t    block = 0;
+    startBlock = 1024 * 9;
 
-#if 1  // slow..
-	// check every 32k, sector
+    
+#if 0 // slow..
+	// check each block
+	uint32_t    block = 0;
 	while(1)
 	{
 		startReadBlock(block);
@@ -342,17 +344,14 @@ sd_openStream()
 
 		readBlockEnd();
 
-		// look for frame 1
-		if ((sd_frame1[0] == 0 && sd_frame1[1] == 0 && sd_frame1[2] == 1))
+		// look for version
+		if ((sd_frame1[0] == 'M' && sd_frame1[1] == 'V' && sd_frame1[2] == 'C'))
 		{
 			startBlock = block;
 			break;
 		}
 
-
-		// jump to start of each 32k sector
-		block += (32768 / 512);
-		//       block++;
+        block++;
 	}
 #endif
 
