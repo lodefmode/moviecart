@@ -379,7 +379,6 @@ MovieCart::fill_addr_end_lines()
 		myFirstAudioVal = myStream.readAudio();
 
 	// normally overscan=30, vblank=37
-	// todo: clicky noise..
 	if (myOdd)
 	{
 		writeROM(addr_set_overscan_size + 1, 29);
