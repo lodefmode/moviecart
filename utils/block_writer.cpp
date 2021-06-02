@@ -98,14 +98,14 @@ verifyDrive(wchar_t* idestDrive)
 				type = 0;
 
 			bool valid = (type == DRIVE_REMOVABLE && (gigs > 0));
-			bool match = (wcscmp(destDrive, idestDrive) == 0);
+			bool match = idestDrive ? (wcscmp(destDrive, idestDrive) == 0) : false;
 
-			printf("%ls %ls %5.3g GB%s%s",
+			printf("%ls  (%ls %5.3g GB%s%s)",
 				szSingleDrive,
 				driveTypes[type],
 				gigs,
-				valid ? " VALID " : "",
-				match ? " (SELECTED) " : "");
+				valid ? " AVAILABLE" : "",
+				match ? " SELECTED" : "");
 
 			printf("\n");
 
@@ -169,6 +169,7 @@ main(int argc, char ** argv)
 	if (argc != 3)
 	{
 		fprintf(stderr, "Usage: %s input_file output_drive \n", argv[0]);
+		verifyDrive(nullptr);
 		return 1;
 	}
 
