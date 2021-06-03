@@ -3005,7 +3005,7 @@ design rules under a new name.</description>
 </pass>
 </autorouter>
 <elements>
-<element name="U$1" library="atari" package="DIP40" value="PIC18F45K42" x="44.577" y="71.12" rot="R90.1"/>
+<element name="U$1" library="atari" package="DIP40" value="PIC18F47K42" x="44.577" y="71.12" rot="R90.1"/>
 <element name="U$2" library="atari" package="DIP48" value="7130LA35PDG" x="40.64" y="50.8" rot="R90"/>
 <element name="JP1" library="sparkfun" package="USD_SHIFTER" value="" x="38.1" y="29.21" smashed="yes" rot="R270">
 <attribute name="VALUE" x="45.085" y="36.83" size="1.27" layer="27" rot="R270"/>

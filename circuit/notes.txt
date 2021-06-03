@@ -3,7 +3,7 @@ a26board.lbr
 
 atari.lbr
 	7130LA35PDG		;SRAM - Dual Port, Asynchronous Memory IC 8Kb (1K x 8) Parallel 35ns 48-PDIP
-	PIC18F45K42		;PIC - 18K Microcontroller IC 8-Bit 64MHz 32KB (16K x 16) FLASH 40-PDIP
+	PIC18F47K42		;PIC - 18K Microcontroller IC 8-Bit 64MHz 128KB (8K RAM) FLASH 40-PDIP
 
 
 sparkfun.lbr:

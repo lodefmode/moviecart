@@ -255,7 +255,7 @@
 </package>
 </packages>
 <symbols>
-<symbol name="PIC18F45K42">
+<symbol name="PIC18F47K42">
 <description>32 KB Flash
 16 MIPS
 2K SRAM
@@ -305,7 +305,7 @@
 <wire x1="15.24" y1="-27.94" x2="15.24" y2="30.48" width="0.254" layer="94"/>
 <wire x1="15.24" y1="30.48" x2="-15.24" y2="30.48" width="0.254" layer="94"/>
 <text x="-12.7" y="-30.48" size="1.27" layer="94">&gt;NAME</text>
-<text x="-12.7" y="-33.02" size="1.27" layer="94">PIC18F45K42</text>
+<text x="-12.7" y="-33.02" size="1.27" layer="94">PIC18F47K42</text>
 </symbol>
 <symbol name="7130LA35PDG">
 <description>IC SRAM 8KBIT 35NS 48DIP</description>
@@ -366,10 +366,10 @@
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="PIC18F45K42">
-<description>PIC18F45K42</description>
+<deviceset name="PIC18F47K42">
+<description>PIC18F47K42</description>
 <gates>
-<gate name="G$1" symbol="PIC18F45K42" x="27.94" y="-2.54"/>
+<gate name="G$1" symbol="PIC18F47K42" x="27.94" y="-2.54"/>
 </gates>
 <devices>
 <device name="" package="DIP40">
@@ -11783,7 +11783,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </class>
 </classes>
 <parts>
-<part name="U$1" library="atari" deviceset="PIC18F45K42" device=""/>
+<part name="U$1" library="atari" deviceset="PIC18F47K42" device=""/>
 <part name="U$2" library="atari" deviceset="7130LA35PDG" device=""/>
 <part name="SUPPLY1" library="supply2" library_urn="urn:adsk.eagle:library:372" deviceset="VDD" device=""/>
 <part name="SUPPLY2" library="supply2" library_urn="urn:adsk.eagle:library:372" deviceset="VDD" device=""/>
