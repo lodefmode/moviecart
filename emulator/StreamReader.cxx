@@ -56,6 +56,30 @@ StreamReader::swapField(bool index)
 	}
 }
 
+void
+StreamReader::blankPartialLines(bool index) 
+{
+	constexpr int colorSize = 192 * 5;
+	if (index)
+	{
+		// top line
+		myColor[0] = 0;
+		myColor[1] = 0;
+		myColor[2] = 0;
+		myColor[3] = 0;
+		myColor[4] = 0;
+	}
+	else
+	{
+		// bottom line
+		myColor[colorSize - 5] = 0;
+		myColor[colorSize - 4] = 0;
+		myColor[colorSize - 3] = 0;
+		myColor[colorSize - 2] = 0;
+		myColor[colorSize - 1] = 0;
+	}
+}
+
 bool
 StreamReader::readField(uint32_t fnum, bool index)
 {

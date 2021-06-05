@@ -312,6 +312,30 @@ sd_swapField(bool index)
 	}
 }
 
+
+void
+sd_blankPartialLines(bool index) 
+{
+	if (index)
+	{
+		// top line
+		sd_ptr_color[0] = 0;
+		sd_ptr_color[1] = 0;
+		sd_ptr_color[2] = 0;
+		sd_ptr_color[3] = 0;
+		sd_ptr_color[4] = 0;
+	}
+	else
+	{
+		// bottom line
+		sd_ptr_color[COLOR_SIZE - 5] = 0;
+		sd_ptr_color[COLOR_SIZE - 4] = 0;
+		sd_ptr_color[COLOR_SIZE - 3] = 0;
+		sd_ptr_color[COLOR_SIZE - 2] = 0;
+		sd_ptr_color[COLOR_SIZE - 1] = 0;
+	}
+}
+
 bool
 sd_openStream() 
 {		

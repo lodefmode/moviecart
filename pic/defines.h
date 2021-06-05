@@ -20,6 +20,7 @@
 #define FRAME_SIZE (2 * FIELD_SIZE)
 #define BLANK_LINE_SIZE	(28+3+37) // 68, +2 prev
 
+#define COLOR_SIZE (192 * 5)
 
 ////////////////////////////////////////////////
 

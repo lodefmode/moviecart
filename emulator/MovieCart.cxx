@@ -543,6 +543,7 @@ MovieCart::runStateMachine()
 					fill_addr_end_lines();
 
 					myStream.swapField(myBufferIndex);
+					myStream.blankPartialLines(myOdd);
 					myBufferIndex = !myBufferIndex;
 					updateTransport();
 

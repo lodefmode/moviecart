@@ -10,6 +10,7 @@
 
 extern bool sd_openStream(void);
 extern void sd_swapField(bool index);
+extern void sd_blankPartialLines(bool index);
 extern void sd_readField(uint32_t fr, bool index);
 extern void sd_runReadState(void);
 
@@ -646,6 +647,7 @@ again:
 				END_WRITE()
 
 				sd_swapField(bufferIndex);
+				sd_blankPartialLines(odd);
 				bufferIndex = !bufferIndex;
 				updateTransport();
 

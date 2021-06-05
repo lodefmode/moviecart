@@ -29,6 +29,7 @@ public:
 	bool	open(const std::string& path);
 	void	close();
 	void	swapField(bool index);
+	void	blankPartialLines(bool index);
 	bool	readField(uint32_t fnum, bool index);
 
 	uint8_t
@@ -104,7 +105,7 @@ private:
 	const uint8_t*	myGraphOverride{nullptr};
 
 	const uint8_t*	myTimecode{nullptr};
-	const uint8_t*	myColor{nullptr};
+		  uint8_t*	myColor{nullptr};
 	const uint8_t*	myVersion{nullptr};
 	const uint8_t*	myFrame{nullptr};
 
