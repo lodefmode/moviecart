@@ -378,16 +378,23 @@ MovieCart::fill_addr_end_lines()
 	if (!myOdd)
 		myFirstAudioVal = myStream.readAudio();
 
-	// normally overscan=30, vblank=37
+	// keep at overscan=29, vblank=36
+	//      or overscan=30, vblank=36 + 1 blank line
+
 	if (myOdd)
 	{
 		writeROM(addr_set_overscan_size + 1, 29);
 		writeROM(addr_set_vblank_size + 1, 36);
+
+		writeROM(addr_pick_extra_lines + 1, 0);
 	}
 	else
 	{
 		writeROM(addr_set_overscan_size + 1, 30);
-		writeROM(addr_set_vblank_size + 1, 37);
+		writeROM(addr_set_vblank_size + 1, 36);
+
+		// extra line after vblank
+		writeROM(addr_pick_extra_lines + 1, 1);
 	}
 
 	if (myBufferIndex == false)

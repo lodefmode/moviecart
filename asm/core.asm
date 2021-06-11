@@ -450,6 +450,11 @@ set_vblank_size
 	ldx  #0
 	stx  VBLANK	
 
+pick_extra_lines
+	ldx	#00
+	beq pick_transport
+	jsr	wait_lines
+
 pick_transport
 	jmp	transport_buttons
 

@@ -465,16 +465,23 @@ fill_addr_end_lines()
 	if (!odd)
 		firstAudVal = *sd_ptr_audio++;
 
-	// normally overscan=30, vblank=37
+	// keep at overscan=29, vblank=36
+	//      or overscan=30, vblank=36 + 1 blank line
+
 	if (odd)
 	{
 		WRITE_DATA(addr_set_overscan_size + 1, 29);
 		WRITE_DATA(addr_set_vblank_size + 1, 36);
+
+		WRITE_DATA(addr_pick_extra_lines + 1, 0);
 	}
 	else
 	{
 		WRITE_DATA(addr_set_overscan_size + 1, 30);
-		WRITE_DATA(addr_set_vblank_size + 1, 37);
+		WRITE_DATA(addr_set_vblank_size + 1, 36);
+
+		// extra line after vblank
+		WRITE_DATA(addr_pick_extra_lines + 1, 1);
 	}
 
 	if (bufferIndex == false)

@@ -48,12 +48,13 @@
 #define addr_set_aud_endlines 0xa8c
 #define addr_set_overscan_size 0xa90
 #define addr_set_vblank_size 0xaa6
-#define addr_pick_transport 0xaaf
-#define addr_transport_direction 0xab2
-#define addr_transport_buttons 0xabb
-#define addr_transport_done 0xac4
-#define addr_wait_lines 0xac9
-#define addr_transport_done1 0xada
+#define addr_pick_extra_lines 0xaaf
+#define addr_pick_transport 0xab6
+#define addr_transport_direction 0xab9
+#define addr_transport_buttons 0xac2
+#define addr_transport_done 0xacb
+#define addr_wait_lines 0xad0
+#define addr_transport_done1 0xae1
 #define addr_draw_title 0xb00
 #define addr_title_loop 0xb50
 #define addr_black_bar 0xb52
@@ -81,6 +82,8 @@ const uint8_t *scales[11] = {scale0, scale1, scale2, scale3, scale4, scale5, sca
 const uint8_t  shiftBright[16 + MAX_LEVEL - 1] = {  0,  0,  0,  0,  0,  0,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 15, 15, 15, 15};
 
 // Compiled kernel
+
+
 const unsigned char kernelROM[] = 
 {
 	133, 2, 185, 50, 248, 133, 27, 185, 62, 248, 133, 28, 185, 74, 248, 133,
@@ -124,12 +127,12 @@ const unsigned char kernelROM[] =
 	6, 133, 4, 169, 2, 133, 5, 169, 1, 133, 38, 169, 0, 133, 32, 169,
 	240, 133, 33, 133, 42, 162, 5, 202, 208, 253, 133, 43, 76, 128, 250, 255,
 	160, 0, 132, 27, 132, 28, 132, 27, 169, 0, 169, 0, 169, 0, 133, 25,
-	162, 29, 32, 201, 250, 169, 2, 133, 0, 162, 3, 32, 201, 250, 169, 0,
-	133, 0, 169, 2, 133, 1, 162, 37, 32, 201, 250, 162, 0, 134, 1, 76,
-	187, 250, 173, 128, 2, 74, 74, 74, 76, 196, 250, 165, 12, 10, 173, 130,
-	2, 42, 41, 23, 133, 129, 76, 70, 249, 133, 2, 169, 0, 177, 130, 133,
-	25, 165, 129, 240, 5, 198, 129, 173, 128, 20, 200, 202, 208, 235, 96, 255,
-	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	162, 29, 32, 208, 250, 169, 2, 133, 0, 162, 3, 32, 208, 250, 169, 0,
+	133, 0, 169, 2, 133, 1, 162, 37, 32, 208, 250, 162, 0, 134, 1, 162,
+	0, 240, 3, 32, 208, 250, 76, 194, 250, 173, 128, 2, 74, 74, 74, 76,
+	203, 250, 165, 12, 10, 173, 130, 2, 42, 41, 23, 133, 129, 76, 70, 249,
+	133, 2, 169, 0, 177, 130, 133, 25, 165, 129, 240, 5, 198, 129, 173, 128,
+	20, 200, 202, 208, 235, 96, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	162, 30, 32, 82, 251, 169, 2, 133, 0, 162, 3, 32, 82, 251, 169, 0,
 	133, 0, 169, 2, 133, 1, 162, 37, 32, 82, 251, 169, 0, 133, 1, 198,
