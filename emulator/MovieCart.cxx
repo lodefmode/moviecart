@@ -279,7 +279,7 @@ MovieCart::updateTransport()
 		if (myMode == Mode::Time)
 		{
 			if (myInputs.right && !myLastInputs.right)
-				step = 3;
+				step = 1;
 			else if (myInputs.left && !myLastInputs.left)
 				step = -3;
 			else

@@ -309,7 +309,7 @@ updateTransport()
 		if (mainMode == MODE_TIME)
 		{
 			if (right && !last_right)
-				step = 3;
+				step = 1;
 			else if (left && !last_left)
 				step = -3;
 			else
