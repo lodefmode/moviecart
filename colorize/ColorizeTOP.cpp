@@ -424,53 +424,51 @@ rgb_palette[4*3] =
 	255, 0, 0
 };
 
-const float colorBlack[4] = {0, 0, 0, 0};
 
-void
-findClosest(float cellColor[4], const float *selectColor, unsigned int *pal, int palSize)
+inline void
+findClosestInPalette(float cellColor[4], unsigned int *pal, int palSize)
 {
-	if (!selectColor) // atari
-	{
-		float	mindist = -1;
-		int		minIndex = 0;
+	float	mindist = -1;
+	int		minIndex = 0;
 
-		for (int i=0; i<palSize; i++)
+	for (int i=0; i<palSize; i++)
+	{
+		float color[4];
+
+		color[0] = pal[i*3 + 0] / 255.0f;
+		color[1] = pal[i*3 + 1] / 255.0f;
+		color[2] = pal[i*3 + 2] / 255.0f;
+		color[3] = (float)i;
+
+		float dist = colorDist(cellColor, color);
+		if (mindist < 0 || dist < mindist)
 		{
-			float color[4];
-
-			color[0] = pal[i*3 + 0] / 255.0f;
-			color[1] = pal[i*3 + 1] / 255.0f;
-			color[2] = pal[i*3 + 2] / 255.0f;
-			color[3] = (float)i;
-
-			float dist = colorDist(cellColor, color);
-			if (mindist < 0 || dist < mindist)
-			{
-				mindist = dist;
-				minIndex = i;
-			}
+			mindist = dist;
+			minIndex = i;
 		}
-
-		cellColor[0] = pal[minIndex*3 + 0] / 255.0f;
-		cellColor[1] = pal[minIndex*3 + 1] / 255.0f;
-		cellColor[2] = pal[minIndex*3 + 2] / 255.0f;
-		cellColor[3] = (float)minIndex;
 	}
-	else // dither, current or select color
-	{
-		float distBlack = colorDist(cellColor, colorBlack);
-		float distWhite = colorDist(cellColor, selectColor);
 
-		if (distBlack < distWhite)
-			memcpy(cellColor, colorBlack, sizeof(float)*4);
-		else
-			memcpy(cellColor, selectColor, sizeof(float)*4);
-	}
+	cellColor[0] = pal[minIndex*3 + 0] / 255.0f;
+	cellColor[1] = pal[minIndex*3 + 1] / 255.0f;
+	cellColor[2] = pal[minIndex*3 + 2] / 255.0f;
+	cellColor[3] = (float)minIndex;
 }
 
-void
+inline void
+findClosest(float cellColor[4], const float *selectColor, const float *backColor)
+{
+	float distBlack = colorDist(cellColor, backColor);
+	float distWhite = colorDist(cellColor, selectColor);
+
+	if (distBlack < distWhite)
+		memcpy(cellColor, backColor, sizeof(float)*4);
+	else
+		memcpy(cellColor, selectColor, sizeof(float)*4);
+}
+
+inline void
 distributeError(const TOP_OutputFormatSpecs *outputFormat, float *mem,
-				int x, int y, float *quantError, float ratio)
+				int x, int y, float *quantError, float ratio, bool clamp)
 {
 	if (x >=0 && x<outputFormat->width && y>=0 && y<outputFormat->height)
 	{
@@ -478,6 +476,18 @@ distributeError(const TOP_OutputFormatSpecs *outputFormat, float *mem,
 		npixel[0] += quantError[0] * ratio;
 		npixel[1] += quantError[1] * ratio;
 		npixel[2] += quantError[2] * ratio;
+
+		if (clamp)
+		{
+			for (int j=0; j<3; j++)
+			{
+				if (npixel[j] < 0)
+					npixel[j] = 0;
+				else if (npixel[j] > 1)
+					npixel[j] = 1;
+			}
+		}
+
 	}
 }
 
@@ -610,7 +620,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	int	palette = inputs->getParInt("Palette");
 	int	cellSize = inputs->getParInt("Cellsize");
 
-	bool black = inputs->getParInt("Black") ? true:false;
 	bool dither = inputs->getParInt("Dither") ? true:false;
 	float bleed = (float)inputs->getParDouble("Bleed");
 
@@ -620,10 +629,14 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	int path = inputs->getParInt("Path");
 	bool zigzag = (path == Path_ZigZag);
 
+	bool background = inputs->getParInt("Background") ? true:false;
+	bool clamp = inputs->getParInt("Clamp") ? true:false;
 
 	unsigned int	*pal;
 	int				palSize;
 	getPalette(palette, pal, palSize);
+
+	float backColor[4] = {0,0,0,0};
 
 	if (!active)
 		return;
@@ -637,6 +650,9 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 	int textureMemoryLocation = 0;
     float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
+
+	// background backup
+	char	mem4[4*2048];
 
 	// copy
 	if (topMem)
@@ -669,154 +685,203 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		bool	reverse = zigzag ? (y&1 ? true:false) : false;
 		int		xdir = reverse ? -1 : +1;
 
-		for (int x0 = 0; x0 < outputFormat->width; x0++)
+		int		bestB = 0;
+		float	bestError = -1.0f;
+
+		// store the line
+
+		if (background)
+			memcpy(mem4, curY, outputFormat->width*4 * sizeof(float));
+
+		for (int b=0; b<=palSize; b++)
 		{
-			int xpix = x0%cellSize;
+			bool	finalB = true;
 
-			int x = reverse ? (outputFormat->width -1 -x0) : x0;
-			float* pixel = &curY[4*x];
-
-
-			// determine cell color
-
-			if (xpix == 0)	// first pixel of cell
+			if (background)
 			{
-				float	sum[3] = { 0,0,0 };
-				float	total_weight = 0.0f;
+				// restore current line
+				memcpy(curY, mem4, outputFormat->width*4 * sizeof(float));
 
-				for (int x2=0; x2<cellSize; x2++)
-				{
-					int x3 = x + xdir*x2;
+				finalB = (b == palSize);
 
-					float* npixel = &curY[4*x3];
-				
-					float r = npixel[0];
-					float g = npixel[1];
-					float b = npixel[2];
+				int		bidx = finalB ? bestB : b;
 
-					float weight;
-
-					switch(weightMethod)
-					{
-						case Weight_Mono:
-						default:
-							weight = r*0.3f + g*0.6f + b*0.1f;
-							break;
-
-						case Weight_Luminance:
-							weight = RGBtoLum(r, g, b);
-							break;
-
-						case Weight_Hue:
-							weight = RGBtoHue(r, g, b);
-							break;
-					}
-
-					sum[0] += r*weight;
-					sum[1] += g*weight;
-					sum[2] += b*weight;
-
-					total_weight += weight;
-				}
-
-				if (total_weight)
-				{
-					for (int i = 0; i < 3; i++)
-						cellColor[i] = sum[i] / total_weight;
-				}
-				else
-				{
-					for (int i = 0; i < 3; i++)
-						cellColor[i] = 0.0f;
-				}
-
-				findClosest(cellColor, nullptr, pal, palSize);
+				backColor[0] = pal[bidx*3 + 0] / 255.0f;
+				backColor[1] = pal[bidx*3 + 1] / 255.0f;
+				backColor[2] = pal[bidx*3 + 2] / 255.0f;
+				backColor[3] = (float)bidx;
 			}
 
-			// now dither
-			if (dither)
-			{
-				float current[3];
-				current[0] = pixel[0];
-				current[1] = pixel[1];
-				current[2] = pixel[2];
+			float	curError = 0.0f;
 
-				if (black)
+			for (int x0 = 0; x0 < outputFormat->width; x0++)
+			{
+				int xpix = x0%cellSize;
+
+				int x = reverse ? (outputFormat->width -1 -x0) : x0;
+				float* pixel = &curY[4*x];
+
+
+				// determine cell color
+
+				if (xpix == 0)	// first pixel of cell
 				{
-					findClosest(pixel, cellColor, pal, palSize);
+					float	sum[3] = { 0,0,0 };
+					float	total_weight = 0.0f;
+
+					for (int x2=0; x2<cellSize; x2++)
+					{
+						int x3 = x + xdir*x2;
+
+						float* npixel = &curY[4*x3];
+					
+						float r = npixel[0];
+						float g = npixel[1];
+						float b = npixel[2];
+
+						float weight;
+
+						switch(weightMethod)
+						{
+							case Weight_Mono:
+							default:
+								weight = r*0.3f + g*0.6f + b*0.1f;
+								break;
+
+							case Weight_Luminance:
+								weight = RGBtoLum(r, g, b);
+								break;
+
+							case Weight_Hue:
+								weight = RGBtoHue(r, g, b);
+								break;
+						}
+
+						sum[0] += r*weight;
+						sum[1] += g*weight;
+						sum[2] += b*weight;
+
+						total_weight += weight;
+					}
+
+					if (total_weight)
+					{
+						for (int i = 0; i < 3; i++)
+							cellColor[i] = sum[i] / total_weight;
+					}
+					else
+					{
+						for (int i = 0; i < 3; i++)
+							cellColor[i] = 0.0f;
+					}
+
+					findClosestInPalette(cellColor, pal, palSize);
+				}
+
+				// now dither
+				if (dither)
+				{
+					float current[3];
+					current[0] = pixel[0];
+					current[1] = pixel[1];
+					current[2] = pixel[2];
+
+					findClosest(pixel, cellColor, backColor);
+
+					if (bleed > 0)
+					{
+						float quantError[3];
+						
+						for (int i = 0; i < 3; i++)
+						{
+							quantError[i] = (current[i] - pixel[i]) * bleed;
+							curError += fabs(quantError[i]);
+						}
+
+						switch(matrix)
+						{
+							case Matrix_FloydSteinberg:
+							default:
+								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 16.0f, clamp);
+
+								if (finalB)
+								{
+									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 3.0f / 16.0f, clamp);
+									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 5.0f / 16.0f, clamp);
+									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 16.0f, clamp);
+								}
+								break;
+
+							case Matrix_JIN:
+							#if 0
+									 -   -   X   7   5 
+									 3   5   7   5   3
+									 1   3   5   3   1
+							 #endif
+								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 48.0f, clamp);
+								distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 5.0f / 48.0f, clamp);
+
+								if (finalB)
+								{
+									distributeError(outputFormat, mem, x-2*xdir, y+1, quantError, 3.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 5.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 7.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 5.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x+2*xdir, y+1, quantError, 3.0f / 48.0f, clamp);
+
+									distributeError(outputFormat, mem, x-2*xdir, y+2, quantError, 1.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x-1*xdir, y+2, quantError, 3.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 5.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x+1*xdir, y+2, quantError, 3.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x+2*xdir, y+2, quantError, 1.0f / 48.0f, clamp);
+								}
+
+								break;
+
+							case Matrix_Atkinson: // (partial error distribution 6/8)
+
+							#if 0
+								-   X   1   1 
+								1   1   1
+								-   1
+						   #endif
+
+								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 1.0f / 8.0f, clamp);
+								distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 1.0f / 8.0f, clamp);
+
+								if (finalB)
+								{
+									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 1.0f / 8.0f, clamp);
+									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 1.0f / 8.0f, clamp);
+									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 8.0f, clamp);
+
+									distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 1.0f / 8.0f, clamp);
+								}
+								
+								break;
+
+						}
+
+					}
 				}
 				else
 				{
-					pixel[0] = cellColor[0];
-					pixel[1] = cellColor[1];
-					pixel[2] = cellColor[2];
+					memcpy(pixel, cellColor, 4*sizeof(float));
 				}
 
-				if (bleed > 0)
+			}
+
+			if (background)
+			{
+				if ((curError < bestError) || (bestError < 0))
 				{
-					float quantError[3];
-					
-					for (int i = 0; i < 3; i++)
-						quantError[i] = (current[i] - pixel[i]) * bleed;
-
-					switch(matrix)
-					{
-						case Matrix_FloydSteinberg:
-						default:
-							distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 16.0f);
-							distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 3.0f / 16.0f);
-							distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 5.0f / 16.0f);
-							distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 16.0f);
-							break;
-
-						case Matrix_JIN:
-						#if 0
-							     -   -   X   7   5 
-								 3   5   7   5   3
-								 1   3   5   3   1
-						 #endif
-							distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 48.0f);
-							distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 5.0f / 48.0f);
-
-							distributeError(outputFormat, mem, x-2*xdir, y+1, quantError, 3.0f / 48.0f);
-							distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 5.0f / 48.0f);
-							distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 7.0f / 48.0f);
-							distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 5.0f / 48.0f);
-							distributeError(outputFormat, mem, x+2*xdir, y+1, quantError, 3.0f / 48.0f);
-
-							distributeError(outputFormat, mem, x-2*xdir, y+2, quantError, 1.0f / 48.0f);
-							distributeError(outputFormat, mem, x-1*xdir, y+2, quantError, 3.0f / 48.0f);
-							distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 5.0f / 48.0f);
-							distributeError(outputFormat, mem, x+1*xdir, y+2, quantError, 3.0f / 48.0f);
-							distributeError(outputFormat, mem, x+2*xdir, y+2, quantError, 1.0f / 48.0f);
-
-							break;
-
-						case Matrix_Atkinson: // (partial error distribution 6/8)
-
-						#if 0
-						    -   X   1   1 
-							1   1   1
-							-   1
-					   #endif
-
-							distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 1.0f / 8.0f);
-							distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 1.0f / 8.0f);
-
-							distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 1.0f / 8.0f);
-							distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 1.0f / 8.0f);
-							distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 8.0f);
-
-							distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 1.0f / 8.0f);
-							break;
-
-					}
-
+					bestError = curError;
+					bestB = b;
 				}
 			}
 			else
 			{
-				memcpy(pixel, cellColor, 4*sizeof(float));
+				break;
 			}
 
 		}
@@ -1009,13 +1074,20 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 	{
 		OP_NumericParameter  sp;
 
-		sp.name = "Black";
-		sp.label = "Black";
-		sp.defaultValues[0] = 1;
+		sp.name = "Background";
+		sp.label = "Background";
 
 		manager->appendToggle(sp);
 	}
 
+	{
+		OP_NumericParameter  sp;
+
+		sp.name = "Clamp";
+		sp.label = "Clamp";
+
+		manager->appendToggle(sp);
+	}
 
 	{
 		OP_NumericParameter  sp;
