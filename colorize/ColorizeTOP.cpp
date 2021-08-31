@@ -561,7 +561,8 @@ enum
 {
 	Weight_Mono = 0,
 	Weight_Luminance = 1,
-	Weight_Hue = 2
+	Weight_Hue = 2,
+	Weight_MonoBack = 3
 };
 
 enum
@@ -744,7 +745,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 						switch(weightMethod)
 						{
 							case Weight_Mono:
-							default:
 								weight = r*0.3f + g*0.6f + b*0.1f;
 								break;
 
@@ -754,6 +754,17 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 							case Weight_Hue:
 								weight = RGBtoHue(r, g, b);
+								break;
+
+							case Weight_MonoBack:
+							default:
+								weight = r*0.3f + g*0.6f + b*0.1f;
+								// weigh background minimally
+								{
+									float	dist = colorDist(npixel, backColor);
+									weight *= dist;
+								}
+
 								break;
 						}
 
@@ -1118,10 +1129,10 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 		sp.name = "Weight";
 		sp.label = "Weight";
 
-		const char *names[3] = { "Mono", "Luminance", "Hue" };
-		const char *labels[3] = { "Mono", "Luminance", "Hue" };
+		const char *names[4] = { "Mono", "Luminance", "Hue", "MonoBack" };
+		const char *labels[4] = { "Mono", "Luminance", "Hue", "MonoBack" };
 
-		manager->appendMenu(sp, 3, names, labels);
+		manager->appendMenu(sp, 4, names, labels);
 	}
 
 	{
