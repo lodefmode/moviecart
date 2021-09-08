@@ -56,7 +56,7 @@ GCOL9	equ $62	;purple
 ;;;;;;;;;;;;;;;;;;;
 
 ;org $F800 (page 0) title_48  	  					---1 1000 0000 0000 / 0    (128)
-;org $F880 (page 1) unused	 						---1 1000 1000 0000 / 128  (128)
+;org $F880 (page 1) transport						---1 1000 1000 0000 / 128  (128)
 ;org $F900 (page 2) line_right      				---1 1001 0000 0000 / 256  (128)
 ;org $F980 (page 3) line_left						---1 1001 1000 0000 / 384  (128)
 ;org $FA00 (page 4) main          					---1 1010 0000 0000 / 512  (128)
@@ -127,8 +127,48 @@ F48
 	.byte  $00, $00, $00, $00, $00, $00, $f8, $80, $80, $e0, $80, $f8
 
 	
-;;;;;;;;;;;;;;;;;; page 1 - unused
+;;;;;;;;;;;;;;;;;; page 1 - transport
 	org $F880
+
+transport_direction
+	lda SWCHA		; RLDU(1) RLDU(2)	; 1111 1111 by default, so joy2 will override some console switches
+	lsr
+	lsr
+	lsr				; 000 RLDUr
+
+	sta TRANSPORT_DATA
+
+	; have to re-enter at correct cycle
+	nop
+	sta USER_TEMP	; 3 dummy
+	sta USER_TEMP	; 3 dummy
+	sta USER_TEMP	; 3 dummy
+	sta USER_TEMP	; 3 dummy
+
+	lda #00
+	jmp	right_line
+
+
+transport_buttons
+	;setup console
+	lda INPT4       ; button - - - - - - -  ; even page, but A12=0
+    asl             ; carry has button
+	lda SWCHB		; a b - - color - select reset
+	rol				; b - - color - select reset button
+	and #%00010111	; 0 0 0 color 0 select reset button
+
+
+	sta TRANSPORT_DATA
+
+	; have to re-enter at correct cycle
+	nop				; dummy
+	sta USER_TEMP	; dummy
+	sta USER_TEMP	; dummy
+	sta USER_TEMP	; dummy
+
+	lda #00
+	jmp	right_line
+
 
 ;;;;;;;;;;;;;;;;;;; page 2 - right
 	org $F900 
@@ -137,7 +177,7 @@ F48
 
 	;; needs to cross to page 3,  (same 256-byte block)
 
-	org $F946
+	org $F944
 
 		;;;;;;;;;;;;;;;;;;;;;
 		;;
@@ -145,12 +185,12 @@ F48
 		;;
 		;;;;;;;;;;;;;;;;;;;;;
 
-	; enter at clock -50
+	; enter at pixel pos 151 / color clock 219
 	; left_line/right_line kernel adapted by Thomas Jentzsch
 
 right_line
 
-    sta     WSYNC       ; 3             or 3 free cycles
+	sta		COLUPF		; 3  background color (WSYNC)
     sta     HMOVE       ; 3     @03     +8 pixel
 ;---------------------------------------
 ; - 0a - 1a - 0b - 1b - 0c
@@ -196,17 +236,17 @@ set_gcol8
 
     sta     HMCLR       ; 3
 
-; free cycles
+set_colubk_r
+	lda		#$00		; 2	 background color
+	sta		COLUBK		; 3  background color
 
-		sta USER_TEMP
-		sta USER_TEMP
-		sta USER_TEMP
+	lda		#$00		; 2  dummy
 
-		;back 8, late hmove ;needs to be on cycle 71
-		sta HMOVE		
+set_colupf_r
+	lda		#$00		; 2  playfield color
 
-;;LEFT_KERNEL ; {graphics index}, {shading value}
-;;    sta     HMOVE           ; 3     @73     -8 pixel
+	;back 8, late hmove ;needs to be on cycle 71
+	sta		HMOVE		
 
 ;;;;;;;;;;;;;;;;;;; page 3 - left
 	org $F980
@@ -220,7 +260,7 @@ left_line
 
 
 ;EnterLeftKernel
-    sta     WSYNC		; 3     3 free cycles here, WSYNC used for easier kernel entering
+	sta		COLUPF		; 3		playfield color
 ;---------------------------------------
 ; 0a - 1a - 0b - 1b - 0c -
 set_gdata1
@@ -269,10 +309,16 @@ set_gcol3
     sta     HMP1        ; 3     @63
 
 
-		; have to re-enter at correct cycle
+set_colubk_l
+	lda		#$00		; 2	 background color
+	sta		COLUBK		; 3  background color
+set_colupf_l
+	lda		#$00		; 2	 background color
+
+	; have to re-enter at correct cycle
 pick_continue
-		jmp right_line
-;		jmp end_lines
+	jmp		right_line
+;	jmp		end_lines
 
 ;;;;;;;;;;;;;;;;;;; page 4 - main
 	org $FA00 
@@ -403,7 +449,7 @@ title_again
 wait_cnt
 	dex
 	bne wait_cnt
-	
+
     sta HMCLR
 
 	jmp end_lines
@@ -427,6 +473,16 @@ end_lines
 set_aud_endlines
 	lda 	#AUD_DATA	; 2
     sta     AUDV0       ; 3     @10
+
+	; setup playfield here...
+	; alternate blocks
+	lda #$30
+	sta PF0
+	lda #$CC
+	sta PF1
+	lda #$33
+	sta PF2
+
 
 	;overscan 29;	one above
 set_overscan_size
@@ -455,26 +511,14 @@ pick_extra_lines
 	beq pick_transport
 	jsr	wait_lines
 
+	nop				; 2 dummy
+	nop				; 2 dummy
+	sta USER_TEMP	; 3 dummy
+	sta USER_TEMP	; 3 dummy
+
 pick_transport
 	jmp	transport_buttons
 
-transport_direction
-	lda SWCHA		; RLDU(1) RLDU(2)	; 1111 1111 by default, so joy2 will override some console switches
-	lsr
-	lsr
-	lsr				; 000 RLDUr
-	jmp	transport_done
-transport_buttons
-	;setup console
-	lda INPT4       ; button - - - - - - -  ; even page, but A12=0
-    asl             ; carry has button
-	lda SWCHB		; a b - - color - select reset
-	rol				; b - - color - select reset button
-	and #%00010111	; 0 0 0 color 0 select reset button
-
-transport_done
-	sta TRANSPORT_DATA
-	jmp	right_line
 
 wait_lines
 	sta WSYNC			;3

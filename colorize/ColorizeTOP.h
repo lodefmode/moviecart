@@ -41,11 +41,13 @@ public:
 
 private:
 
+	void				setupStorage(int outputWidth, int outputHeight, int cellSize);
 	void				storeResults(int outputWidth, int outputHeight, float *mem, int cellSize);
 
 	int                  myResultWidth;
 	int                  myResultHeight;
 	uint8_t             *myResultGraph;
 	uint8_t             *myResultColor;
+	float               *myResultBK;
 
 };

@@ -79,6 +79,7 @@ CPUMemoryTOP::CPUMemoryTOP(const OP_NodeInfo* info)
 	myResultHeight = 0;
 	myResultGraph = nullptr;
 	myResultColor = nullptr;
+	myResultBK = nullptr;
 }
 
 CPUMemoryTOP::~CPUMemoryTOP()
@@ -87,6 +88,8 @@ CPUMemoryTOP::~CPUMemoryTOP()
 		delete [] myResultGraph;
 	if (myResultColor)
 		delete [] myResultColor;
+	if (myResultBK)
+		delete [] myResultBK;
 }
 
 void
@@ -454,16 +457,22 @@ findClosestInPalette(float cellColor[4], unsigned int *pal, int palSize)
 	cellColor[3] = (float)minIndex;
 }
 
-inline void
+inline int
 findClosest(float cellColor[4], const float *selectColor, const float *backColor)
 {
 	float distBlack = colorDist(cellColor, backColor);
 	float distWhite = colorDist(cellColor, selectColor);
 
 	if (distBlack < distWhite)
+	{
 		memcpy(cellColor, backColor, sizeof(float)*4);
+		return 0;
+	}
 	else
+	{
 		memcpy(cellColor, selectColor, sizeof(float)*4);
+		return 1;
+	}
 }
 
 inline void
@@ -654,6 +663,8 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 	// background backup
 	char	mem4[4*2048];
+
+	setupStorage(outputFormat->width, outputFormat->height, cellSize);
 
 	// copy
 	if (topMem)
@@ -894,8 +905,10 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			{
 				break;
 			}
-
 		}
+
+		for (int i = 0; i < 4; i++)
+			myResultBK[y * 4 + i] = backColor[i];
     }
 
 	storeResults(outputFormat->width, outputFormat->height, mem, cellSize);
@@ -905,7 +918,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 }
 
 void
-CPUMemoryTOP::storeResults(int outputWidth, int outputHeight, float *mem, int cellSize)
+CPUMemoryTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
 {
 	outputWidth /= cellSize;
 	if (outputWidth < 1)
@@ -917,18 +930,32 @@ CPUMemoryTOP::storeResults(int outputWidth, int outputHeight, float *mem, int ce
 			delete[] myResultGraph;
 		if (myResultColor)
 			delete[] myResultColor;
+		if (myResultBK)
+			delete[] myResultBK;
 
 		myResultWidth = outputWidth;
 		myResultHeight = outputHeight;
 		myResultGraph = new uint8_t[myResultWidth * myResultHeight];
 		myResultColor = new uint8_t[myResultWidth * myResultHeight];
+		myResultBK = new float[myResultHeight * 4];
 	}
+
+}
+
+void
+CPUMemoryTOP::storeResults(int outputWidth, int outputHeight, float *mem, int cellSize)
+{
+	outputWidth /= cellSize;
+	if (outputWidth < 1)
+		outputWidth = 1;
 
 
 	int		cnt = 0;
 
 	for (int y = 0; y<outputHeight; y++)
 	{
+		int	bidx = (int)myResultBK[y*4 + 3];
+
 		for (int x=0; x<outputWidth; x++, cnt++)
 		{
 			float* pixel = &mem[4 * cellSize * (y*outputWidth + x)];
@@ -940,14 +967,27 @@ CPUMemoryTOP::storeResults(int outputWidth, int outputHeight, float *mem, int ce
 			for (int i = 0; i < cellSize; i++, npixel += 4)
 			{
 				val <<= 1;
-				if (npixel[0] || npixel[1] || npixel[2])
+
+				// only store non-backcolor in this array
+				if (npixel[3] != bidx)
+				{
 					val |= 1;
+					if (npixel[3])
+						col = (uint8_t)npixel[3];
 
-				if (npixel[3])
-					col = (uint8_t)npixel[3];
+					// set alpha to solid
+					npixel[3] = 1.0f;
+				}
+				else
+				{
+					// turn off background
 
-				// set alpha to solid
-				npixel[3] = 1.0f;
+					npixel[0] = 0.0f;
+					npixel[1] = 0.0f;
+					npixel[2] = 0.0f;
+					npixel[3] = 0.0f;
+				}
+
 			}
 
 			myResultGraph[cnt] = val;
@@ -970,8 +1010,8 @@ CPUMemoryTOP::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan, void* reserv
 bool		
 CPUMemoryTOP::getInfoDATSize(OP_InfoDATSize* infoSize, void* reserved1)
 {
-	infoSize->rows = myResultHeight * 2;
-	infoSize->cols = myResultWidth;
+	infoSize->rows = myResultHeight;
+	infoSize->cols = myResultWidth + myResultWidth + 4;		// graph, color,  bkground
 
 	// Setting this to false means we'll be assigning values to the table
 	// one row at a time. True means we'll do it one column at a time.
@@ -981,7 +1021,7 @@ CPUMemoryTOP::getInfoDATSize(OP_InfoDATSize* infoSize, void* reserved1)
 
 void
 CPUMemoryTOP::getInfoDATEntries(int32_t index,
-								int32_t nEntries,
+								int32_t nCols,
 								OP_InfoDATEntries* entries,
 								void *reserved1)
 {
@@ -1001,33 +1041,58 @@ CPUMemoryTOP::getInfoDATEntries(int32_t index,
 		first = false;
 	}
 
-	bool	color = false;
-	if (index >= myResultHeight)
-	{
-		index -= myResultHeight;
-		color = true;
-	}
+	int y = myResultHeight - index - 1; // reverse
+	int cntBase = (y*myResultWidth);
 
-	for (int i=0; i<nEntries; i++)
+	// graph
+	for (int i=0; i<myResultWidth; i++)
 	{
 		int x = i;
-		int y = myResultHeight - index - 1; // reverse
-		int cnt = (y*myResultWidth + x);
-		int v;
-
-		if (color)
-		{
-			v = myResultColor[cnt];
-			// top 7 bits only
-			v <<= 1;
-		}
-		else
-		{
-			v = myResultGraph[cnt];
-		}
+		int v = myResultGraph[cntBase + x];
 
 		entries->values[i]->setString(intBuffer[v]);
 	}
+
+	// color
+
+	for (int i=0; i<myResultWidth; i++)
+	{
+		int x = i;
+		int v = myResultColor[cntBase + x];
+
+		// top 7 bits only
+		v <<= 1;
+
+		entries->values[i + myResultWidth]->setString(intBuffer[v]);
+	}
+
+
+	// color bk
+
+	{
+		int v = (int)myResultBK[y*4 + 3];
+
+		// top 7 bits only
+		v <<= 1;
+
+		entries->values[2*myResultWidth + 0]->setString(intBuffer[v]);
+
+		for (int i=0; i<3; i++)
+		{
+			float	f = myResultBK[y*4 + i];
+			char	fltBuffer[64];
+
+#ifdef _WIN32
+			sprintf_s(fltBuffer, "%g", f);
+#else
+			snprintf(fltBuffer, 4, "%g", f);
+#endif
+
+			entries->values[2*myResultWidth + i + 1]->setString(fltBuffer);
+		}
+	}
+
+
 }
 
 void
