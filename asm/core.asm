@@ -190,21 +190,26 @@ transport_buttons
 
 right_line
 
-	sta		COLUPF		; 3  background color (WSYNC)
-    sta     HMOVE       ; 3     @03     +8 pixel
-;---------------------------------------
-; - 0a - 1a - 0b - 1b - 0c
-set_aud_right
-	lda 	#AUD_DATA	; 2
-set_gdata9
-    ldx     #GDATA9     ; 2
-    sta     AUDV0       ; 3     @10
-set_gcol9
-    ldy     #GCOL9   	; 2
 
 set_gdata6
     lda     #GDATA6     ; 2
     sta     GRP1        ; 3     VDELed
+
+;---------------------------------------
+; - 0a - 1a - 0b - 1b - 0c
+    sta     HMOVE       ; 3     @03     +8 pixel
+
+	lda 	#AUD_DATA	; 2
+
+set_gdata9
+    ldx     #GDATA9     ; 2
+
+set_aud_right
+    sta     AUDV0       ; 3     @10
+
+set_gcol9
+    ldy     #GCOL9   	; 2
+
 set_gcol6
     lda     #GCOL6   	; 2
     sta     COLUP1      ; 3
@@ -220,6 +225,11 @@ set_gdata8
     lda     #GDATA8     ; 2
     sta     GRP1        ; 3     VDELed
 
+
+set_colubk_r
+	lda		#$00		; 2	 background color
+	sta		COLUBK		; 3  background color
+
 set_gcol7
     lda     #GCOL7   	; 2
     sta     COLUP0      ; 3     @42!    end of GRP0a display
@@ -234,19 +244,13 @@ set_gcol8
     stx     GRP0        ; 3     @55
     sty     COLUP0      ; 3     @58     <=@60
 
+
+	lda		#$00		; 2  turn off background color
+	sta		COLUBK		; 3  background color
+	
     sta     HMCLR       ; 3
 
-set_colubk_r
-	lda		#$00		; 2	 background color
-	sta		COLUBK		; 3  background color
-
-	lda		#$00		; 2  dummy
-
-set_colupf_r
-	lda		#$00		; 2  playfield color
-
-	;back 8, late hmove ;needs to be on cycle 71
-	sta		HMOVE		
+	;;;;
 
 ;;;;;;;;;;;;;;;;;;; page 3 - left
 	org $F980
@@ -260,28 +264,33 @@ left_line
 
 
 ;EnterLeftKernel
-	sta		COLUPF		; 3		playfield color
 ;---------------------------------------
 ; 0a - 1a - 0b - 1b - 0c -
 set_gdata1
     lda     #GDATA1     ; 2
-    sta     GRP1        ; 3     VDELed
 
-set_aud_left
-	lda 	#AUD_DATA	; 2
-    sta     AUDV0       ; 3     @10
-set_gdata4
-    ldx     #GDATA4     ; 2
-set_gcol4
-    ldy     #GCOL4   	; 2
+	;back 8, late hmove ;needs to be on cycle 71
+	sta		HMOVE		
+
+    sta     GRP1        ; 3     VDELed
 
 set_gcol1
     lda     #GCOL1   	; 2
     sta     COLUP1      ; 3
 
+set_aud_left
+	lda 	#AUD_DATA	; 2
+    sta     AUDV0       ; 3     @10
+
+set_gdata4
+    ldx     #GDATA4     ; 2
+set_gcol4
+    ldy     #GCOL4   	; 2
+
 set_gdata0
     lda     #GDATA0     ; 2
     sta     GRP0        ; 3
+
 set_gcol0
     lda     #GCOL0   	; 2
     sta     COLUP0      ; 3
@@ -289,6 +298,10 @@ set_gcol0
 set_gdata3
     lda     #GDATA3     ; 2
     sta     GRP1        ; 3     VDELed
+
+set_colupf_l
+	lda		#$00		; 2  playfield color
+	sta		COLUPF		; 3	 playfield color
 
 set_gcol2
     lda     #GCOL2   	; 2
@@ -304,16 +317,12 @@ set_gcol3
     stx     GRP0        ; 3     @52
     sty     COLUP0      ; 3     @55     <=@57
 
+	lda		#$00		; 2		turn off playfield
+	sta		COLUPF		; 3
+
     lda     #$80        ; 2
     sta     HMP0        ; 3
     sta     HMP1        ; 3     @63
-
-
-set_colubk_l
-	lda		#$00		; 2	 background color
-	sta		COLUBK		; 3  background color
-set_colupf_l
-	lda		#$00		; 2	 background color
 
 	; have to re-enter at correct cycle
 pick_continue
@@ -664,6 +673,4 @@ reset_loop
 	.word main_start		;NMI 
 	.word main_start		;RESET
 	.word main_start 		;IRQ/BRK
-
-
 
