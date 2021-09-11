@@ -477,7 +477,7 @@ findClosest(float cellColor[4], const float *selectColor, const float *backColor
 
 inline void
 distributeError(const TOP_OutputFormatSpecs *outputFormat, float *mem,
-				int x, int y, float *quantError, float ratio, bool clamp)
+				int x, int y, float *quantError, float ratio)
 {
 	if (x >=0 && x<outputFormat->width && y>=0 && y<outputFormat->height)
 	{
@@ -486,15 +486,13 @@ distributeError(const TOP_OutputFormatSpecs *outputFormat, float *mem,
 		npixel[1] += quantError[1] * ratio;
 		npixel[2] += quantError[2] * ratio;
 
-		if (clamp)
+		// clamp
+		for (int j=0; j<3; j++)
 		{
-			for (int j=0; j<3; j++)
-			{
-				if (npixel[j] < 0)
-					npixel[j] = 0;
-				else if (npixel[j] > 1)
-					npixel[j] = 1;
-			}
+			if (npixel[j] < 0)
+				npixel[j] = 0;
+			else if (npixel[j] > 1)
+				npixel[j] = 1;
 		}
 
 	}
@@ -640,7 +638,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	bool zigzag = (path == Path_ZigZag);
 
 	bool background = inputs->getParInt("Background") ? true:false;
-	bool clamp = inputs->getParInt("Clamp") ? true:false;
 
 	unsigned int	*pal;
 	int				palSize;
@@ -824,13 +821,13 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 						{
 							case Matrix_FloydSteinberg:
 							default:
-								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 16.0f, clamp);
+								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 16.0f);
 
 								if (finalB)
 								{
-									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 3.0f / 16.0f, clamp);
-									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 5.0f / 16.0f, clamp);
-									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 16.0f, clamp);
+									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 3.0f / 16.0f);
+									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 5.0f / 16.0f);
+									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 16.0f);
 								}
 								break;
 
@@ -840,22 +837,22 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 									 3   5   7   5   3
 									 1   3   5   3   1
 							 #endif
-								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 48.0f, clamp);
-								distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 5.0f / 48.0f, clamp);
+								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 48.0f);
+								distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 5.0f / 48.0f);
 
 								if (finalB)
 								{
-									distributeError(outputFormat, mem, x-2*xdir, y+1, quantError, 3.0f / 48.0f, clamp);
-									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 5.0f / 48.0f, clamp);
-									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 7.0f / 48.0f, clamp);
-									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 5.0f / 48.0f, clamp);
-									distributeError(outputFormat, mem, x+2*xdir, y+1, quantError, 3.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x-2*xdir, y+1, quantError, 3.0f / 48.0f);
+									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 5.0f / 48.0f);
+									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 7.0f / 48.0f);
+									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 5.0f / 48.0f);
+									distributeError(outputFormat, mem, x+2*xdir, y+1, quantError, 3.0f / 48.0f);
 
-									distributeError(outputFormat, mem, x-2*xdir, y+2, quantError, 1.0f / 48.0f, clamp);
-									distributeError(outputFormat, mem, x-1*xdir, y+2, quantError, 3.0f / 48.0f, clamp);
-									distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 5.0f / 48.0f, clamp);
-									distributeError(outputFormat, mem, x+1*xdir, y+2, quantError, 3.0f / 48.0f, clamp);
-									distributeError(outputFormat, mem, x+2*xdir, y+2, quantError, 1.0f / 48.0f, clamp);
+									distributeError(outputFormat, mem, x-2*xdir, y+2, quantError, 1.0f / 48.0f);
+									distributeError(outputFormat, mem, x-1*xdir, y+2, quantError, 3.0f / 48.0f);
+									distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 5.0f / 48.0f);
+									distributeError(outputFormat, mem, x+1*xdir, y+2, quantError, 3.0f / 48.0f);
+									distributeError(outputFormat, mem, x+2*xdir, y+2, quantError, 1.0f / 48.0f);
 								}
 
 								break;
@@ -868,16 +865,16 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 								-   1
 						   #endif
 
-								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 1.0f / 8.0f, clamp);
-								distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 1.0f / 8.0f, clamp);
+								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 1.0f / 8.0f);
+								distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 1.0f / 8.0f);
 
 								if (finalB)
 								{
-									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 1.0f / 8.0f, clamp);
-									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 1.0f / 8.0f, clamp);
-									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 8.0f, clamp);
+									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 1.0f / 8.0f);
+									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 1.0f / 8.0f);
+									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 8.0f);
 
-									distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 1.0f / 8.0f, clamp);
+									distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 1.0f / 8.0f);
 								}
 								
 								break;
@@ -1152,15 +1149,6 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 
 		sp.name = "Background";
 		sp.label = "Background";
-
-		manager->appendToggle(sp);
-	}
-
-	{
-		OP_NumericParameter  sp;
-
-		sp.name = "Clamp";
-		sp.label = "Clamp";
 
 		manager->appendToggle(sp);
 	}
