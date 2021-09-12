@@ -177,7 +177,7 @@ transport_buttons
 
 	;; needs to cross to page 3,  (same 256-byte block)
 
-	org $F944
+	org $F948
 
 		;;;;;;;;;;;;;;;;;;;;;
 		;;
@@ -199,13 +199,13 @@ set_gdata6
 ; - 0a - 1a - 0b - 1b - 0c
     sta     HMOVE       ; 3     @03     +8 pixel
 
+set_aud_right
 	lda 	#AUD_DATA	; 2
+    sta     AUDV0       ; 3     @10
 
 set_gdata9
     ldx     #GDATA9     ; 2
 
-set_aud_right
-    sta     AUDV0       ; 3     @10
 
 set_gcol9
     ldy     #GCOL9   	; 2
@@ -323,6 +323,8 @@ set_gcol3
     lda     #$80        ; 2
     sta     HMP0        ; 3
     sta     HMP1        ; 3     @63
+
+	lda		#00			; 2     dummy
 
 	; have to re-enter at correct cycle
 pick_continue
@@ -471,25 +473,27 @@ end_lines
 
 	;continue overscan with audio bank memory
 	ldy #0
-
 	sty GRP0
 	sty GRP1	;VDEL'd
-	sty GRP0
 
-	;no time to get to audio routine below, so cross to new line and setup audio now
-    lda     #0			; 2  dummy
-    lda     #0			; 2  dummy
 set_aud_endlines
 	lda 	#AUD_DATA	; 2
     sta     AUDV0       ; 3     @10
 
+	sty GRP0
+
+	;no time to get to audio routine below, so cross to new line and setup audio now
+
+    lda     #0			; 2  dummy
+    lda     #0			; 2  dummy
+
 	; setup playfield here...
 	; alternate blocks
-	lda #$30
+	lda #$CF
 	sta PF0
-	lda #$CC
-	sta PF1
 	lda #$33
+	sta PF1
+	lda #$CC
 	sta PF2
 
 
