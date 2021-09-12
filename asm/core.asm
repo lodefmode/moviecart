@@ -145,7 +145,6 @@ transport_direction
 	sta USER_TEMP	; 3 dummy
 	sta USER_TEMP	; 3 dummy
 
-	lda #00
 	jmp	right_line
 
 
@@ -166,7 +165,6 @@ transport_buttons
 	sta USER_TEMP	; dummy
 	sta USER_TEMP	; dummy
 
-	lda #00
 	jmp	right_line
 
 
@@ -201,11 +199,11 @@ set_gdata6
 
 set_aud_right
 	lda 	#AUD_DATA	; 2
-    sta     AUDV0       ; 3     @10
 
 set_gdata9
     ldx     #GDATA9     ; 2
 
+    sta     AUDV0       ; 3     @10
 
 set_gcol9
     ldy     #GCOL9   	; 2
@@ -262,6 +260,7 @@ left_line
 		;;
 		;;;;;;;;;;;;;;;;;;;;;
 
+	lda		#00			; 2     dummy
 
 ;EnterLeftKernel
 ;---------------------------------------
@@ -324,7 +323,6 @@ set_gcol3
     sta     HMP0        ; 3
     sta     HMP1        ; 3     @63
 
-	lda		#00			; 2     dummy
 
 	; have to re-enter at correct cycle
 pick_continue
@@ -472,20 +470,19 @@ wait_cnt
 end_lines
 
 	;continue overscan with audio bank memory
-	ldy #0
-	sty GRP0
-	sty GRP1	;VDEL'd
-
 set_aud_endlines
-	lda 	#AUD_DATA	; 2
-    sta     AUDV0       ; 3     @10
-
-	sty GRP0
-
 	;no time to get to audio routine below, so cross to new line and setup audio now
 
-    lda     #0			; 2  dummy
-    lda     #0			; 2  dummy
+	lda 	#AUD_DATA	; 2
+	ldx		#0			; dummy
+
+	ldy		#0			; 2
+	sty		GRP0
+	sty		GRP1	;VDEL'd
+
+	sta		AUDV0       ; 3     @10
+
+	sty		GRP0
 
 	; setup playfield here...
 	; alternate blocks
@@ -495,7 +492,6 @@ set_aud_endlines
 	sta PF1
 	lda #$CC
 	sta PF2
-
 
 	;overscan 29;	one above
 set_overscan_size
