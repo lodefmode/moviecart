@@ -476,12 +476,12 @@ findClosest(float cellColor[4], const float *selectColor, const float *backColor
 }
 
 inline void
-distributeError(const TOP_OutputFormatSpecs *outputFormat, float *mem,
+distributeError(int width, int height, float *mem,
 				int x, int y, float *quantError, float ratio)
 {
-	if (x >=0 && x<outputFormat->width && y>=0 && y<outputFormat->height)
+	if (x >=0 && x<width && y>=0 && y<height)
 	{
-		float* npixel = &mem[4 * (y*outputFormat->width + x)];
+		float* npixel = &mem[4 * (y*width + x)];
 		npixel[0] += quantError[0] * ratio;
 		npixel[1] += quantError[1] * ratio;
 		npixel[2] += quantError[2] * ratio;
@@ -617,6 +617,205 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 }
 
 
+void
+ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize, bool reverse,
+	int xdir, float *curY, int weightMethod,
+	unsigned int *pal, int palSize, float bleed, int matrix,
+	float *mem, bool dither, float *curError)
+{
+	float	cellColor[4] = { 1, 1, 1, 0 };
+	float	backColor[4];
+
+	backColor[0] = pal[bidx*3 + 0] / 255.0f;
+	backColor[1] = pal[bidx*3 + 1] / 255.0f;
+	backColor[2] = pal[bidx*3 + 2] / 255.0f;
+	backColor[3] = (float)bidx;
+
+
+	// background backup
+	float	mem4[2048 * 4];
+
+	// sanity check
+	if (width > 2048)
+		width = 2048;
+
+	*curError = 0.0f;
+
+	// if intermediate result, work on copy instead
+	if (!finalB)
+	{
+		memcpy(mem4, curY, width*4 * sizeof(float));
+		curY = mem4;
+	}
+
+	for (int x0 = 0; x0 < width; x0++)
+	{
+		int xpix = x0%cellSize;
+
+		int x = reverse ? (width -1 -x0) : x0;
+		float* pixel = &curY[4*x];
+
+
+		// determine cell color
+
+		if (xpix == 0)	// first pixel of cell
+		{
+			float	sum[3] = { 0,0,0 };
+			float	total_weight = 0.0f;
+
+			for (int x2=0; x2<cellSize; x2++)
+			{
+				int x3 = x + xdir*x2;
+
+				float* npixel = &curY[4*x3];
+			
+				float r = npixel[0];
+				float g = npixel[1];
+				float b = npixel[2];
+
+				float weight;
+
+				switch(weightMethod)
+				{
+					case Weight_Mono:
+						weight = r*0.3f + g*0.6f + b*0.1f;
+						break;
+
+					case Weight_Luminance:
+						weight = RGBtoLum(r, g, b);
+						break;
+
+					case Weight_Hue:
+						weight = RGBtoHue(r, g, b);
+						break;
+
+					case Weight_MonoBack:
+					default:
+						weight = r*0.3f + g*0.6f + b*0.1f;
+						// weigh background minimally
+						{
+							float	dist = colorDist(npixel, backColor);
+							weight *= dist;
+						}
+
+						break;
+				}
+
+				sum[0] += r*weight;
+				sum[1] += g*weight;
+				sum[2] += b*weight;
+
+				total_weight += weight;
+			}
+
+			if (total_weight)
+			{
+				for (int i = 0; i < 3; i++)
+					cellColor[i] = sum[i] / total_weight;
+			}
+			else
+			{
+				for (int i = 0; i < 3; i++)
+					cellColor[i] = 0.0f;
+			}
+
+			findClosestInPalette(cellColor, pal, palSize);
+		}
+
+		// now dither
+		if (dither)
+		{
+			float current[3];
+			current[0] = pixel[0];
+			current[1] = pixel[1];
+			current[2] = pixel[2];
+
+			findClosest(pixel, cellColor, backColor);
+
+			if (bleed > 0)
+			{
+				float quantError[3];
+				
+				for (int i = 0; i < 3; i++)
+				{
+					quantError[i] = (current[i] - pixel[i]) * bleed;
+					*curError += fabs(quantError[i]);
+				}
+
+				switch(matrix)
+				{
+					case Matrix_FloydSteinberg:
+					default:
+						distributeError(width, height, curY, x+1*xdir, 0, quantError, 7.0f / 16.0f);
+
+						if (finalB)
+						{
+							distributeError(width, height, mem, x-1*xdir, y+1, quantError, 3.0f / 16.0f);
+							distributeError(width, height, mem, x+0*xdir, y+1, quantError, 5.0f / 16.0f);
+							distributeError(width, height, mem, x+1*xdir, y+1, quantError, 1.0f / 16.0f);
+						}
+						break;
+
+					case Matrix_JIN:
+					#if 0
+							 -   -   X   7   5 
+							 3   5   7   5   3
+							 1   3   5   3   1
+					 #endif
+						distributeError(width, height, curY, x+1*xdir, 0, quantError, 7.0f / 48.0f);
+						distributeError(width, height, curY, x+2*xdir, 0, quantError, 5.0f / 48.0f);
+
+						if (finalB)
+						{
+							distributeError(width, height, mem, x-2*xdir, y+1, quantError, 3.0f / 48.0f);
+							distributeError(width, height, mem, x-1*xdir, y+1, quantError, 5.0f / 48.0f);
+							distributeError(width, height, mem, x+0*xdir, y+1, quantError, 7.0f / 48.0f);
+							distributeError(width, height, mem, x+1*xdir, y+1, quantError, 5.0f / 48.0f);
+							distributeError(width, height, mem, x+2*xdir, y+1, quantError, 3.0f / 48.0f);
+
+							distributeError(width, height, mem, x-2*xdir, y+2, quantError, 1.0f / 48.0f);
+							distributeError(width, height, mem, x-1*xdir, y+2, quantError, 3.0f / 48.0f);
+							distributeError(width, height, mem, x+0*xdir, y+2, quantError, 5.0f / 48.0f);
+							distributeError(width, height, mem, x+1*xdir, y+2, quantError, 3.0f / 48.0f);
+							distributeError(width, height, mem, x+2*xdir, y+2, quantError, 1.0f / 48.0f);
+						}
+
+						break;
+
+					case Matrix_Atkinson: // (partial error distribution 6/8)
+
+					#if 0
+						-   X   1   1 
+						1   1   1
+						-   1
+				   #endif
+
+						distributeError(width, height, curY, x+1*xdir, 0, quantError, 1.0f / 8.0f);
+						distributeError(width, height, curY, x+2*xdir, 0, quantError, 1.0f / 8.0f);
+
+						if (finalB)
+						{
+							distributeError(width, height, mem, x-1*xdir, y+1, quantError, 1.0f / 8.0f);
+							distributeError(width, height, mem, x+0*xdir, y+1, quantError, 1.0f / 8.0f);
+							distributeError(width, height, mem, x+1*xdir, y+1, quantError, 1.0f / 8.0f);
+
+							distributeError(width, height, mem, x+0*xdir, y+2, quantError, 1.0f / 8.0f);
+						}
+						
+						break;
+
+				}
+
+			}
+		}
+		else
+		{
+			memcpy(pixel, cellColor, 4*sizeof(float));
+		}
+
+	}
+}
+
 
 void
 CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
@@ -643,7 +842,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	int				palSize;
 	getPalette(palette, pal, palSize);
 
-	float backColor[4] = {0,0,0,0};
 
 	if (!active)
 		return;
@@ -658,10 +856,11 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	int textureMemoryLocation = 0;
     float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
 
-	// background backup
-	char	mem4[4*2048];
 
-	setupStorage(outputFormat->width, outputFormat->height, cellSize);
+	int width = outputFormat->width;
+	int height = outputFormat->height;
+
+	setupStorage(width, outputFormat->height, cellSize);
 
 	// copy
 	if (topMem)
@@ -670,7 +869,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		float			*dstPixel = mem;
 		for (int y = 0; y < outputFormat->height; y++)
 		{
-			for (int x = 0; x < outputFormat->width; x++)
+			for (int x = 0; x < width; x++)
 			{
 				// BRGA (8bit) to  RGBA  (float)
 
@@ -685,230 +884,76 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		}
 	}
 
-    for (int y = 0; y < outputFormat->height; y++)
-    {
-		float	cellColor[4] = { 1, 1, 1, 0 };
+	if (!background)
+	{
+		bool	final = true;
 
-		float* curY = &mem[4 * (y*outputFormat->width)];
-		
-		bool	reverse = zigzag ? (y&1 ? true:false) : false;
-		int		xdir = reverse ? -1 : +1;
-
-		int		bestB = 0;
-		float	bestError = -1.0f;
-
-		// store the line
-
-		if (background)
-			memcpy(mem4, curY, outputFormat->width*4 * sizeof(float));
-
-		for (int b=0; b<=palSize; b++)
+		for (int y = 0; y < outputFormat->height; y++)
 		{
-			bool	finalB = true;
+			float* curY = &mem[4 * (y*width)];
+			
+			bool	reverse = zigzag ? (y&1 ? true:false) : false;
+			int		xdir = reverse ? -1 : +1;
+			float	error;
 
-			if (background)
+			ditherLine(0, y, final, width, height, cellSize, reverse, xdir, curY, weightMethod,
+				pal, palSize, bleed, matrix, mem, dither, &error);
+
+			for (int i = 0; i < 4; i++)
+				myResultBK[y * 4 + i] = 0.0f;
+		}
+	}
+	else
+	{
+		// exhaustive search of each background color
+
+		for (int y = 0; y < outputFormat->height; y++)
+		{
+			float* curY = &mem[4 * (y*width)];
+			
+			bool	reverse = zigzag ? (y&1 ? true:false) : false;
+			int		xdir = reverse ? -1 : +1;
+
+			int		bestB = 0;
+			float	bestError = -1.0f;
+
+
+			for (int bidx=0; bidx<palSize; bidx++)
 			{
-				// restore current line
-				memcpy(curY, mem4, outputFormat->width*4 * sizeof(float));
+				float	curError;
+				bool	final = false;
 
-				finalB = (b == palSize);
+				ditherLine(bidx, y, final, width, height, cellSize, reverse, xdir, curY, weightMethod, pal, palSize, bleed, matrix, mem, dither, &curError);
 
-				int		bidx = finalB ? bestB : b;
+				if ((curError < bestError) || (bestError < 0))
+				{
+					bestError = curError;
+					bestB = bidx;
+				}
+			}
 
+			// redo best color
+			{
+				bool	final = true;
+				float	error;
+				int		bidx = bestB;
+
+				ditherLine(bestB, y, final, width, height, cellSize, reverse, xdir, curY, weightMethod, pal, palSize, bleed, matrix, mem, dither, &error);
+
+				float	backColor[4];
 				backColor[0] = pal[bidx*3 + 0] / 255.0f;
 				backColor[1] = pal[bidx*3 + 1] / 255.0f;
 				backColor[2] = pal[bidx*3 + 2] / 255.0f;
 				backColor[3] = (float)bidx;
+
+				for (int i = 0; i < 4; i++)
+					myResultBK[y * 4 + i] = backColor[i];
 			}
 
-			float	curError = 0.0f;
-
-			for (int x0 = 0; x0 < outputFormat->width; x0++)
-			{
-				int xpix = x0%cellSize;
-
-				int x = reverse ? (outputFormat->width -1 -x0) : x0;
-				float* pixel = &curY[4*x];
-
-
-				// determine cell color
-
-				if (xpix == 0)	// first pixel of cell
-				{
-					float	sum[3] = { 0,0,0 };
-					float	total_weight = 0.0f;
-
-					for (int x2=0; x2<cellSize; x2++)
-					{
-						int x3 = x + xdir*x2;
-
-						float* npixel = &curY[4*x3];
-					
-						float r = npixel[0];
-						float g = npixel[1];
-						float b = npixel[2];
-
-						float weight;
-
-						switch(weightMethod)
-						{
-							case Weight_Mono:
-								weight = r*0.3f + g*0.6f + b*0.1f;
-								break;
-
-							case Weight_Luminance:
-								weight = RGBtoLum(r, g, b);
-								break;
-
-							case Weight_Hue:
-								weight = RGBtoHue(r, g, b);
-								break;
-
-							case Weight_MonoBack:
-							default:
-								weight = r*0.3f + g*0.6f + b*0.1f;
-								// weigh background minimally
-								{
-									float	dist = colorDist(npixel, backColor);
-									weight *= dist;
-								}
-
-								break;
-						}
-
-						sum[0] += r*weight;
-						sum[1] += g*weight;
-						sum[2] += b*weight;
-
-						total_weight += weight;
-					}
-
-					if (total_weight)
-					{
-						for (int i = 0; i < 3; i++)
-							cellColor[i] = sum[i] / total_weight;
-					}
-					else
-					{
-						for (int i = 0; i < 3; i++)
-							cellColor[i] = 0.0f;
-					}
-
-					findClosestInPalette(cellColor, pal, palSize);
-				}
-
-				// now dither
-				if (dither)
-				{
-					float current[3];
-					current[0] = pixel[0];
-					current[1] = pixel[1];
-					current[2] = pixel[2];
-
-					findClosest(pixel, cellColor, backColor);
-
-					if (bleed > 0)
-					{
-						float quantError[3];
-						
-						for (int i = 0; i < 3; i++)
-						{
-							quantError[i] = (current[i] - pixel[i]) * bleed;
-							curError += fabs(quantError[i]);
-						}
-
-						switch(matrix)
-						{
-							case Matrix_FloydSteinberg:
-							default:
-								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 16.0f);
-
-								if (finalB)
-								{
-									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 3.0f / 16.0f);
-									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 5.0f / 16.0f);
-									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 16.0f);
-								}
-								break;
-
-							case Matrix_JIN:
-							#if 0
-									 -   -   X   7   5 
-									 3   5   7   5   3
-									 1   3   5   3   1
-							 #endif
-								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 7.0f / 48.0f);
-								distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 5.0f / 48.0f);
-
-								if (finalB)
-								{
-									distributeError(outputFormat, mem, x-2*xdir, y+1, quantError, 3.0f / 48.0f);
-									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 5.0f / 48.0f);
-									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 7.0f / 48.0f);
-									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 5.0f / 48.0f);
-									distributeError(outputFormat, mem, x+2*xdir, y+1, quantError, 3.0f / 48.0f);
-
-									distributeError(outputFormat, mem, x-2*xdir, y+2, quantError, 1.0f / 48.0f);
-									distributeError(outputFormat, mem, x-1*xdir, y+2, quantError, 3.0f / 48.0f);
-									distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 5.0f / 48.0f);
-									distributeError(outputFormat, mem, x+1*xdir, y+2, quantError, 3.0f / 48.0f);
-									distributeError(outputFormat, mem, x+2*xdir, y+2, quantError, 1.0f / 48.0f);
-								}
-
-								break;
-
-							case Matrix_Atkinson: // (partial error distribution 6/8)
-
-							#if 0
-								-   X   1   1 
-								1   1   1
-								-   1
-						   #endif
-
-								distributeError(outputFormat, mem, x+1*xdir, y+0, quantError, 1.0f / 8.0f);
-								distributeError(outputFormat, mem, x+2*xdir, y+0, quantError, 1.0f / 8.0f);
-
-								if (finalB)
-								{
-									distributeError(outputFormat, mem, x-1*xdir, y+1, quantError, 1.0f / 8.0f);
-									distributeError(outputFormat, mem, x+0*xdir, y+1, quantError, 1.0f / 8.0f);
-									distributeError(outputFormat, mem, x+1*xdir, y+1, quantError, 1.0f / 8.0f);
-
-									distributeError(outputFormat, mem, x+0*xdir, y+2, quantError, 1.0f / 8.0f);
-								}
-								
-								break;
-
-						}
-
-					}
-				}
-				else
-				{
-					memcpy(pixel, cellColor, 4*sizeof(float));
-				}
-
-			}
-
-			if (background)
-			{
-				if ((curError < bestError) || (bestError < 0))
-				{
-					bestError = curError;
-					bestB = b;
-				}
-			}
-			else
-			{
-				break;
-			}
 		}
+	}
 
-		for (int i = 0; i < 4; i++)
-			myResultBK[y * 4 + i] = backColor[i];
-    }
-
-	storeResults(outputFormat->width, outputFormat->height, mem, cellSize);
+	storeResults(width, height, mem, cellSize);
 
     outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
     textureMemoryLocation = !textureMemoryLocation;
