@@ -80,6 +80,7 @@ CPUMemoryTOP::CPUMemoryTOP(const OP_NodeInfo* info)
 	myResultGraph = nullptr;
 	myResultColor = nullptr;
 	myResultBK = nullptr;
+	myLastPal = nullptr;
 }
 
 CPUMemoryTOP::~CPUMemoryTOP()
@@ -111,6 +112,17 @@ CPUMemoryTOP::getOutputFormat(TOP_OutputFormat* format, const OP_Inputs* inputs,
 
 
 
+/////////////////////////////////////////////////////////
+/* Adapted from: https://rosettacode.org/wiki/K-d_tree */
+
+#define MAX_DIM 3
+
+struct kd_node_t
+{
+    float	val[MAX_DIM];
+	int		index;
+    struct	kd_node_t *left, *right;
+};
 
 float
 colorDist(const float a[3], const float b[3])
@@ -122,6 +134,175 @@ colorDist(const float a[3], const float b[3])
 	
 	return dist;
 }
+
+ 
+inline float
+dist(struct kd_node_t *a, struct kd_node_t *b)
+{
+	return colorDist(a->val, b->val);
+}
+
+inline void
+swap_nodes(struct kd_node_t *x, struct kd_node_t *y) 
+{
+	kd_node_t	tmp;
+
+	tmp.val[0] = x->val[0];
+	tmp.val[1] = x->val[1];
+	tmp.val[2] = x->val[2];
+	tmp.index = x->index;
+
+	x->val[0] = y->val[0];
+	x->val[1] = y->val[1];
+	x->val[2] = y->val[2];
+	x->index = y->index;
+
+	y->val[0] = tmp.val[0];
+	y->val[1] = tmp.val[1];
+	y->val[2] = tmp.val[2];
+	y->index = tmp.index;
+}
+ 
+ 
+/* see quickselect method */
+static struct kd_node_t*
+find_median(struct kd_node_t *start, struct kd_node_t *end, int idx)
+{
+    if (end <= start)
+		return nullptr;
+
+    if (end == start + 1)
+        return start;
+ 
+    struct kd_node_t *p, *store, *md = start + (end - start) / 2;
+
+    while (1) 
+	{
+		float pivot = md->val[idx];
+ 
+        swap_nodes(md, end - 1);
+        for (store = p = start; p < end; p++) 
+		{
+            if (p->val[idx] < pivot) 
+			{
+                if (p != store)
+                    swap_nodes(p, store);
+                store++;
+            }
+        }
+        swap_nodes(store, end - 1);
+ 
+        /* median has duplicate values */
+        if (store->val[idx] == md->val[idx])
+            return md;
+ 
+        if (store > md)
+			end = store;
+        else
+			start = store;
+    }
+}
+ 
+static struct kd_node_t*
+make_tree(struct kd_node_t *t, int len, int i)
+{
+    struct kd_node_t *n;
+ 
+    if (!len)
+		return 0;
+ 
+    if ((n = find_median(t, t + len, i))) 
+	{
+        i = (i + 1) % MAX_DIM;
+        n->left  = make_tree(t, n - t, i);
+        n->right = make_tree(n + 1, t + len - (n + 1), i);
+    }
+    return n;
+}
+ 
+ 
+static void
+nearest(struct kd_node_t *root, struct kd_node_t *nd, int i,
+        struct kd_node_t **best, float *best_dist)
+{
+    float d, dx, dx2;
+ 
+    if (!root)
+		return;
+
+    d = dist(root, nd);
+    dx = root->val[i] - nd->val[i];
+
+    dx2 = dx * dx;
+
+	const float	scales[3] = {0.3f, 0.6f, 0.1f};
+	dx2 *= scales[i];
+
+    if (!*best || d < *best_dist) 
+	{
+        *best_dist = d;
+        *best = root;
+    }
+ 
+    /* if chance of exact match is high */
+    if (!*best_dist)
+		return;
+ 
+    if (++i >= MAX_DIM)
+		i = 0;
+ 
+    nearest(dx > 0 ? root->left : root->right, nd, i, best, best_dist);
+
+    if (dx2 >= *best_dist)
+		return;
+
+    nearest(dx > 0 ? root->right : root->left, nd, i, best, best_dist);
+}
+ 
+struct kd_node_t	kdtree[256];
+struct kd_node_t*	kdtree_root;
+
+static void
+setup_kdtree(unsigned int *pal, int palSize)
+{
+	if (palSize > 256)
+		palSize = 256;
+
+    for (int i=0; i<palSize; i++)
+    {
+		kd_node_t	&n = kdtree[i];
+
+        n.val[0] = (pal[i*3 + 0] / 255.0f);
+        n.val[1] = (pal[i*3 + 1] / 255.0f);
+        n.val[2] = (pal[i*3 + 2] / 255.0f);
+		n.index = i;
+	}
+
+    kdtree_root = make_tree(kdtree, palSize, 0);
+}
+
+static int
+search_kdtree(float r, float g, float b)
+{
+	kd_node_t	n;
+
+	n.val[0] = r;
+	n.val[1] = g;
+	n.val[2] = b;
+
+    struct kd_node_t *found = nullptr;
+    float best_dist;
+
+    nearest(kdtree_root, &n, 0, &found, &best_dist);
+
+	if (found)
+		return found->index;
+
+	return -1;
+}
+
+/*              end of kd -tree                        */
+/////////////////////////////////////////////////////////
 
 unsigned int
 rubik_palette[6*3] =
@@ -431,6 +612,13 @@ rgb_palette[4*3] =
 inline void
 findClosestInPalette(float cellColor[4], unsigned int *pal, int palSize)
 {
+	float r = cellColor[0];
+	float g = cellColor[1];
+	float b = cellColor[2];
+
+	int		minIndex = search_kdtree(r, g, b);
+
+#if 0
 	float	mindist = -1;
 	int		minIndex = 0;
 
@@ -450,6 +638,7 @@ findClosestInPalette(float cellColor[4], unsigned int *pal, int palSize)
 			minIndex = i;
 		}
 	}
+#endif
 
 	cellColor[0] = pal[minIndex*3 + 0] / 255.0f;
 	cellColor[1] = pal[minIndex*3 + 1] / 255.0f;
@@ -842,6 +1031,11 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	int				palSize;
 	getPalette(palette, pal, palSize);
 
+	if (pal != myLastPal)
+	{
+		myLastPal = pal;
+		setup_kdtree(pal, palSize);
+	}
 
 	if (!active)
 		return;
