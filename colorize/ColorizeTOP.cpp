@@ -111,19 +111,6 @@ CPUMemoryTOP::getOutputFormat(TOP_OutputFormat* format, const OP_Inputs* inputs,
 }
 
 
-
-/////////////////////////////////////////////////////////
-/* Adapted from: https://rosettacode.org/wiki/K-d_tree */
-
-#define MAX_DIM 3
-
-struct kd_node_t
-{
-    float	val[MAX_DIM];
-	int		index;
-    struct	kd_node_t *left, *right;
-};
-
 float
 colorDist(const float a[3], const float b[3])
 {
@@ -134,6 +121,10 @@ colorDist(const float a[3], const float b[3])
 	
 	return dist;
 }
+
+
+/////////////////////////////////////////////////////////
+/* Adapted from: https://rosettacode.org/wiki/K-d_tree */
 
  
 inline float
@@ -259,11 +250,8 @@ nearest(struct kd_node_t *root, struct kd_node_t *nd, int i,
     nearest(dx > 0 ? root->right : root->left, nd, i, best, best_dist);
 }
  
-struct kd_node_t	kdtree[256];
-struct kd_node_t*	kdtree_root;
-
-static void
-setup_kdtree(unsigned int *pal, int palSize)
+void
+CPUMemoryTOP::setup_kdtree(unsigned int *pal, int palSize)
 {
 	if (palSize > 256)
 		palSize = 256;
@@ -282,7 +270,7 @@ setup_kdtree(unsigned int *pal, int palSize)
 }
 
 static int
-search_kdtree(float r, float g, float b)
+search_kdtree(float r, float g, float b, kd_node_t* root)
 {
 	kd_node_t	n;
 
@@ -293,7 +281,7 @@ search_kdtree(float r, float g, float b)
     struct kd_node_t *found = nullptr;
     float best_dist;
 
-    nearest(kdtree_root, &n, 0, &found, &best_dist);
+    nearest(root, &n, 0, &found, &best_dist);
 
 	if (found)
 		return found->index;
@@ -610,13 +598,13 @@ rgb_palette[4*3] =
 
 
 inline void
-findClosestInPalette(float cellColor[4], unsigned int *pal, int palSize)
+findClosestInPalette(float cellColor[4], unsigned int *pal, int palSize, kd_node_t* root)
 {
 	float r = cellColor[0];
 	float g = cellColor[1];
 	float b = cellColor[2];
 
-	int		minIndex = search_kdtree(r, g, b);
+	int		minIndex = search_kdtree(r, g, b, root);
 
 #if 0
 	float	mindist = -1;
@@ -795,7 +783,7 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 void
 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float *curY, unsigned int *pal, int palSize, float bleed, int matrix,
-	float *mem, bool dither, float *curError)
+	float *mem, bool dither, float *curError, kd_node_t* root)
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
 	float	backColor[4];
@@ -873,7 +861,7 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 					cellColor[i] = 0.0f;
 			}
 
-			findClosestInPalette(cellColor, pal, palSize);
+			findClosestInPalette(cellColor, pal, palSize, root);
 		}
 
 		// now dither
@@ -1041,7 +1029,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 	if (!background)
 	{
-		bool	final = true;
+		bool	finalB = true;
 
 		for (int y = 0; y < outputFormat->height; y++)
 		{
@@ -1049,8 +1037,8 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			
 			float	error;
 
-			ditherLine(0, y, final, width, height, cellSize, curY,
-				pal, palSize, bleed, matrix, mem, dither, &error);
+			ditherLine(0, y, finalB, width, height, cellSize, curY,
+				pal, palSize, bleed, matrix, mem, dither, &error, kdtree_root);
 
 			for (int i = 0; i < 4; i++)
 				myResultBK[y * 4 + i] = 0.0f;
@@ -1071,9 +1059,9 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			for (int bidx=0; bidx<palSize; bidx++)
 			{
 				float	curError;
-				bool	final = false;
+				bool	finalB = false;
 
-				ditherLine(bidx, y, final, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &curError);
+				ditherLine(bidx, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &curError, kdtree_root);
 
 				if ((curError < bestError) || (bestError < 0))
 				{
@@ -1084,11 +1072,11 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 			// redo best color
 			{
-				bool	final = true;
+				bool	finalB = true;
 				float	error;
 				int		bidx = bestB;
 
-				ditherLine(bestB, y, final, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &error);
+				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &error, kdtree_root);
 
 				float	backColor[4];
 				backColor[0] = pal[bidx*3 + 0] / 255.0f;

@@ -10,6 +10,19 @@
 
 #include "TOP_CPlusPlusBase.h"
 
+
+// kd-tree structures
+/* Adapted from: https://rosettacode.org/wiki/K-d_tree */
+#define MAX_DIM 3
+
+struct kd_node_t
+{
+    float   val[MAX_DIM];
+    int     index;
+    struct  kd_node_t *left, *right;
+};
+
+
 class CPUMemoryTOP : public TOP_CPlusPlusBase
 {
 public:
@@ -51,5 +64,10 @@ private:
 	float               *myResultBK;
 
 	unsigned int		*myLastPal;
+
+	// k-d tree data
+	struct kd_node_t	kdtree[256];
+	struct kd_node_t*	kdtree_root{nullptr};
+	void				setup_kdtree(unsigned int *pal, int palSize);
 
 };
