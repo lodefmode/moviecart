@@ -50,6 +50,4 @@ private:
 	uint8_t             *myResultColor;
 	float               *myResultBK;
 
-	unsigned int		*myLastPal;
-
 };
