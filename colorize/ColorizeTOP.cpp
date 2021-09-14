@@ -292,6 +292,27 @@ search_kdtree(float r, float g, float b, kd_node_t* root)
 /*              end of kd -tree                        */
 /////////////////////////////////////////////////////////
 
+void
+CPUMemoryTOP::buildColourMap(unsigned int *pal, int palSize) 
+{
+    for (int r = 0; r < 256; r++) 
+	{
+        for (int g = 0; g < 256; g++) 
+		{
+            for (int b = 0; b < 256; b++) 
+			{
+                float rr = r / 255.0f;
+                float gg = g / 255.0f;
+                float bb = b / 255.0f;
+                                
+				int		minIndex = search_kdtree(rr, gg, bb, kdtree_root);
+
+                myColorLookup[r][g][b] = minIndex;
+            }
+        }
+    }
+}
+
 unsigned int
 rubik_palette[6*3] =
 {
@@ -596,42 +617,21 @@ rgb_palette[4*3] =
 	255, 0, 0
 };
 
-
 inline void
-findClosestInPalette(float cellColor[4], unsigned int *pal, int palSize, kd_node_t* root)
+lookupClosestInPalette(float cellColor[4], unsigned int *pal, uint8_t lookup[256][256][256]) 
 {
-	float r = cellColor[0];
-	float g = cellColor[1];
-	float b = cellColor[2];
+    int r = (int)(cellColor[0] * 255.0f);
+    int g = (int)(cellColor[1] * 255.0f);
+    int b = (int)(cellColor[2] * 255.0f);
+    
+    int minIndex = lookup[r][g][b];
 
-	int		minIndex = search_kdtree(r, g, b, root);
+    // stuff it all back in.
 
-#if 0
-	float	mindist = -1;
-	int		minIndex = 0;
-
-	for (int i=0; i<palSize; i++)
-	{
-		float color[4];
-
-		color[0] = pal[i*3 + 0] / 255.0f;
-		color[1] = pal[i*3 + 1] / 255.0f;
-		color[2] = pal[i*3 + 2] / 255.0f;
-		color[3] = (float)i;
-
-		float dist = colorDist(cellColor, color);
-		if (mindist < 0 || dist < mindist)
-		{
-			mindist = dist;
-			minIndex = i;
-		}
-	}
-#endif
-
-	cellColor[0] = pal[minIndex*3 + 0] / 255.0f;
-	cellColor[1] = pal[minIndex*3 + 1] / 255.0f;
-	cellColor[2] = pal[minIndex*3 + 2] / 255.0f;
-	cellColor[3] = (float)minIndex;
+    cellColor[0] = pal[minIndex * 3 + 0] / 255.0f;
+    cellColor[1] = pal[minIndex * 3 + 1] / 255.0f;
+    cellColor[2] = pal[minIndex * 3 + 2] / 255.0f;
+    cellColor[3] = (float)minIndex;
 }
 
 inline int
@@ -783,7 +783,8 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 void
 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float *curY, unsigned int *pal, int palSize, float bleed, int matrix,
-	float *mem, bool dither, float *curError, kd_node_t* root)
+	float *mem, bool dither, float *curError,
+	uint8_t lookup[256][256][256])
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
 	float	backColor[4];
@@ -861,7 +862,7 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 					cellColor[i] = 0.0f;
 			}
 
-			findClosestInPalette(cellColor, pal, palSize, root);
+			lookupClosestInPalette(cellColor, pal, lookup);
 		}
 
 		// now dither
@@ -984,6 +985,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	{
 		myLastPal = pal;
 		setup_kdtree(pal, palSize);
+		buildColourMap(pal, palSize);
 	}
 
 	if (!active)
@@ -1038,7 +1040,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			float	error;
 
 			ditherLine(0, y, finalB, width, height, cellSize, curY,
-				pal, palSize, bleed, matrix, mem, dither, &error, kdtree_root);
+				pal, palSize, bleed, matrix, mem, dither, &error, myColorLookup);
 
 			for (int i = 0; i < 4; i++)
 				myResultBK[y * 4 + i] = 0.0f;
@@ -1061,7 +1063,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	curError;
 				bool	finalB = false;
 
-				ditherLine(bidx, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &curError, kdtree_root);
+				ditherLine(bidx, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &curError, myColorLookup);
 
 				if ((curError < bestError) || (bestError < 0))
 				{
@@ -1076,7 +1078,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	error;
 				int		bidx = bestB;
 
-				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &error, kdtree_root);
+				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &error, myColorLookup);
 
 				float	backColor[4];
 				backColor[0] = pal[bidx*3 + 0] / 255.0f;
