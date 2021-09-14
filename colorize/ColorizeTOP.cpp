@@ -753,20 +753,6 @@ enum
 	Matrix_Atkinson = 2
 };
 
-enum
-{
-	Weight_Mono = 0,
-	Weight_Luminance = 1,
-	Weight_Hue = 2,
-	Weight_MonoBack = 3
-};
-
-enum
-{
-	Path_LeftToRight = 0,
-	Path_ZigZag = 1,
-};
-
 void
 getPalette(int palette, unsigned int *&pal, int &palSize)
 {
@@ -807,9 +793,8 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 
 
 void
-ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize, bool reverse,
-	int xdir, float *curY, int weightMethod,
-	unsigned int *pal, int palSize, float bleed, int matrix,
+ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
+	float *curY, unsigned int *pal, int palSize, float bleed, int matrix,
 	float *mem, bool dither, float *curError)
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
@@ -841,7 +826,7 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize, bo
 	{
 		int xpix = x0%cellSize;
 
-		int x = reverse ? (width -1 -x0) : x0;
+		int x = x0;
 		float* pixel = &curY[4*x];
 
 
@@ -854,7 +839,7 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize, bo
 
 			for (int x2=0; x2<cellSize; x2++)
 			{
-				int x3 = x + xdir*x2;
+				int x3 = x + x2;
 
 				float* npixel = &curY[4*x3];
 			
@@ -862,32 +847,12 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize, bo
 				float g = npixel[1];
 				float b = npixel[2];
 
-				float weight;
-
-				switch(weightMethod)
+				float weight = r*0.3f + g*0.6f + b*0.1f;
+				//
+				// weigh background minimally
 				{
-					case Weight_Mono:
-						weight = r*0.3f + g*0.6f + b*0.1f;
-						break;
-
-					case Weight_Luminance:
-						weight = RGBtoLum(r, g, b);
-						break;
-
-					case Weight_Hue:
-						weight = RGBtoHue(r, g, b);
-						break;
-
-					case Weight_MonoBack:
-					default:
-						weight = r*0.3f + g*0.6f + b*0.1f;
-						// weigh background minimally
-						{
-							float	dist = colorDist(npixel, backColor);
-							weight *= dist;
-						}
-
-						break;
+					float	dist = colorDist(npixel, backColor);
+					weight *= dist;
 				}
 
 				sum[0] += r*weight;
@@ -935,13 +900,13 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize, bo
 				{
 					case Matrix_FloydSteinberg:
 					default:
-						distributeError(width, height, curY, x+1*xdir, 0, quantError, 7.0f / 16.0f);
+						distributeError(width, height, curY, x+1, 0, quantError, 7.0f / 16.0f);
 
 						if (finalB)
 						{
-							distributeError(width, height, mem, x-1*xdir, y+1, quantError, 3.0f / 16.0f);
-							distributeError(width, height, mem, x+0*xdir, y+1, quantError, 5.0f / 16.0f);
-							distributeError(width, height, mem, x+1*xdir, y+1, quantError, 1.0f / 16.0f);
+							distributeError(width, height, mem, x-1, y+1, quantError, 3.0f / 16.0f);
+							distributeError(width, height, mem, x+0, y+1, quantError, 5.0f / 16.0f);
+							distributeError(width, height, mem, x+1, y+1, quantError, 1.0f / 16.0f);
 						}
 						break;
 
@@ -951,22 +916,22 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize, bo
 							 3   5   7   5   3
 							 1   3   5   3   1
 					 #endif
-						distributeError(width, height, curY, x+1*xdir, 0, quantError, 7.0f / 48.0f);
-						distributeError(width, height, curY, x+2*xdir, 0, quantError, 5.0f / 48.0f);
+						distributeError(width, height, curY, x+1, 0, quantError, 7.0f / 48.0f);
+						distributeError(width, height, curY, x+2, 0, quantError, 5.0f / 48.0f);
 
 						if (finalB)
 						{
-							distributeError(width, height, mem, x-2*xdir, y+1, quantError, 3.0f / 48.0f);
-							distributeError(width, height, mem, x-1*xdir, y+1, quantError, 5.0f / 48.0f);
-							distributeError(width, height, mem, x+0*xdir, y+1, quantError, 7.0f / 48.0f);
-							distributeError(width, height, mem, x+1*xdir, y+1, quantError, 5.0f / 48.0f);
-							distributeError(width, height, mem, x+2*xdir, y+1, quantError, 3.0f / 48.0f);
+							distributeError(width, height, mem, x-2, y+1, quantError, 3.0f / 48.0f);
+							distributeError(width, height, mem, x-1, y+1, quantError, 5.0f / 48.0f);
+							distributeError(width, height, mem, x+0, y+1, quantError, 7.0f / 48.0f);
+							distributeError(width, height, mem, x+1, y+1, quantError, 5.0f / 48.0f);
+							distributeError(width, height, mem, x+2, y+1, quantError, 3.0f / 48.0f);
 
-							distributeError(width, height, mem, x-2*xdir, y+2, quantError, 1.0f / 48.0f);
-							distributeError(width, height, mem, x-1*xdir, y+2, quantError, 3.0f / 48.0f);
-							distributeError(width, height, mem, x+0*xdir, y+2, quantError, 5.0f / 48.0f);
-							distributeError(width, height, mem, x+1*xdir, y+2, quantError, 3.0f / 48.0f);
-							distributeError(width, height, mem, x+2*xdir, y+2, quantError, 1.0f / 48.0f);
+							distributeError(width, height, mem, x-2, y+2, quantError, 1.0f / 48.0f);
+							distributeError(width, height, mem, x-1, y+2, quantError, 3.0f / 48.0f);
+							distributeError(width, height, mem, x+0, y+2, quantError, 5.0f / 48.0f);
+							distributeError(width, height, mem, x+1, y+2, quantError, 3.0f / 48.0f);
+							distributeError(width, height, mem, x+2, y+2, quantError, 1.0f / 48.0f);
 						}
 
 						break;
@@ -979,16 +944,16 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize, bo
 						-   1
 				   #endif
 
-						distributeError(width, height, curY, x+1*xdir, 0, quantError, 1.0f / 8.0f);
-						distributeError(width, height, curY, x+2*xdir, 0, quantError, 1.0f / 8.0f);
+						distributeError(width, height, curY, x+1, 0, quantError, 1.0f / 8.0f);
+						distributeError(width, height, curY, x+2, 0, quantError, 1.0f / 8.0f);
 
 						if (finalB)
 						{
-							distributeError(width, height, mem, x-1*xdir, y+1, quantError, 1.0f / 8.0f);
-							distributeError(width, height, mem, x+0*xdir, y+1, quantError, 1.0f / 8.0f);
-							distributeError(width, height, mem, x+1*xdir, y+1, quantError, 1.0f / 8.0f);
+							distributeError(width, height, mem, x-1, y+1, quantError, 1.0f / 8.0f);
+							distributeError(width, height, mem, x+0, y+1, quantError, 1.0f / 8.0f);
+							distributeError(width, height, mem, x+1, y+1, quantError, 1.0f / 8.0f);
 
-							distributeError(width, height, mem, x+0*xdir, y+2, quantError, 1.0f / 8.0f);
+							distributeError(width, height, mem, x+0, y+2, quantError, 1.0f / 8.0f);
 						}
 						
 						break;
@@ -1019,11 +984,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	bool dither = inputs->getParInt("Dither") ? true:false;
 	float bleed = (float)inputs->getParDouble("Bleed");
 
-	int weightMethod = inputs->getParInt("Weight");
 	int matrix = inputs->getParInt("Matrix");
-
-	int path = inputs->getParInt("Path");
-	bool zigzag = (path == Path_ZigZag);
 
 	bool background = inputs->getParInt("Background") ? true:false;
 
@@ -1086,11 +1047,9 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		{
 			float* curY = &mem[4 * (y*width)];
 			
-			bool	reverse = zigzag ? (y&1 ? true:false) : false;
-			int		xdir = reverse ? -1 : +1;
 			float	error;
 
-			ditherLine(0, y, final, width, height, cellSize, reverse, xdir, curY, weightMethod,
+			ditherLine(0, y, final, width, height, cellSize, curY,
 				pal, palSize, bleed, matrix, mem, dither, &error);
 
 			for (int i = 0; i < 4; i++)
@@ -1105,9 +1064,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		{
 			float* curY = &mem[4 * (y*width)];
 			
-			bool	reverse = zigzag ? (y&1 ? true:false) : false;
-			int		xdir = reverse ? -1 : +1;
-
 			int		bestB = 0;
 			float	bestError = -1.0f;
 
@@ -1117,7 +1073,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	curError;
 				bool	final = false;
 
-				ditherLine(bidx, y, final, width, height, cellSize, reverse, xdir, curY, weightMethod, pal, palSize, bleed, matrix, mem, dither, &curError);
+				ditherLine(bidx, y, final, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &curError);
 
 				if ((curError < bestError) || (bestError < 0))
 				{
@@ -1132,7 +1088,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	error;
 				int		bidx = bestB;
 
-				ditherLine(bestB, y, final, width, height, cellSize, reverse, xdir, curY, weightMethod, pal, palSize, bleed, matrix, mem, dither, &error);
+				ditherLine(bestB, y, final, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &error);
 
 				float	backColor[4];
 				backColor[0] = pal[bidx*3 + 0] / 255.0f;
@@ -1401,30 +1357,6 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 		sp.defaultValues[0] = 1;
 
 		manager->appendFloat(sp);
-	}
-
-	{
-		OP_StringParameter  sp;
-
-		sp.name = "Path";
-		sp.label = "Path";
-
-		const char *names[2] = { "Lr", "Zigzag" };
-		const char *labels[2] = { "Left to Right", "Zigzag" };
-
-		manager->appendMenu(sp, 2, names, labels);
-	}
-
-	{
-		OP_StringParameter  sp;
-
-		sp.name = "Weight";
-		sp.label = "Weight";
-
-		const char *names[4] = { "Mono", "Luminance", "Hue", "MonoBack" };
-		const char *labels[4] = { "Mono", "Luminance", "Hue", "MonoBack" };
-
-		manager->appendMenu(sp, 4, names, labels);
 	}
 
 	{
