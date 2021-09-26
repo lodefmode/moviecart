@@ -7,8 +7,6 @@ core.bin: core.asm
 	../utils/expand_bin core.bin
 	mv core_data.h ../output
 	mv core_locations.h ../output
-	rm core.sym
-	rm core.bin
 
 clean:
 	rm -rf core.bin core.sym core_locations.h core_data.h
