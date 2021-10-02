@@ -996,6 +996,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 	OP_TOPInputDownloadOptions dlOptions;
 	dlOptions.downloadType = OP_TOPInputDownloadType::Instant;
+	dlOptions.cpuMemPixelType = OP_CPUMemPixelType::RGBA32Float;
 
 	const OP_TOPInput	*topInput = inputs->getInputTOP(0);
 	const uint8_t	*topMem = topInput ? (uint8_t *)inputs->getTOPDataInCPUMemory(topInput, &dlOptions) : nullptr;
@@ -1009,26 +1010,12 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
     float* mem = myMem;
 
-	// copy
+	// copy, will already be float format
 	if (topMem)
 	{
 		const uint8_t	*topCopy = topMem;
 		float			*dstPixel = mem;
-		for (int y = 0; y < outputFormat->height; y++)
-		{
-			for (int x = 0; x < width; x++)
-			{
-				// BRGA (8bit) to  RGBA  (float)
-
-				dstPixel[0] = topCopy[2] / 255.0f;
-				dstPixel[1] = topCopy[1] / 255.0f;
-				dstPixel[2] = topCopy[0] / 255.0f;
-				dstPixel[3] = 1.0f;
-
-				topCopy += 4;
-				dstPixel += 4;
-			}
-		}
+		memcpy(dstPixel, topCopy, width * height * 4 * sizeof(float));
 	}
 
 	if (!background)
