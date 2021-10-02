@@ -1165,18 +1165,16 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 
 			findClosest(pixel, cellColor, backColor);
 
+			*curError += colorDist(current, pixel);
+			if (!finalB && *curError >= bestError)
+				return;
+
 			if (bleed > 0)
 			{
 				float quantError[3];
 				
 				for (int i = 0; i < 3; i++)
-				{
 					quantError[i] = (current[i] - pixel[i]) * bleed;
-					*curError += fabs(quantError[i]);
-				}
-
-				if (*curError > bestError)
-					return;
 
 				switch(matrix)
 				{
