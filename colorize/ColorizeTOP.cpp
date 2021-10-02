@@ -901,7 +901,7 @@ rgb_palette[4*3] =
 };
 
 inline void
-lookupClosestInPalette(float cellColor[4], unsigned int *pal, uint8_t lookup[256][256][256]) 
+lookupClosestInPalette(float cellColor[4], unsigned int *pal, const uint8_t lookup[256][256][256]) 
 {
     int r = (int)(cellColor[0] * 255.0f);
     int g = (int)(cellColor[1] * 255.0f);
@@ -1034,8 +1034,8 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 void
 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float *curY, unsigned int *pal, int palSize, float bleed, int matrix,
-	float *mem, float *memBackup, bool dither, float *curError,
-	uint8_t lookup[256][256][256],
+	float *mem, bool dither, float *curError,
+	const uint8_t lookup[256][256][256],
 	float bestError)
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
@@ -1048,13 +1048,6 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 
 
 	*curError = 0.0f;
-
-	// if intermediate result, work on copy instead
-	if (!finalB)
-	{
-		memcpy(memBackup, curY, width*4 * sizeof(float));
-		curY = memBackup;
-	}
 
 	for (int x0 = 0; x0 < width; x0++)
 	{
@@ -1252,13 +1245,12 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	setupStorage(width, outputFormat->height, cellSize);
 
     float* mem = myMem;
-    float* memBackup = myMemBackup;
 
 	// copy, will already be float format
 	if (topMem)
 	{
 		const uint8_t	*topCopy = topMem;
-		float			*dstPixel = mem;
+		float			*dstPixel = myMem;
 		memcpy(dstPixel, topCopy, width * height * 4 * sizeof(float));
 	}
 
@@ -1268,12 +1260,12 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 		for (int y = 0; y < outputFormat->height; y++)
 		{
-			float* curY = &mem[4 * (y*width)];
+			float* curY = &myMem[4 * (y*width)];
 			
 			float	error;
 
 			ditherLine(0, y, finalB, width, height, cellSize, curY,
-				pal, palSize, bleed, matrix, mem, memBackup, dither, &error, myColorLookup, HUGE_VAL);
+				pal, palSize, bleed, matrix, myMem, dither, &error, myColorLookup, HUGE_VAL);
 
 			for (int i = 0; i < 4; i++)
 				myResultBK[y * 4 + i] = 0.0f;
@@ -1285,7 +1277,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 		for (int y = 0; y < outputFormat->height; y++)
 		{
-			float* curY = &mem[4 * (y*width)];
+			float* curY = &myMem[4 * (y*width)];
 			
 			int		bestB = 0;
 			float	bestError = HUGE_VAL;
@@ -1299,7 +1291,8 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				bool	finalB = false;
 				int		bidx = (startB + b) % palSize;
 
-				ditherLine(bidx, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, memBackup, dither, &curError, myColorLookup, bestError);
+				memcpy(myMemBackup, curY, width*4 * sizeof(float));
+				ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, pal, palSize, bleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
 
 				if (curError < bestError)
 				{
@@ -1314,7 +1307,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	error;
 				int		bidx = bestB;
 
-				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, memBackup, dither, &error, myColorLookup, HUGE_VAL);
+				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, myMem, dither, &error, myColorLookup, HUGE_VAL);
 
 				float	backColor[4];
 				backColor[0] = pal[bidx*3 + 0] / 255.0f;
@@ -1331,7 +1324,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 	{
 		uint8_t* destMem = (uint8_t*)outputFormat->cpuPixelData[textureMemoryLocation];
-		storeResults(width, height, mem, destMem, cellSize);
+		storeResults(width, height, myMem, destMem, cellSize);
 	}
 
     outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
