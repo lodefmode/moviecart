@@ -961,51 +961,6 @@ distributeError(int width, int height, float *mem,
 #define max(a,b)  ((a)>(b) ? (a):(b))
 #define min(a,b)  ((a)<(b) ? (a):(b))
 
-float
-RGBtoHue(float r, float g, float b)
-{
-	float maxcol, mincol;
-	float h = 0;
-
-	maxcol = max(r, max(g, b));
-	mincol = min(r, min(g, b));
-
-	if (maxcol == mincol)
-	{                       /* achromatic case */
-		h = 0;
-	}
-	else
-	{
-		float diff = maxcol - mincol;
-
-		/* find hue */
-		float rc = (maxcol - r) / diff;
-		float gc = (maxcol - g) / diff;
-		float bc = (maxcol - b) / diff;
-
-		if (r == maxcol)
-			h = bc - gc;
-		else if (g == maxcol)
-			h = rc - bc;
-		else
-			h = gc - rc;
-	}
-
-	return h;
-}
-
-float
-RGBtoLum(float r, float g, float b)
-{
-	float maxcol, mincol;
-
-	maxcol = max(r, max(g, b));
-	mincol = min(r, min(g, b));
-
-	return r;
-
-	return (maxcol + mincol) / 2.0f;
-}
 
 enum
 {
