@@ -82,18 +82,12 @@ CPUMemoryTOP::CPUMemoryTOP(const OP_NodeInfo* info)
 	myResultBK = nullptr;
 	myLastPal = nullptr;
 	myMem = nullptr;
+	myMemBackup = nullptr;
 }
 
 CPUMemoryTOP::~CPUMemoryTOP()
 {
-	if (myResultGraph)
-		delete [] myResultGraph;
-	if (myResultColor)
-		delete [] myResultColor;
-	if (myResultBK)
-		delete [] myResultBK;
-	if (myMem)
-		delete [] myMem;
+	releaseStorage();
 }
 
 void
@@ -113,18 +107,18 @@ CPUMemoryTOP::getOutputFormat(TOP_OutputFormat* format, const OP_Inputs* inputs,
 	return false;
 }
 
+const float	colorScales[3] = {0.299f, 0.587f, 0.114f};
 
 float
 colorDist(const float a[3], const float b[3])
 {
 	float dist =
-		(a[0] - b[0])*(a[0] - b[0]) * 0.3f +
-		(a[1] - b[1])*(a[1] - b[1]) * 0.6f +
-		(a[2] - b[2])*(a[2] - b[2]) * 0.1f;
+		(a[0] - b[0])*(a[0] - b[0]) * colorScales[0] +
+		(a[1] - b[1])*(a[1] - b[1]) * colorScales[1] +
+		(a[2] - b[2])*(a[2] - b[2]) * colorScales[2];
 	
 	return dist;
 }
-
 
 /////////////////////////////////////////////////////////
 /* Adapted from: https://rosettacode.org/wiki/K-d_tree */
@@ -229,8 +223,7 @@ nearest(struct kd_node_t *root, struct kd_node_t *nd, int i,
 
     dx2 = dx * dx;
 
-	const float	scales[3] = {0.3f, 0.6f, 0.1f};
-	dx2 *= scales[i];
+	dx2 *= colorScales[i];
 
     if (!*best || d < *best_dist) 
 	{
@@ -1086,7 +1079,7 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 void
 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float *curY, unsigned int *pal, int palSize, float bleed, int matrix,
-	float *mem, bool dither, float *curError,
+	float *mem, float *memBackup, bool dither, float *curError,
 	uint8_t lookup[256][256][256],
 	float bestError)
 {
@@ -1099,20 +1092,13 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	backColor[3] = (float)bidx;
 
 
-	// background backup
-	float	mem4[2048 * 4];
-
-	// sanity check
-	if (width > 2048)
-		width = 2048;
-
 	*curError = 0.0f;
 
 	// if intermediate result, work on copy instead
 	if (!finalB)
 	{
-		memcpy(mem4, curY, width*4 * sizeof(float));
-		curY = mem4;
+		memcpy(memBackup, curY, width*4 * sizeof(float));
+		curY = memBackup;
 	}
 
 	for (int x0 = 0; x0 < width; x0++)
@@ -1140,7 +1126,7 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 				float g = npixel[1];
 				float b = npixel[2];
 
-				float weight = r*0.3f + g*0.6f + b*0.1f;
+				float weight = r*colorScales[0] + g*colorScales[1] + b*colorScales[2];
 				//
 				// weigh background minimally
 				{
@@ -1313,6 +1299,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	setupStorage(width, outputFormat->height, cellSize);
 
     float* mem = myMem;
+    float* memBackup = myMemBackup;
 
 	// copy, will already be float format
 	if (topMem)
@@ -1333,7 +1320,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			float	error;
 
 			ditherLine(0, y, finalB, width, height, cellSize, curY,
-				pal, palSize, bleed, matrix, mem, dither, &error, myColorLookup, HUGE_VAL);
+				pal, palSize, bleed, matrix, mem, memBackup, dither, &error, myColorLookup, HUGE_VAL);
 
 			for (int i = 0; i < 4; i++)
 				myResultBK[y * 4 + i] = 0.0f;
@@ -1359,7 +1346,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				bool	finalB = false;
 				int		bidx = (startB + b) % palSize;
 
-				ditherLine(bidx, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &curError, myColorLookup, bestError);
+				ditherLine(bidx, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, memBackup, dither, &curError, myColorLookup, bestError);
 
 				if (curError < bestError)
 				{
@@ -1374,7 +1361,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	error;
 				int		bidx = bestB;
 
-				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &error, myColorLookup, HUGE_VAL);
+				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, memBackup, dither, &error, myColorLookup, HUGE_VAL);
 
 				float	backColor[4];
 				backColor[0] = pal[bidx*3 + 0] / 255.0f;
@@ -1399,6 +1386,27 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 }
 
 void
+CPUMemoryTOP::releaseStorage()
+{
+	if (myResultGraph)
+		delete[] myResultGraph;
+	if (myResultColor)
+		delete[] myResultColor;
+	if (myResultBK)
+		delete[] myResultBK;
+	if (myMem)
+		delete[] myMem;
+	if (myMemBackup)
+		delete[] myMemBackup;
+
+	myResultGraph = nullptr;
+	myResultColor = nullptr;
+	myResultBK = nullptr;
+	myMem = nullptr;
+	myMemBackup = nullptr;
+}
+
+void
 CPUMemoryTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
 {
 	outputWidth /= cellSize;
@@ -1407,14 +1415,7 @@ CPUMemoryTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
 
 	if (myResultWidth != outputWidth || (myResultHeight != outputHeight))
 	{
-		if (myResultGraph)
-			delete[] myResultGraph;
-		if (myResultColor)
-			delete[] myResultColor;
-		if (myResultBK)
-			delete[] myResultBK;
-		if (myMem)
-			delete[] myMem;
+		releaseStorage();
 
 		myResultWidth = outputWidth;
 		myResultHeight = outputHeight;
@@ -1427,6 +1428,7 @@ CPUMemoryTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
 		memset(myResultBK, 0, bkSize * sizeof(float));
 
 		myMem = new float[myResultWidth * cellSize * myResultHeight * 4];
+		myMemBackup = new float[myResultWidth * cellSize * 4];
 	}
 
 }

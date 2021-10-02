@@ -55,6 +55,7 @@ public:
 private:
 
 	void				setupStorage(int outputWidth, int outputHeight, int cellSize);
+	void				releaseStorage();
 	void				storeResults(int outputWidth, int outputHeight, const float *srcMem, uint8_t *destPixel, int cellSize);
 
 	int                  myResultWidth;
@@ -63,6 +64,7 @@ private:
 	uint8_t             *myResultColor;
 	float               *myResultBK;
 	float				*myMem;
+	float				*myMemBackup;
 
 	unsigned int		*myLastPal;
 	uint8_t				 myColorLookup[256][256][256];
