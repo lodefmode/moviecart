@@ -81,6 +81,7 @@ CPUMemoryTOP::CPUMemoryTOP(const OP_NodeInfo* info)
 	myResultColor = nullptr;
 	myResultBK = nullptr;
 	myLastPal = nullptr;
+	myMem = nullptr;
 }
 
 CPUMemoryTOP::~CPUMemoryTOP()
@@ -91,12 +92,14 @@ CPUMemoryTOP::~CPUMemoryTOP()
 		delete [] myResultColor;
 	if (myResultBK)
 		delete [] myResultBK;
+	if (myMem)
+		delete [] myMem;
 }
 
 void
 CPUMemoryTOP::getGeneralInfo(TOP_GeneralInfo* ginfo, const OP_Inputs* inputs, void* reserved1)
 {
-    ginfo->memPixelType = OP_CPUMemPixelType::RGBA32Float;
+    ginfo->memPixelType = OP_CPUMemPixelType::BGRA8Fixed;
 }
 
 bool
@@ -999,13 +1002,12 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 
 	int textureMemoryLocation = 0;
-    float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
-
-
 	int width = outputFormat->width;
 	int height = outputFormat->height;
 
 	setupStorage(width, outputFormat->height, cellSize);
+
+    float* mem = myMem;
 
 	// copy
 	if (topMem)
@@ -1093,7 +1095,10 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		}
 	}
 
-	storeResults(width, height, mem, cellSize);
+	{
+		uint8_t* destMem = (uint8_t*)outputFormat->cpuPixelData[textureMemoryLocation];
+		storeResults(width, height, mem, destMem, cellSize);
+	}
 
     outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
     textureMemoryLocation = !textureMemoryLocation;
@@ -1114,18 +1119,21 @@ CPUMemoryTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
 			delete[] myResultColor;
 		if (myResultBK)
 			delete[] myResultBK;
+		if (myMem)
+			delete[] myMem;
 
 		myResultWidth = outputWidth;
 		myResultHeight = outputHeight;
 		myResultGraph = new uint8_t[myResultWidth * myResultHeight];
 		myResultColor = new uint8_t[myResultWidth * myResultHeight];
 		myResultBK = new float[myResultHeight * 4];
+		myMem = new float[myResultWidth * cellSize * myResultHeight * 4];
 	}
 
 }
 
 void
-CPUMemoryTOP::storeResults(int outputWidth, int outputHeight, float *mem, int cellSize)
+CPUMemoryTOP::storeResults(int outputWidth, int outputHeight, const float *srcMem, uint8_t *destMem, int cellSize)
 {
 	outputWidth /= cellSize;
 	if (outputWidth < 1)
@@ -1140,34 +1148,42 @@ CPUMemoryTOP::storeResults(int outputWidth, int outputHeight, float *mem, int ce
 
 		for (int x=0; x<outputWidth; x++, cnt++)
 		{
-			float* pixel = &mem[4 * cellSize * (y*outputWidth + x)];
+			const float* pixel = &srcMem[4 * cellSize * (y*outputWidth + x)];
 
 			// take next cellSize rgb bits for dither
 			uint8_t val = 0;
 			uint8_t col = 0;
-			float *npixel = pixel;
-			for (int i = 0; i < cellSize; i++, npixel += 4)
+
+			uint8_t* destPixel = &destMem[4 * cellSize * (y*outputWidth + x)];
+
+
+			for (int i = 0; i < cellSize; i++, destPixel += 4, pixel +=4)
 			{
+				destPixel[0] = uint8_t(pixel[2] * 255.0f);
+				destPixel[1] = uint8_t(pixel[1] * 255.0f);
+				destPixel[2] = uint8_t(pixel[0] * 255.0f);
+				destPixel[3] = uint8_t(pixel[3]);
+
 				val <<= 1;
 
 				// only store non-backcolor in this array
-				if (npixel[3] != bidx)
+				if (destPixel[3] != bidx)
 				{
 					val |= 1;
-					if (npixel[3])
-						col = (uint8_t)npixel[3];
+					if (destPixel[3])
+						col = (uint8_t)destPixel[3];
 
 					// set alpha to solid
-					npixel[3] = 1.0f;
+					destPixel[3] = 255;
 				}
 				else
 				{
 					// turn off background
 
-					npixel[0] = 0.0f;
-					npixel[1] = 0.0f;
-					npixel[2] = 0.0f;
-					npixel[3] = 0.0f;
+					destPixel[0] = 0;
+					destPixel[1] = 0;
+					destPixel[2] = 0;
+					destPixel[3] = 0;
 				}
 
 			}
