@@ -787,7 +787,8 @@ void
 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float *curY, unsigned int *pal, int palSize, float bleed, int matrix,
 	float *mem, bool dither, float *curError,
-	uint8_t lookup[256][256][256])
+	uint8_t lookup[256][256][256],
+	float bestError)
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
 	float	backColor[4];
@@ -887,6 +888,9 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 					quantError[i] = (current[i] - pixel[i]) * bleed;
 					*curError += fabs(quantError[i]);
 				}
+
+				if (*curError > bestError)
+					return;
 
 				switch(matrix)
 				{
@@ -1029,7 +1033,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			float	error;
 
 			ditherLine(0, y, finalB, width, height, cellSize, curY,
-				pal, palSize, bleed, matrix, mem, dither, &error, myColorLookup);
+				pal, palSize, bleed, matrix, mem, dither, &error, myColorLookup, HUGE_VAL);
 
 			for (int i = 0; i < 4; i++)
 				myResultBK[y * 4 + i] = 0.0f;
@@ -1044,17 +1048,20 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			float* curY = &mem[4 * (y*width)];
 			
 			int		bestB = 0;
-			float	bestError = -1.0f;
+			float	bestError = HUGE_VAL;
 
+			// start with best color from previous frame
+			int		startB = (int)(myResultBK[y*4 + 3]);
 
-			for (int bidx=0; bidx<palSize; bidx++)
+			for (int b=0; b<palSize; b++)
 			{
 				float	curError;
 				bool	finalB = false;
+				int		bidx = (startB + b) % palSize;
 
-				ditherLine(bidx, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &curError, myColorLookup);
+				ditherLine(bidx, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &curError, myColorLookup, bestError);
 
-				if ((curError < bestError) || (bestError < 0))
+				if (curError < bestError)
 				{
 					bestError = curError;
 					bestB = bidx;
@@ -1067,7 +1074,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	error;
 				int		bidx = bestB;
 
-				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &error, myColorLookup);
+				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, mem, dither, &error, myColorLookup, HUGE_VAL);
 
 				float	backColor[4];
 				backColor[0] = pal[bidx*3 + 0] / 255.0f;
@@ -1113,7 +1120,12 @@ CPUMemoryTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
 		myResultHeight = outputHeight;
 		myResultGraph = new uint8_t[myResultWidth * myResultHeight];
 		myResultColor = new uint8_t[myResultWidth * myResultHeight];
-		myResultBK = new float[myResultHeight * 4];
+
+		// will be read each frame, initialize to zero
+		int bkSize = (myResultHeight * 4);
+		myResultBK = new float[bkSize];
+		memset(myResultBK, 0, bkSize * sizeof(float));
+
 		myMem = new float[myResultWidth * cellSize * myResultHeight * 4];
 	}
 
