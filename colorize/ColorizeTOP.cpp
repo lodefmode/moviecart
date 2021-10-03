@@ -917,22 +917,13 @@ lookupClosestInPalette(float cellColor[4], const float *fpal, const uint8_t look
     cellColor[3] = (float)minIndex;
 }
 
-inline int
+inline const float *
 findClosest(float cellColor[4], const float *selectColor, const float *backColor)
 {
-	float distBlack = colorDist(cellColor, backColor);
-	float distWhite = colorDist(cellColor, selectColor);
+    float distBlack = colorDist(cellColor, backColor);
+    float distWhite = colorDist(cellColor, selectColor);
 
-	if (distBlack < distWhite)
-	{
-		memcpy(cellColor, backColor, sizeof(float)*4);
-		return 0;
-	}
-	else
-	{
-		memcpy(cellColor, selectColor, sizeof(float)*4);
-		return 1;
-	}
+    return distBlack <= distWhite ? backColor : selectColor;
 }
 
 inline void
@@ -1105,12 +1096,12 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 		// now dither
 		if (dither)
 		{
-			float current[3];
-			current[0] = pixel[0];
-			current[1] = pixel[1];
-			current[2] = pixel[2];
+            
+            float current[3];
+            memcpy(current, pixel, 3 * sizeof(float));
 
-			findClosest(pixel, cellColor, backColor);
+			// copy cellColor or backColor into pixel
+			memcpy(pixel, findClosest(pixel, cellColor, backColor), sizeof(float) * 4);
 
 			*curError += colorDist(current, pixel);
 			if (!finalB && *curError >= bestError)
