@@ -965,13 +965,13 @@ distributeError(int width, int height, float *mem,
 enum
 {
 	Palette_Atari2600NTSC = 0,
-	Palette_Atari2600PAL = 1,
-	Palette_Atari2600SECAM = 2,
-	Palette_Atari2600RandomTerrain = 3,
-	Palette_BW2 = 4,
-	Palette_BW4 = 5,
-	Palette_RGB = 6,
-	Palette_Rubik = 7,
+	Palette_BW2 = 1,
+	Palette_BW4 = 2,
+	Palette_RGB = 3,
+	Palette_Atari2600RandomTerrain = 4,
+	Palette_Rubik = 5,
+	Palette_Atari2600PAL = 6,
+	Palette_Atari2600SECAM = 7,
 };
 
 enum
