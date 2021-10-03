@@ -1061,8 +1061,11 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 
 		if (xpix == 0)	// first pixel of cell
 		{
-			float	sum[3] = { 0,0,0 };
 			float	total_weight = 0.0f;
+
+			cellColor[0] = 0.0f;
+			cellColor[1] = 0.0f;
+			cellColor[2] = 0.0f;
 
 			for (int x2=0; x2<cellSize; x2++)
 			{
@@ -1082,22 +1085,18 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 					weight *= dist;
 				}
 
-				sum[0] += r*weight;
-				sum[1] += g*weight;
-				sum[2] += b*weight;
+				cellColor[0] += r*weight;
+				cellColor[1] += g*weight;
+				cellColor[2] += b*weight;
 
 				total_weight += weight;
 			}
 
 			if (total_weight)
 			{
-				for (int i = 0; i < 3; i++)
-					cellColor[i] = sum[i] / total_weight;
-			}
-			else
-			{
-				for (int i = 0; i < 3; i++)
-					cellColor[i] = 0.0f;
+				cellColor[0] /= total_weight;
+				cellColor[1] /= total_weight;
+				cellColor[2] /= total_weight;
 			}
 
 			lookupClosestInPalette(cellColor, fpal, lookup);
