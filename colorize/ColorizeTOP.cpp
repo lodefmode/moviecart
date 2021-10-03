@@ -1252,15 +1252,9 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 	setupStorage(width, outputFormat->height, cellSize);
 
-    float* mem = myMem;
-
 	// copy, will already be float format
 	if (topMem)
-	{
-		const uint8_t	*topCopy = topMem;
-		float			*dstPixel = myMem;
-		memcpy(dstPixel, topCopy, width * height * 4 * sizeof(float));
-	}
+		memcpy(myMem, topMem, width * height * 4 * sizeof(float));
 
 	if (!background)
 	{
