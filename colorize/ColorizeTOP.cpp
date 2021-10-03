@@ -1210,6 +1210,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 
 	bool dither = inputs->getParInt("Dither") ? true:false;
 	float bleed = (float)inputs->getParDouble("Bleed");
+	bool bleedSearch = inputs->getParInt("Bleedsearch") ? true:false;
 
 	int matrix = inputs->getParInt("Matrix");
 
@@ -1282,6 +1283,9 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	{
 		// exhaustive search of each background color
 
+		// don't bleed during search unless specified.
+		float lbleed = bleedSearch ? bleed : 0.0f;
+
 		for (int y = 0; y < outputFormat->height; y++)
 		{
 			float* curY = &myMem[4 * (y*width)];
@@ -1299,7 +1303,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				int		bidx = (startB + b) % palSize;
 
 				memcpy(myMemBackup, curY, width*4 * sizeof(float));
-				ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, bleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
+				ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
 
 				if (curError < bestError)
 				{
@@ -1638,6 +1642,16 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 		sp.defaultValues[0] = 1;
 
 		manager->appendFloat(sp);
+	}
+
+	{
+		OP_NumericParameter  sp;
+
+		sp.name = "Bleedsearch";
+		sp.label = "Bleed During Search";
+		sp.defaultValues[0] = 0;
+
+		manager->appendToggle(sp);
 	}
 
 	{
