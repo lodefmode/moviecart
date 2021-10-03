@@ -247,7 +247,7 @@ nearest(struct kd_node_t *root, struct kd_node_t *nd, int i,
 }
  
 void
-CPUMemoryTOP::setup_kdtree(unsigned int *pal, int palSize)
+CPUMemoryTOP::setup_kdtree(const float *fpal, int palSize)
 {
 	if (palSize > 256)
 		palSize = 256;
@@ -256,9 +256,9 @@ CPUMemoryTOP::setup_kdtree(unsigned int *pal, int palSize)
     {
 		kd_node_t	&n = kdtree[i];
 
-        n.val[0] = (pal[i*3 + 0] / 255.0f);
-        n.val[1] = (pal[i*3 + 1] / 255.0f);
-        n.val[2] = (pal[i*3 + 2] / 255.0f);
+        n.val[0] = fpal[i*3 + 0];
+        n.val[1] = fpal[i*3 + 1];
+        n.val[2] = fpal[i*3 + 2];
 		n.index = i;
 	}
 
@@ -289,7 +289,7 @@ search_kdtree(float r, float g, float b, kd_node_t* root)
 /////////////////////////////////////////////////////////
 
 void
-CPUMemoryTOP::buildColourMap(unsigned int *pal, int palSize) 
+CPUMemoryTOP::buildColourMap() 
 {
     for (int r = 0; r < 256; r++) 
 	{
@@ -901,7 +901,7 @@ rgb_palette[4*3] =
 };
 
 inline void
-lookupClosestInPalette(float cellColor[4], unsigned int *pal, const uint8_t lookup[256][256][256]) 
+lookupClosestInPalette(float cellColor[4], const float *fpal, const uint8_t lookup[256][256][256]) 
 {
     int r = (int)(cellColor[0] * 255.0f);
     int g = (int)(cellColor[1] * 255.0f);
@@ -911,9 +911,9 @@ lookupClosestInPalette(float cellColor[4], unsigned int *pal, const uint8_t look
 
     // stuff it all back in.
 
-    cellColor[0] = pal[minIndex * 3 + 0] / 255.0f;
-    cellColor[1] = pal[minIndex * 3 + 1] / 255.0f;
-    cellColor[2] = pal[minIndex * 3 + 2] / 255.0f;
+    cellColor[0] = fpal[minIndex * 3 + 0];
+    cellColor[1] = fpal[minIndex * 3 + 1];
+    cellColor[2] = fpal[minIndex * 3 + 2];
     cellColor[3] = (float)minIndex;
 }
 
@@ -1033,7 +1033,7 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 
 void
 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
-	float *curY, unsigned int *pal, int palSize, float bleed, int matrix,
+	float *curY, const float *fpal, int palSize, float bleed, int matrix,
 	float *mem, bool dither, float *curError,
 	const uint8_t lookup[256][256][256],
 	float bestError)
@@ -1041,9 +1041,9 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float	cellColor[4] = { 1, 1, 1, 0 };
 	float	backColor[4];
 
-	backColor[0] = pal[bidx*3 + 0] / 255.0f;
-	backColor[1] = pal[bidx*3 + 1] / 255.0f;
-	backColor[2] = pal[bidx*3 + 2] / 255.0f;
+	backColor[0] = fpal[bidx*3 + 0];
+	backColor[1] = fpal[bidx*3 + 1];
+	backColor[2] = fpal[bidx*3 + 2];
 	backColor[3] = (float)bidx;
 
 
@@ -1100,7 +1100,7 @@ ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 					cellColor[i] = 0.0f;
 			}
 
-			lookupClosestInPalette(cellColor, pal, lookup);
+			lookupClosestInPalette(cellColor, fpal, lookup);
 		}
 
 		// now dither
@@ -1223,8 +1223,16 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	if (pal != myLastPal)
 	{
 		myLastPal = pal;
-		setup_kdtree(pal, palSize);
-		buildColourMap(pal, palSize);
+
+		for (int i=0; i<palSize; i++)
+		{
+			myFPal[3*i + 0] = pal[3*i + 0] / 255.0f;
+			myFPal[3*i + 1] = pal[3*i + 1] / 255.0f;
+			myFPal[3*i + 2] = pal[3*i + 2] / 255.0f;
+		}
+
+		setup_kdtree(myFPal, palSize);
+		buildColourMap();
 	}
 
 	if (!active)
@@ -1265,7 +1273,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			float	error;
 
 			ditherLine(0, y, finalB, width, height, cellSize, curY,
-				pal, palSize, bleed, matrix, myMem, dither, &error, myColorLookup, HUGE_VAL);
+				myFPal, palSize, bleed, matrix, myMem, dither, &error, myColorLookup, HUGE_VAL);
 
 			for (int i = 0; i < 4; i++)
 				myResultBK[y * 4 + i] = 0.0f;
@@ -1292,7 +1300,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				int		bidx = (startB + b) % palSize;
 
 				memcpy(myMemBackup, curY, width*4 * sizeof(float));
-				ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, pal, palSize, bleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
+				ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, bleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
 
 				if (curError < bestError)
 				{
@@ -1307,12 +1315,12 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	error;
 				int		bidx = bestB;
 
-				ditherLine(bestB, y, finalB, width, height, cellSize, curY, pal, palSize, bleed, matrix, myMem, dither, &error, myColorLookup, HUGE_VAL);
+				ditherLine(bestB, y, finalB, width, height, cellSize, curY, myFPal, palSize, bleed, matrix, myMem, dither, &error, myColorLookup, HUGE_VAL);
 
 				float	backColor[4];
-				backColor[0] = pal[bidx*3 + 0] / 255.0f;
-				backColor[1] = pal[bidx*3 + 1] / 255.0f;
-				backColor[2] = pal[bidx*3 + 2] / 255.0f;
+				backColor[0] = myFPal[bidx*3 + 0];
+				backColor[1] = myFPal[bidx*3 + 1];
+				backColor[2] = myFPal[bidx*3 + 2];
 				backColor[3] = (float)bidx;
 
 				for (int i = 0; i < 4; i++)

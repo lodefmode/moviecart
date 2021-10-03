@@ -65,14 +65,15 @@ private:
 	float               *myResultBK;
 	float				*myMem;
 	float				*myMemBackup;
+	float				 myFPal[256*3];
 
 	unsigned int		*myLastPal;
 	uint8_t				 myColorLookup[256][256][256];
-	void				 buildColourMap(unsigned int *pal, int palSize);
+	void				 buildColourMap();
 
 	// k-d tree data
 	struct kd_node_t	kdtree[256];
 	struct kd_node_t*	kdtree_root{nullptr};
-	void				setup_kdtree(unsigned int *pal, int palSize);
+	void				setup_kdtree(const float *fpal, int palSize);
 
 };
