@@ -1215,6 +1215,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	int matrix = inputs->getParInt("Matrix");
 
 	bool background = inputs->getParInt("Background") ? true:false;
+	bool backgroundFast = background && (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain);
 
 	unsigned int	*pal;
 	int				palSize;
@@ -1242,8 +1243,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	dlOptions.downloadType = OP_TOPInputDownloadType::Instant;
 	dlOptions.cpuMemPixelType = OP_CPUMemPixelType::RGBA32Float;
 
-	const OP_TOPInput	*topInput = inputs->getInputTOP(0);
-	const uint8_t	*topMem = topInput ? (uint8_t *)inputs->getTOPDataInCPUMemory(topInput, &dlOptions) : nullptr;
 
 
 	int textureMemoryLocation = 0;
@@ -1253,8 +1252,12 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	setupStorage(width, outputFormat->height, cellSize);
 
 	// copy, will already be float format
-	if (topMem)
-		memcpy(myMem, topMem, width * height * 4 * sizeof(float));
+	{
+		const OP_TOPInput	*topInput = inputs->getInputTOP(0);
+		const uint8_t	*topMem = topInput ? (uint8_t *)inputs->getTOPDataInCPUMemory(topInput, &dlOptions) : nullptr;
+		if (topMem)
+			memcpy(myMem, topMem, width * height * 4 * sizeof(float));
+	}
 
 	if (!background)
 	{
@@ -1275,8 +1278,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	}
 	else
 	{
-		// exhaustive search of each background color
-
 		// don't bleed during search unless specified.
 		float lbleed = bleedSearch ? bleed : 0.0f;
 
@@ -1287,23 +1288,74 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			int		bestB = 0;
 			float	bestError = HUGE_VAL;
 
-			// start with best color from previous frame
-			int		startB = (int)(myResultBK[y*4 + 3]);
 
-			for (int b=0; b<palSize; b++)
+			if (backgroundFast)
 			{
-				float	curError;
-				bool	finalB = false;
-				int		bidx = (startB + b) % palSize;
+				// start with best color from previous frame
+				int		startB = (int)(myResultBK[y*4 + 3]);
 
-				memcpy(myMemBackup, curY, width*4 * sizeof(float));
-				ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
+				startB /= 8;	//	round down to nearest 8 
+				startB *= 8;
 
-				if (curError < bestError)
+				// check one quarter
+				for (int b=0; b<palSize; b+=4)
 				{
-					bestError = curError;
-					bestB = bidx;
+					float	curError;
+					bool	finalB = false;
+					int		bidx = (startB + b) % palSize;
+
+					memcpy(myMemBackup, curY, width*4 * sizeof(float));
+					ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
+					if (curError < bestError)
+					{
+						bestError = curError;
+						bestB = bidx;
+					}
 				}
+
+				// now redo rest of hue
+				int b2 = bestB/8;
+				for (int b=0; b<8; b++)
+				{
+					// processed in original loop
+					if (b == 0 || b == 4)
+						continue;
+
+					float	curError;
+					bool	finalB = false;
+					int		bidx = b2 + b;
+
+					memcpy(myMemBackup, curY, width*4 * sizeof(float));
+					ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
+					if (curError < bestError)
+					{
+						bestError = curError;
+						bestB = bidx;
+					}
+				}
+			}
+			else
+			{
+				// start with best color from previous frame
+				int		startB = (int)(myResultBK[y*4 + 3]);
+
+				// search every color
+				for (int b=0; b<palSize; b++)
+				{
+					float	curError;
+					bool	finalB = false;
+					int		bidx = (startB + b) % palSize;
+
+					memcpy(myMemBackup, curY, width*4 * sizeof(float));
+					ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
+
+					if (curError < bestError)
+					{
+						bestError = curError;
+						bestB = bidx;
+					}
+				}
+
 			}
 
 			// redo best color
