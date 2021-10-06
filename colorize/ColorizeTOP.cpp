@@ -1259,6 +1259,14 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			memcpy(myMem, topMem, width * height * 4 * sizeof(float));
 	}
 
+	auto finishLine = [&](int y, int bidx, float* curY)
+	{
+		float	curError;
+		bool	finalB = true;
+
+		ditherLine(bidx, y, finalB, width, height, cellSize, curY, myFPal, palSize, bleed, matrix, myMem, dither, &curError, myColorLookup, HUGE_VAL);
+	};
+
 	if (!background)
 	{
 		bool	finalB = true;
@@ -1266,11 +1274,9 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		for (int y = 0; y < outputFormat->height; y++)
 		{
 			float* curY = &myMem[4 * (y*width)];
-			
-			float	error;
 
-			ditherLine(0, y, finalB, width, height, cellSize, curY,
-				myFPal, palSize, bleed, matrix, myMem, dither, &error, myColorLookup, HUGE_VAL);
+			int		bidx = 0;
+			finishLine(y, bidx, curY);
 
 			for (int i = 0; i < 4; i++)
 				myResultBK[y * 4 + i] = 0.0f;
@@ -1278,8 +1284,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	}
 	else
 	{
-		// don't bleed during search unless specified.
-		float lbleed = bleedSearch ? bleed : 0.0f;
 
 		for (int y = 0; y < outputFormat->height; y++)
 		{
@@ -1287,6 +1291,22 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 			
 			int		bestB = 0;
 			float	bestError = HUGE_VAL;
+
+			auto testLine = [&](int bidx)
+			{
+				float	curError;
+				bool	finalB = false;
+				float	lbleed = bleedSearch ? bleed : 0.0f;
+
+				memcpy(myMemBackup, curY, width*4 * sizeof(float));
+				ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
+
+				if (curError < bestError)
+				{
+					bestError = curError;
+					bestB = bidx;
+				}
+			};
 
 
 			if (backgroundFast)
@@ -1300,17 +1320,8 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				// check one quarter
 				for (int b=0; b<palSize; b+=4)
 				{
-					float	curError;
-					bool	finalB = false;
 					int		bidx = (startB + b) % palSize;
-
-					memcpy(myMemBackup, curY, width*4 * sizeof(float));
-					ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
-					if (curError < bestError)
-					{
-						bestError = curError;
-						bestB = bidx;
-					}
+					testLine(bidx);
 				}
 
 				// now redo rest of hue
@@ -1318,19 +1329,10 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				for (int b=0; b<8; b++)
 				{
 					// processed in original loop
-					if (b == 0 || b == 4)
-						continue;
-
-					float	curError;
-					bool	finalB = false;
-					int		bidx = b2 + b;
-
-					memcpy(myMemBackup, curY, width*4 * sizeof(float));
-					ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
-					if (curError < bestError)
+					if (b != 0 && b != 4)
 					{
-						bestError = curError;
-						bestB = bidx;
+						int		bidx = b2 + b;
+						testLine(bidx);
 					}
 				}
 			}
@@ -1342,29 +1344,15 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				// search every color
 				for (int b=0; b<palSize; b++)
 				{
-					float	curError;
-					bool	finalB = false;
 					int		bidx = (startB + b) % palSize;
-
-					memcpy(myMemBackup, curY, width*4 * sizeof(float));
-					ditherLine(bidx, y, finalB, width, height, cellSize, myMemBackup, myFPal, palSize, lbleed, matrix, myMem, dither, &curError, myColorLookup, bestError);
-
-					if (curError < bestError)
-					{
-						bestError = curError;
-						bestB = bidx;
-					}
+					testLine(bidx);
 				}
-
 			}
 
 			// redo best color
 			{
-				bool	finalB = true;
-				float	error;
 				int		bidx = bestB;
-
-				ditherLine(bestB, y, finalB, width, height, cellSize, curY, myFPal, palSize, bleed, matrix, myMem, dither, &error, myColorLookup, HUGE_VAL);
+				finishLine(y, bidx, curY);
 
 				float	backColor[4];
 				backColor[0] = myFPal[bidx*3 + 0];
@@ -1375,7 +1363,6 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				for (int i = 0; i < 4; i++)
 					myResultBK[y * 4 + i] = backColor[i];
 			}
-
 		}
 	}
 
