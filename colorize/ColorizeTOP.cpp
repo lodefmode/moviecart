@@ -1314,8 +1314,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				// start with best color from previous frame
 				int		startB = (int)(myResultBK[y*4 + 3]);
 
-				startB /= 8;	//	round down to nearest 8 
-				startB *= 8;
+				startB &= ~0x7;	//	round down to nearest 8 
 
 				// check one quarter
 				for (int b=0; b<palSize; b+=4)
@@ -1325,7 +1324,8 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				}
 
 				// now redo rest of hue
-				int b2 = bestB/8;
+				int b2 = bestB & ~0x7;	// round down to nearest 8
+
 				for (int b=0; b<8; b++)
 				{
 					// processed in original loop
