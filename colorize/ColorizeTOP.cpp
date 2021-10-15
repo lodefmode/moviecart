@@ -1027,7 +1027,7 @@ void
 CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float *curY, int palSize, float bleed, int matrix,
 	bool dither, float *curError,
-	float bestError, bool searchForeground)
+	float bestError, bool searchForeground, bool fastPalette)
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
 	float	backColor[4];
@@ -1060,12 +1060,9 @@ CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, in
 
 				// start with best color from previous frame
 				int		startB = myResultColor(xcell, y);
-				startB %= palSize;
 
-				for (int b=0; b<palSize; b++)
+				auto testForeground = [&](int bidx)
 				{
-					int	bidx = (startB+b) % palSize;
-
 					cellColor[0] = myFPal(bidx,0)[0];
 					cellColor[1] = myFPal(bidx,0)[1];
 					cellColor[2] = myFPal(bidx,0)[2];
@@ -1089,6 +1086,40 @@ CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, in
 					{
 						maxError = cellError;
 						bestF = bidx;
+					}
+				};
+
+				if (fastPalette)
+				{
+					startB &= ~0x7;	//	round down to nearest 8 
+
+					// check one quarter
+					for (int b=0; b<palSize; b+=4)
+					{
+						int		bidx = (startB + b) % palSize;
+						testForeground(bidx);
+					}
+
+					// now redo rest of hue
+					int b2 = bestF & ~0x7;	// round down to nearest 8
+
+					for (int b=0; b<8; b++)
+					{
+						// processed in original loop
+						if (b != 0 && b != 4)
+						{
+							int		bidx = b2 + b;
+							testForeground(bidx);
+						}
+					}
+				}
+				else
+				{
+					for (int b=0; b<palSize; b++)
+					{
+						int	bidx = (startB+b) % palSize;
+						testForeground(bidx);
+
 					}
 				}
 
@@ -1257,7 +1288,8 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	int matrix = inputs->getParInt("Matrix");
 
 	bool background = inputs->getParInt("Background") ? true:false;
-	bool backgroundFast = background && (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain);
+	bool fastPalette = (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain);
+	bool backgroundFast = background && fastPalette;
 
 	bool foreground = inputs->getParInt("Foreground") ? true:false;
 
@@ -1309,7 +1341,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		float	curError;
 		bool	finalB = true;
 
-		ditherLine(bidx, y, finalB, width, height, cellSize, curY, palSize, bleed, matrix, dither, &curError, HUGE_VAL, foreground);
+		ditherLine(bidx, y, finalB, width, height, cellSize, curY, palSize, bleed, matrix, dither, &curError, HUGE_VAL, foreground, fastPalette);
 	};
 
 	if (!background)
@@ -1342,7 +1374,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	lbleed = bleedSearch ? bleed : 0.0f;
 
 				memcpy((float*)myMemBackup.getData(), curY, width*4 * sizeof(float));
-				ditherLine(bidx, y, finalB, width, height, cellSize, (float*)myMemBackup.getData(), palSize, lbleed, matrix, dither, &curError, bestError, foreground);
+				ditherLine(bidx, y, finalB, width, height, cellSize, (float*)myMemBackup.getData(), palSize, lbleed, matrix, dither, &curError, bestError, foreground, fastPalette);
 
 				if (curError < bestError)
 				{
