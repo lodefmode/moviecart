@@ -1058,11 +1058,17 @@ CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, in
 				float	maxError = HUGE_VAL;
 				int		bestF = 0;
 
+				// start with best color from previous frame
+				int		startB = myResultColor(xcell, y);
+				startB %= palSize;
+
 				for (int b=0; b<palSize; b++)
 				{
-					cellColor[0] = myFPal(b,0)[0];
-					cellColor[1] = myFPal(b,0)[1];
-					cellColor[2] = myFPal(b,0)[2];
+					int	bidx = (startB+b) % palSize;
+
+					cellColor[0] = myFPal(bidx,0)[0];
+					cellColor[1] = myFPal(bidx,0)[1];
+					cellColor[2] = myFPal(bidx,0)[2];
 
 					float	cellError = 0;
 
@@ -1075,12 +1081,14 @@ CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, in
 						float distWhite = colorDist(npixel, cellColor);
 
 						cellError += min(distBack, distWhite);
+						if (cellError >= maxError)
+							break;
 					}
 
 					if (cellError < maxError)
 					{
 						maxError = cellError;
-						bestF = b;
+						bestF = bidx;
 					}
 				}
 

@@ -53,6 +53,8 @@ public:
 				mem = new T[width * height];
 			else
 				mem = nullptr;
+
+			zero();
 		}
 	}
 
