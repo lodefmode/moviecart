@@ -22,6 +22,84 @@ struct kd_node_t
     struct  kd_node_t *left, *right;
 };
 
+template<class T>
+class Array2D
+{
+public:
+
+	Array2D()
+	{
+		width = height = 0;
+		mem = nullptr;
+	}
+
+	~Array2D()
+	{
+		setSize(0, 0);
+	}
+
+	void
+	setSize(int w, int h)
+	{
+		if (w != width || h != height)
+		{
+			width = w;
+			height = h;
+
+			if (mem)
+				delete [] mem;
+
+			if (w || h)
+				mem = new T[width * height];
+			else
+				mem = nullptr;
+		}
+	}
+
+	void
+	zero()
+	{
+		if (mem)
+			memset(mem, 0, width*height*sizeof(T));
+	}
+
+	T&
+	operator()(int x, int y)
+	{
+		return mem[y*width + x];
+	}
+
+	T&
+	operator()(int x, int y) const
+	{
+		return mem[y*width + x];
+	}
+
+	T*
+	getData()
+	{
+		return mem;
+	}
+
+	int
+	getWidth() const
+	{
+		return width;
+	}
+
+	int
+	getHeight() const
+	{
+		return height;
+	}
+
+private:
+
+	T*			mem;
+	int			width;
+	int			height;
+
+};
 
 class CPUMemoryTOP : public TOP_CPlusPlusBase
 {
@@ -55,25 +133,27 @@ public:
 private:
 
 	void				setupStorage(int outputWidth, int outputHeight, int cellSize);
-	void				releaseStorage();
-	void				storeResults(int outputWidth, int outputHeight, const float *srcMem, uint8_t *destPixel, int cellSize);
+	void				storeResults(uint8_t *destPixel, int cellSize);
 
-	int                  myResultWidth;
-	int                  myResultHeight;
-	uint8_t             *myResultGraph;
-	uint8_t             *myResultColor;
-	float               *myResultBK;
-	float				*myMem;
-	float				*myMemBackup;
-	float				 myFPal[256*3];
+	Array2D<float[4]>		myMem;
+	Array2D<float[4]>		myMemBackup;
+	Array2D<uint8_t>		myResultGraph;
+	Array2D<uint8_t>		myResultColor;
+	Array2D<float[4]>		myResultBK;
+	Array2D<float[3]>		myFPal;
 
 	unsigned int		*myLastPal;
 	uint8_t				 myColorLookup[256][256][256];
 	void				 buildColourMap();
 
+	void				 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
+								float *curY, int palSize, float bleed, int matrix,
+								bool dither, float *curError, float bestError);
+
+
 	// k-d tree data
 	struct kd_node_t	kdtree[256];
 	struct kd_node_t*	kdtree_root{nullptr};
-	void				setup_kdtree(const float *fpal, int palSize);
+	void				setup_kdtree(Array2D<float[3]>& fpal, int palSize);
 
 };
