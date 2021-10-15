@@ -1027,7 +1027,7 @@ void
 CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float *curY, int palSize, float bleed, int matrix,
 	bool dither, float *curError,
-	float bestError)
+	float bestError, bool searchForeground)
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
 	float	backColor[4];
@@ -1053,43 +1053,82 @@ CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, in
 
 		if (xpix == 0)	// first pixel of cell
 		{
-			float	total_weight = 0.0f;
-
-			cellColor[0] = 0.0f;
-			cellColor[1] = 0.0f;
-			cellColor[2] = 0.0f;
-
-
-			for (int x2=0; x2<cellSize; x2++)
+			if (searchForeground)
 			{
-				int x3 = x + x2;
+				float	maxError = HUGE_VAL;
+				int		bestF = 0;
 
-				float* npixel = &curY[4*x3];
-			
-				float r = npixel[0];
-				float g = npixel[1];
-				float b = npixel[2];
-
-				float weight = r*colorScales[0] + g*colorScales[1] + b*colorScales[2];
-				//
-				// weigh background minimally
+				for (int b=0; b<palSize; b++)
 				{
-					float	dist = colorDist(npixel, backColor);
-					weight *= dist;
+					cellColor[0] = myFPal(b,0)[0];
+					cellColor[1] = myFPal(b,0)[1];
+					cellColor[2] = myFPal(b,0)[2];
+
+					float	cellError = 0;
+
+					for (int x2=0; x2<cellSize; x2++)
+					{
+						int x3 = x + x2;
+						float* npixel = &curY[4*x3];
+					
+						float distBack = colorDist(npixel, backColor);
+						float distWhite = colorDist(npixel, cellColor);
+
+						cellError += min(distBack, distWhite);
+					}
+
+					if (cellError < maxError)
+					{
+						maxError = cellError;
+						bestF = b;
+					}
 				}
 
-				cellColor[0] += r*weight;
-				cellColor[1] += g*weight;
-				cellColor[2] += b*weight;
-
-				total_weight += weight;
+				cellColor[0] = myFPal(bestF,0)[0];
+				cellColor[1] = myFPal(bestF,0)[1];
+				cellColor[2] = myFPal(bestF,0)[2];
+				cellColor[3] = bestF;
 			}
-
-			if (total_weight)
+			else
 			{
-				cellColor[0] /= total_weight;
-				cellColor[1] /= total_weight;
-				cellColor[2] /= total_weight;
+				float	total_weight = 0.0f;
+
+				cellColor[0] = 0.0f;
+				cellColor[1] = 0.0f;
+				cellColor[2] = 0.0f;
+
+
+				for (int x2=0; x2<cellSize; x2++)
+				{
+					int x3 = x + x2;
+
+					float* npixel = &curY[4*x3];
+				
+					float r = npixel[0];
+					float g = npixel[1];
+					float b = npixel[2];
+
+					float weight = r*colorScales[0] + g*colorScales[1] + b*colorScales[2];
+					//
+					// weigh background minimally
+					{
+						float	dist = colorDist(npixel, backColor);
+						weight *= dist;
+					}
+
+					cellColor[0] += r*weight;
+					cellColor[1] += g*weight;
+					cellColor[2] += b*weight;
+
+					total_weight += weight;
+				}
+
+				if (total_weight)
+				{
+					cellColor[0] /= total_weight;
+					cellColor[1] /= total_weight;
+					cellColor[2] /= total_weight;
+				}
 			}
 
 			uint8_t i = lookupClosestInPalette(cellColor, myFPal, myColorLookup);
@@ -1212,6 +1251,8 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 	bool background = inputs->getParInt("Background") ? true:false;
 	bool backgroundFast = background && (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain);
 
+	bool foreground = inputs->getParInt("Foreground") ? true:false;
+
 	unsigned int	*pal;
 	int				palSize;
 	getPalette(palette, pal, palSize);
@@ -1260,7 +1301,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 		float	curError;
 		bool	finalB = true;
 
-		ditherLine(bidx, y, finalB, width, height, cellSize, curY, palSize, bleed, matrix, dither, &curError, HUGE_VAL);
+		ditherLine(bidx, y, finalB, width, height, cellSize, curY, palSize, bleed, matrix, dither, &curError, HUGE_VAL, foreground);
 	};
 
 	if (!background)
@@ -1293,7 +1334,7 @@ CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
 				float	lbleed = bleedSearch ? bleed : 0.0f;
 
 				memcpy((float*)myMemBackup.getData(), curY, width*4 * sizeof(float));
-				ditherLine(bidx, y, finalB, width, height, cellSize, (float*)myMemBackup.getData(), palSize, lbleed, matrix, dither, &curError, bestError);
+				ditherLine(bidx, y, finalB, width, height, cellSize, (float*)myMemBackup.getData(), palSize, lbleed, matrix, dither, &curError, bestError, foreground);
 
 				if (curError < bestError)
 				{
@@ -1613,6 +1654,15 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 
 		sp.name = "Background";
 		sp.label = "Background";
+
+		manager->appendToggle(sp);
+	}
+
+	{
+		OP_NumericParameter  sp;
+
+		sp.name = "Foreground";
+		sp.label = "Foreground";
 
 		manager->appendToggle(sp);
 	}

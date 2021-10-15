@@ -148,7 +148,8 @@ private:
 
 	void				 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 								float *curY, int palSize, float bleed, int matrix,
-								bool dither, float *curError, float bestError);
+								bool dither, float *curError, float bestError,
+								bool searchForeground);
 
 
 	// k-d tree data
