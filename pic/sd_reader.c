@@ -14,12 +14,14 @@ Bytes are read 512 bytes at a time, using DMA, into one of two frame buffers, ov
 
 extern void test_flash(uint8_t num);
 
+#define VERSION_DATA_OFFSET		0
 #define FRAME_DATA_OFFSET 		4
 #define AUDIO_DATA_OFFSET 		7
 #define GRAPH_DATA_OFFSET 		269
 #define TIMECODE_DATA_OFFSET 	1229
 #define COLOR_DATA_OFFSET 		1289
-#define END_DATA_OFFSET			2249
+#define COLORBK_DATA_OFFSET		2249
+#define END_DATA_OFFSET			2441
 
 
 // custom, receive 512 bytes as quickly as possible
@@ -32,11 +34,13 @@ bool sdcard_init(void);
 static __persistent uint8_t         sd_frame1[FIELD_SIZE];
 static __persistent uint8_t         sd_frame2[FIELD_SIZE];
 
+uint8_t         *sd_ptr_version = 0;
+uint8_t         *sd_ptr_frame = 0;
 uint8_t         *sd_ptr_audio = 0;
 uint8_t         *sd_ptr_graph = 0;
 uint8_t         *sd_ptr_timecode = 0;
 uint8_t         *sd_ptr_color = 0;
-uint8_t         *sd_ptr_data = 0;
+uint8_t         *sd_ptr_colorbk = 0;
 
 uint32_t         startBlock = 0;
 
@@ -290,28 +294,22 @@ sd_runReadState()
 			return;             
 	}
 }
-
 void
-sd_swapField(bool index)
+sd_swapField(bool index, bool odd)
 {
-	if (index == true)
-	{
-		sd_ptr_data  = sd_frame1;
-		sd_ptr_audio = sd_frame1 + AUDIO_DATA_OFFSET;
-		sd_ptr_graph = sd_frame1 + GRAPH_DATA_OFFSET;
-		sd_ptr_timecode = sd_frame1 + TIMECODE_DATA_OFFSET;
-		sd_ptr_color = sd_frame1 + COLOR_DATA_OFFSET;
-	}
-	else
-	{
-		sd_ptr_data  = sd_frame2;
-		sd_ptr_audio = sd_frame2 + AUDIO_DATA_OFFSET;
-		sd_ptr_graph = sd_frame2 + GRAPH_DATA_OFFSET;
-		sd_ptr_timecode = sd_frame2 + TIMECODE_DATA_OFFSET;
-		sd_ptr_color = sd_frame2 + COLOR_DATA_OFFSET;
-	}
-}
+    uint8_t* offset = index ? sd_frame1 : sd_frame2;
 
+    sd_ptr_version  = offset + VERSION_DATA_OFFSET;
+    sd_ptr_frame    = offset + FRAME_DATA_OFFSET;
+    sd_ptr_audio    = offset + AUDIO_DATA_OFFSET;
+    sd_ptr_graph    = offset + GRAPH_DATA_OFFSET;
+    sd_ptr_timecode = offset + TIMECODE_DATA_OFFSET;
+    sd_ptr_color    = offset + COLOR_DATA_OFFSET;
+    sd_ptr_colorbk  = offset + COLORBK_DATA_OFFSET;
+
+    if (!odd)
+        sd_ptr_colorbk++;
+}
 
 void
 sd_blankPartialLines(bool index) 
@@ -334,6 +332,8 @@ sd_blankPartialLines(bool index)
 		sd_ptr_color[COLOR_SIZE - 2] = 0;
 		sd_ptr_color[COLOR_SIZE - 1] = 0;
 	}
+
+	sd_ptr_colorbk[0] = 0;
 }
 
 bool

@@ -9,16 +9,20 @@
 #define HI_JUMP_BYTE(X) ((((X) & 0xff00) >> 8) | 0x10)
 
 extern bool sd_openStream(void);
-extern void sd_swapField(bool index);
+extern void sd_swapField(bool index, bool odd);
 extern void sd_blankPartialLines(bool index);
 extern void sd_readField(uint32_t fr, bool index);
 extern void sd_runReadState(void);
 
+extern uint8_t *sd_ptr_version;
+extern uint8_t *sd_ptr_frame;
 extern uint8_t *sd_ptr_audio;
 extern uint8_t *sd_ptr_graph;
 extern uint8_t *sd_ptr_timecode;
 extern uint8_t *sd_ptr_color;
-extern uint8_t *sd_ptr_data;
+extern uint8_t *sd_ptr_colorbk;
+
+const uint8_t   *sd_ptr_graph_override = 0;
 
 
 uint8_t 	lines = 0;
@@ -30,23 +34,25 @@ bool		odd = true;
 bool		bufferIndex = false;
 
 #define TIMECODE_HEIGHT		12
+#define OSD_FRAMES			180
+#define BACK_SECONDS		10
 
 #define MAX_LEVEL 			11
 #define DEFAULT_LEVEL 		6
 
-const uint8_t  scale0[16] = {  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8}; /* 0.0000 */
-const uint8_t  scale1[16] = {  6,  6,  7,  7,  7,  7,  7,  7,  8,  8,  8,  8,  8,  8,  9,  9}; /* 0.1667 */
-const uint8_t  scale2[16] = {  5,  5,  6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10, 10}; /* 0.3333 */
-const uint8_t  scale3[16] = {  4,  4,  5,  5,  6,  6,  7,  7,  8,  8,  9,  9, 10, 10, 11, 11}; /* 0.5000 */
-const uint8_t  scale4[16] = {  3,  3,  4,  5,  5,  6,  7,  7,  8,  9,  9, 10, 11, 11, 12, 13}; /* 0.6667 */
-const uint8_t  scale5[16] = {  1,  2,  3,  4,  5,  5,  6,  7,  8,  9, 10, 10, 11, 12, 13, 14}; /* 0.8333 */
-const uint8_t  scale6[16] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15}; /* 1.0000 */
-const uint8_t  scale7[16] = {  0,  0,  0,  1,  3,  4,  5,  7,  8, 10, 11, 12, 14, 15, 15, 15}; /* 1.3611 */
-const uint8_t  scale8[16] = {  0,  0,  0,  0,  1,  3,  5,  7,  8, 10, 12, 14, 15, 15, 15, 15}; /* 1.7778 */
-const uint8_t  scale9[16] = {  0,  0,  0,  0,  0,  2,  4,  6,  9, 11, 13, 15, 15, 15, 15, 15}; /* 2.2500 */
-const uint8_t scale10[16] = {  0,  0,  0,  0,  0,  1,  3,  6,  9, 12, 14, 15, 15, 15, 15, 15}; /* 2.7778 */
-const uint8_t *scales[11] = {scale0, scale1, scale2, scale3, scale4, scale5, scale6, scale7, scale8, scale9, scale10};
 
+const uint8_t  scale0[16] = { 8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8   /* 0.0000 */ };
+const uint8_t  scale1[16] = { 6,  6,  7,  7,  7,  7,  7,  7,  8,  8,  8,  8,  8,  8,  9,  9   /* 0.1667 */ };
+const uint8_t  scale2[16] = { 5,  5,  6,  6,  6,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10, 10   /* 0.3333 */ };
+const uint8_t  scale3[16] = { 4,  4,  5,  5,  6,  6,  7,  7,  8,  8,  9,  9, 10, 10, 11, 11   /* 0.5000 */ };
+const uint8_t  scale4[16] = { 3,  3,  4,  5,  5,  6,  7,  7,  8,  9,  9, 10, 11, 11, 12, 13   /* 0.6667 */ };
+const uint8_t  scale5[16] = { 1,  2,  3,  4,  5,  5,  6,  7,  8,  9, 10, 10, 11, 12, 13, 14   /* 0.8333 */ };
+const uint8_t  scale6[16] = { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15   /* 1.0000 */ };
+const uint8_t  scale7[16] = { 0,  0,  0,  1,  3,  4,  5,  7,  8, 10, 11, 12, 14, 15, 15, 15   /* 1.3611 */ };
+const uint8_t  scale8[16] = { 0,  0,  0,  0,  1,  3,  5,  7,  8, 10, 12, 14, 15, 15, 15, 15   /* 1.7778 */ };
+const uint8_t  scale9[16] = { 0,  0,  0,  0,  0,  2,  4,  6,  9, 11, 13, 15, 15, 15, 15, 15   /* 2.2500 */ };
+const uint8_t scale10[16] = { 0,  0,  0,  0,  0,  1,  3,  6,  9, 12, 14, 15, 15, 15, 15, 15   /* 2.7778 */ };
+const uint8_t *scales[11] = { scale0, scale1, scale2, scale3, scale4, scale5, scale6, scale7, scale8, scale9, scale10 };
 
 uint8_t mainVolume = DEFAULT_LEVEL;
 const uint8_t	*volumeScale = 0;
@@ -66,12 +72,8 @@ uint8_t	mainMode = MODE_TIME;
 #include "../output/osd_data.h"
 
 
-const uint8_t	*labelOdd = 0;
-const uint8_t	*labelEven = 0;
-
 const uint8_t	*levelBarsOdd = 0;
 const uint8_t	*levelBarsEven = 0;
-const uint8_t   *sd_ptr_graph_const = 0;
 
 ///////////////////////////////////////////////////////////////////
 
@@ -110,7 +112,7 @@ uint8_t		drawTimeCode = 0;
 void
 updateTransport()
 {
-	sd_ptr_graph_const = 0;
+	sd_ptr_graph_override = nullptr;
 
 	uint8_t		transport_count = A10_COUNT;
 	A10_COUNT = 0;
@@ -156,14 +158,11 @@ updateTransport()
 
 	forceBWMode = bw;
 
-	bool				dt = false;
-	bool				dl = false;
-
 	if (reset)
 	{
 		frameNumber = 1;
 		play = true;
-		dt = true;
+		drawTimeCode = OSD_FRAMES;
 
 		goto update_stream;
 	}
@@ -204,14 +203,14 @@ updateTransport()
 		{
 			if (mainMode == MODE_TIME)
 			{
-				dt = true;
+				drawTimeCode = OSD_FRAMES;
 				jumpStep += 4;
 				if (jumpStep < 0)
 					jumpStep -= 4;
 			}
 			else if (mainMode == MODE_VOLUME)
 			{
-				dl = true;
+				drawLevelBars = OSD_FRAMES;
 				if (left)
 				{
 					if (mainVolume)
@@ -226,7 +225,7 @@ updateTransport()
 			}
 			else if (mainMode == MODE_BRIGHT)
 			{
-				dl = true;
+				drawLevelBars = OSD_FRAMES;
 				if (left)
 				{
 					if (mainBright)
@@ -245,57 +244,34 @@ updateTransport()
 
 	if (select && !last_select)
 	{
-		dt = true;
-		frameNumber -= 60 * 10 + 1; // back 10 seconds
+		drawTimeCode = OSD_FRAMES;
+		frameNumber -= 60 * BACK_SECONDS + 1; // back 10 seconds
 		goto update_stream;
 	}
 
 	if (button && !last_button)
 		play = !play;
 
-	uint8_t	levelValue;
-
-	switch (mainMode)
+	switch(mainMode)
 	{
 		case MODE_TIME:
-			levelValue = 0;
-			labelOdd =  nullptr;
-			labelEven =  nullptr;
-			if (lastMainMode != mainMode)
-				dt = true;
+			if(lastMainMode != mainMode)
+				drawTimeCode = OSD_FRAMES;
 			break;
 
 		case MODE_BRIGHT:
-			levelValue = mainBright;
-			labelOdd =  brightLabelOdd;
-			labelEven =  brightLabelEven;
-			if (lastMainMode != mainMode)
-				dl = true;
-			break;
-
 		case MODE_VOLUME:
-			levelValue = mainVolume;
-			labelOdd =  volumeLabelOdd;
-			labelEven =  volumeLabelEven;
-			if (lastMainMode != mainMode)
-				dl = true;
+		default:
+			if(lastMainMode != mainMode)
+				drawLevelBars = OSD_FRAMES;
 			break;
 	}
-
-	if (dt)
-	{
-		drawTimeCode = 180;
-		drawLevelBars = 0;
-	}
-	else if (dl)
-	{
-		drawLevelBars = 180;
+	
+	// just draw one
+	if (drawLevelBars > drawTimeCode)
 		drawTimeCode = 0;
-	}
-
-	// optimize multiplication..
-	levelBarsOdd = &levelBarsOddData[levelValue * 40];
-	levelBarsEven = &levelBarsEvenData[levelValue * 40];
+	else
+		drawLevelBars = 0;
 
 	if (play)
 		volumeScale = scales[mainVolume];
@@ -309,9 +285,9 @@ updateTransport()
 		if (mainMode == MODE_TIME)
 		{
 			if (right && !last_right)
-				step = 1;
+				step = 2;
 			else if (left && !last_left)
-				step = -3;
+				step = -2;
 			else
 				step = (frameNumber & 1) ? -1 : 1;
 		}
@@ -357,12 +333,17 @@ update_stream:
 uint8_t	streamByte = 0;
 uint8_t	colorByte = 0;
 
-#define READ_DATA() \
-    { streamByte = *sd_ptr_data++; }
+#define READ_FRAME()    \
+{ \
+	streamByte = *sd_ptr_frame++; \
+}
 
-#define WRITE_COLOR(X)    \
-    { \
-		{ colorByte = *sd_ptr_color++; \
+#define READ_VERSION()    \
+{ \
+	streamByte = *sd_ptr_version++; \
+}
+
+#define PROCESS_COLOR() \
 			\
 			streamByte = colorByte; \
 			streamByte &= 0x0f; \
@@ -375,9 +356,21 @@ uint8_t	colorByte = 0;
 		  if (forceColor) \
 			streamByte = forceColor; \
 		  if (forceBWMode) \
-			streamByte &= 0x0f; \
-		} \
-	WRITE_DATA(X, streamByte) \
+			streamByte &= 0x0f;
+
+
+#define WRITE_COLOR(X)    \
+    { \
+		colorByte = *sd_ptr_color++; \
+		PROCESS_COLOR() \
+		WRITE_DATA(X, streamByte) \
+    }
+
+#define WRITE_COLOR_BK(X)    \
+    { \
+		colorByte = *sd_ptr_colorbk++; \
+		PROCESS_COLOR() \
+		WRITE_DATA(X, streamByte) \
     }
 
 #define WRITE_AUDIO_DATA(X, Y)    \
@@ -385,6 +378,7 @@ uint8_t	colorByte = 0;
 	streamByte = volumeScale[Y]; \
 	WRITE_DATA(X, streamByte) \
     }
+
 #define WRITE_AUDIO(X)    \
     { \
 	streamByte = *sd_ptr_audio++; \
@@ -393,8 +387,8 @@ uint8_t	colorByte = 0;
 
 #define WRITE_GRAPH(X)    \
     { \
-    if (sd_ptr_graph_const) \
-        streamByte = *sd_ptr_graph_const++; \
+    if (sd_ptr_graph_override) \
+        streamByte = *sd_ptr_graph_override++; \
     else \
         streamByte = *sd_ptr_graph++; \
 	WRITE_DATA(X, streamByte) \
@@ -418,6 +412,17 @@ fill_addr_right_line()
 	WRITE_COLOR(addr_set_gcol7 + 1);
 	WRITE_COLOR(addr_set_gcol8 + 1);
 	WRITE_COLOR(addr_set_gcol9 + 1);
+
+	// alternate between background color and playfield color
+    if (forceColor)
+    {
+        WRITE_DATA(addr_set_colubk_r + 1, 0);
+    }
+    else
+    {
+        WRITE_COLOR_BK(addr_set_colubk_r + 1);
+    }
+
 }
 
 void
@@ -438,6 +443,17 @@ fill_addr_left_line(bool again)
 	WRITE_COLOR(addr_set_gcol2 + 1);
 	WRITE_COLOR(addr_set_gcol3 + 1);
 	WRITE_COLOR(addr_set_gcol4 + 1);
+
+	// alternate between background color and playfield color
+	if (forceColor)
+	{
+		WRITE_DATA(addr_set_colupf_l + 1, 0);
+	}
+	else
+	{
+		WRITE_COLOR_BK(addr_set_colupf_l + 1);
+	}
+
 
 	// addr_pick_line_end = 0x0ee;
 	//		jmp right_line
@@ -503,14 +519,14 @@ fill_addr_blank_lines()
 	uint8_t	i;
 
 	// version number
-	READ_DATA();
-	READ_DATA();
-	READ_DATA();
-	READ_DATA();
+	READ_VERSION();
+	READ_VERSION();
+	READ_VERSION();
+	READ_VERSION();
 
-	READ_DATA();    // frame number
-	READ_DATA();    // frame number
-	READ_DATA();    // frame number
+	READ_FRAME();    // frame number
+	READ_FRAME();    // frame number
+	READ_FRAME();    // frame number
     
     if (streamByte & 4) // debug flash during play
     {
@@ -565,10 +581,8 @@ initState()
 		return false;
     
     volumeScale = scales[DEFAULT_LEVEL];
-	levelBarsOdd = levelBarsOddData;
-	levelBarsEven = levelBarsEvenData;
 
-	sd_swapField(true);
+	sd_swapField(true, odd);
 
 	A10_COUNT = 0;
 
@@ -605,10 +619,27 @@ again:
 					drawLevelBars--;
 					forceColor = COLOR_BLUE;
 
-					if (odd)
-						sd_ptr_graph_const = labelOdd;
-					else
-						sd_ptr_graph_const = labelEven;
+					switch(mainMode)
+					{
+						case MODE_TIME:
+							sd_ptr_graph_override = nullptr;
+							break;
+
+						case MODE_BRIGHT:
+							if(odd)
+								sd_ptr_graph_override = brightLabelOdd;
+							else
+								sd_ptr_graph_override = brightLabelEven;
+							break;
+
+						case MODE_VOLUME:
+						default:
+							if(odd)
+								sd_ptr_graph_override = volumeLabelOdd;
+							else
+								sd_ptr_graph_override = volumeLabelEven;
+							break;
+					}
 				}
 			}
 
@@ -616,10 +647,28 @@ again:
 			{
 				if (drawLevelBars)
 				{
-					if (odd)
-						sd_ptr_graph_const = levelBarsOdd;
+					uint8_t levelValue = 0;
+
+					switch(mainMode)
+					{
+						case MODE_TIME:
+							levelValue = 0;
+							break;
+
+						case MODE_BRIGHT:
+							levelValue = mainBright;
+							break;
+
+						case MODE_VOLUME:
+						default:
+							levelValue = mainVolume;
+							break;
+					}
+
+					if(odd)
+						sd_ptr_graph_override = (&levelBarsOddData[levelValue * 40]);
 					else
-						sd_ptr_graph_const = levelBarsEven;
+						sd_ptr_graph_override = (&levelBarsEvenData[levelValue * 40]);
 				}
 			}
 
@@ -637,6 +686,20 @@ again:
 			WHILE_A7();
 			sd_runReadState();
 
+			if(odd)
+			{
+				if(drawTimeCode)
+				{
+					if (lines == (TIMECODE_HEIGHT - 0))
+						sd_blankPartialLines(true);
+				}
+				if(drawLevelBars)
+				{
+					if(lines == 22)
+						sd_blankPartialLines(true);
+				}
+			}
+
 			if (lines >= 1)
 			{
 				BEGIN_WRITE()
@@ -653,8 +716,9 @@ again:
 					fill_addr_end_lines();
 				END_WRITE()
 
-				sd_swapField(bufferIndex);
+				sd_swapField(bufferIndex, odd);
 				sd_blankPartialLines(odd);
+
 				bufferIndex = !bufferIndex;
 				updateTransport();
 

@@ -18,7 +18,7 @@
 #define FULL_NUM_BLOCKS 8 /* (FIELD_SIZE / BLOCK_SIZE) */
 
 #define FRAME_SIZE (2 * FIELD_SIZE)
-#define BLANK_LINE_SIZE	(28+3+37) // 68, +2 prev
+#define BLANK_LINE_SIZE (30+3+37-1) // 70-1
 
 #define COLOR_SIZE (192 * 5)
 
