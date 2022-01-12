@@ -892,6 +892,28 @@ rgb_palette[4*3] =
 	255, 0, 0
 };
 
+
+// https://en.wikipedia.org/wiki/Texas_Instruments_TMS9918#Colors
+unsigned int colecovision_palette[16*3] = 
+{
+	0x00, 0x00, 0x00, // transparent	
+	0x00, 0x00, 0x00, // black	
+	0x0A, 0xAD, 0x1E, // medium green	
+	0x34, 0xC8, 0x4C, // light green	
+	0x2B, 0x2D, 0xE3, // dark blue	
+	0x51, 0x4B, 0xFB, // light blue	
+	0xBD, 0x29, 0x25, // dark red	
+	0x1E, 0xE2, 0xEF, // cyan	
+	0xFB, 0x2C, 0x2B, // medium red	
+	0xFF, 0x5F, 0x4C, // light red	
+	0xBD, 0xA2, 0x2B, // dark yellow	
+	0xD7, 0xB4, 0x54, // light yellow	
+	0x0A, 0x8C, 0x18, // dark green	
+	0xAF, 0x32, 0x9A, // magenta	
+	0xB2, 0xB2, 0xB2, // gray	
+	0xFF, 0xFF, 0xFF, // white	
+};
+
 inline uint8_t
 lookupClosestInPalette(float cellColor[4], Array2D<float[3]>& fpal, const uint8_t lookup[256][256][256]) 
 {
@@ -964,6 +986,7 @@ enum
 	Palette_Rubik = 5,
 	Palette_Atari2600PAL = 6,
 	Palette_Atari2600SECAM = 7,
+	Palette_ColecoVision = 8,
 };
 
 enum
@@ -1018,6 +1041,11 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 		case Palette_Rubik:
 			pal = rubik_palette;
 			palSize = 6;
+			break;
+
+		case Palette_ColecoVision:
+			pal = colecovision_palette;
+			palSize = 16;
 			break;
 	}
 }
@@ -1635,7 +1663,9 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 		sp.name = "Palette";
 		sp.label = "Palette";
 
-		const char *names[8] = 
+		constexpr int	numItems = 9;
+
+		const char *names[numItems] = 
 		{
 			"Atari2600ntsc",
 			"Bw2",
@@ -1644,10 +1674,11 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 			"Atari2600randomterrain",
 			"Rubik",
 			"Atari2600pal",
-			"Atari2600secam"
+			"Atari2600secam",
+			"Colecovision"
 		};
 
-		const char *labels[8] = 
+		const char *labels[numItems] = 
 		{
 			"Atari 2600 NTSC",
 			"B/W 2",
@@ -1656,10 +1687,11 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 			"Atari 2600 Random Terrain",
 			"Rubik",
 			"Atari 2600 PAL",
-			"Atari 2600 SECAM"
+			"Atari 2600 SECAM",
+			"ColecoVision"
 		};
 
-		manager->appendMenu(sp, 8, names, labels);
+		manager->appendMenu(sp, numItems, names, labels);
 	}
 	
 	{
