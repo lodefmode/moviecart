@@ -1,14 +1,20 @@
-/* Shared Use License: This file is owned by Derivative Inc. (Derivative) and
- * can only be used, and/or modified for use, in conjunction with 
- * Derivative's TouchDesigner software, and only if you are a licensee who has
- * accepted Derivative's TouchDesigner license or assignment agreement (which
- * also govern the use of this file).  You may share a modified version of this
- * file with another authorized licensee of Derivative's TouchDesigner software.
- * Otherwise, no redistribution or sharing of this file, with or without
- * modification, is permitted.
- */
+/* Shared Use License: This file is owned by Derivative Inc. (Derivative)
+* and can only be used, and/or modified for use, in conjunction with
+* Derivative's TouchDesigner software, and only if you are a licensee who has
+* accepted Derivative's TouchDesigner license or assignment agreement
+* (which also govern the use of this file). You may share or redistribute
+* a modified version of this file provided the following conditions are met:
+*
+* 1. The shared file or redistribution must retain the information set out
+* above and this list of conditions.
+* 2. Derivative's name (Derivative Inc.) or its trademarks may not be used
+* to endorse or promote products derived from this file without specific
+* prior written permission from Derivative.
+*/
 
 #include "TOP_CPlusPlusBase.h"
+
+using namespace TD;
 
 
 // kd-tree structures
@@ -103,28 +109,24 @@ private:
 
 };
 
-class CPUMemoryTOP : public TOP_CPlusPlusBase
+class ColorizeTOP : public TOP_CPlusPlusBase
 {
 public:
-    CPUMemoryTOP(const OP_NodeInfo *info);
-    virtual ~CPUMemoryTOP();
+	ColorizeTOP(const OP_NodeInfo *info, TOP_Context* context);
+	virtual ~ColorizeTOP();
 
-    virtual void		getGeneralInfo(TOP_GeneralInfo *, const OP_Inputs*, void*) override;
-    virtual bool		getOutputFormat(TOP_OutputFormat*, const OP_Inputs*, void*) override;
+	virtual void		getGeneralInfo(TOP_GeneralInfo *, const OP_Inputs*, void*) override;
 
-
-    virtual void		execute(TOP_OutputFormatSpecs*,
+	virtual void		execute(TOP_Output*,
 							const OP_Inputs*,
-							TOP_Context* context,
 							void* reserved1) override;
 
-
-    virtual int32_t		getNumInfoCHOPChans(void *reserved1) override;
-    virtual void		getInfoCHOPChan(int32_t index,
+	virtual int32_t		getNumInfoCHOPChans(void *reserved1) override;
+	virtual void		getInfoCHOPChan(int32_t index,
 								OP_InfoCHOPChan *chan, void* reserved1) override;
 
-    virtual bool		getInfoDATSize(OP_InfoDATSize *infoSize, void *reserved1) override;
-    virtual void		getInfoDATEntries(int32_t index,
+	virtual bool		getInfoDATSize(OP_InfoDATSize *infoSize, void *reserved1) override;
+	virtual void		getInfoDATEntries(int32_t index,
 									int32_t nEntries,
 									OP_InfoDATEntries *entries,
 									void *reserved1) override;
@@ -134,29 +136,30 @@ public:
 
 private:
 
-	void				setupStorage(int outputWidth, int outputHeight, int cellSize);
-	void				storeResults(uint8_t *destPixel, int cellSize);
+	TOP_Context*		myContext;
 
-	Array2D<float[4]>		myMem;
-	Array2D<float[4]>		myMemBackup;
-	Array2D<uint8_t>		myResultGraph;
-	Array2D<uint8_t>		myResultColor;
-	Array2D<float[4]>		myResultBK;
-	Array2D<float[3]>		myFPal;
+    void                setupStorage(int outputWidth, int outputHeight, int cellSize);
+    void                storeResults(uint8_t *destPixel, int cellSize);
 
-	unsigned int		*myLastPal;
-	uint8_t				 myColorLookup[256][256][256];
-	void				 buildColourMap();
+    Array2D<float[4]>	myMem;
+    Array2D<float[4]>	myMemBackup;
+    Array2D<uint8_t>	myResultGraph;
+    Array2D<uint8_t>	myResultColor;
+    Array2D<float[4]>	myResultBK;
+    Array2D<float[3]>	myFPal;
 
-	void				 ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
-								float *curY, int palSize, float bleed, int matrix,
-								bool dither, float *curError, float bestError,
-								bool searchForeground, bool fastPalette);
+    unsigned int*		myLastPal;
+    uint8_t				myColorLookup[256][256][256];
+    void				buildColourMap();
 
+    void				ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
+							float *curY, int palSize, float bleed, int matrix,
+							bool dither, float *curError, float bestError,
+							bool searchForeground, bool fastPalette);
 
-	// k-d tree data
-	struct kd_node_t	kdtree[256];
-	struct kd_node_t*	kdtree_root{nullptr};
-	void				setup_kdtree(Array2D<float[3]>& fpal, int palSize);
+    // k-d tree data
+    struct kd_node_t	kdtree[256];
+    struct kd_node_t*	kdtree_root{nullptr};
+    void				setup_kdtree(Array2D<float[3]>& fpal, int palSize);
 
 };

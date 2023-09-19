@@ -18,21 +18,21 @@ stays the same, otherwise changes won't be backwards compatible
 ********/
 
 
-#ifndef __CPlusPlus_Common
-#define __CPlusPlus_Common
+#ifndef __CPlusPlus_Common__
+#define __CPlusPlus_Common__
 
+#include <utility>
 
 #ifdef _WIN32
 	#define NOMINMAX
 	#include <windows.h>
 	#include <stdint.h>
-	#include "GL_Extensions.h"
 	#define DLLEXPORT __declspec (dllexport)
 #else
-	#include <OpenGL/gltypes.h>
 	#define DLLEXPORT
 #endif
 
+#include <cstring>
 #include <assert.h>
 #include <cmath>
 #include <float.h>
@@ -40,67 +40,258 @@ stays the same, otherwise changes won't be backwards compatible
 #ifndef PyObject_HEAD
 	struct _object;
 	typedef _object PyObject;
+	typedef struct _typeobject PyTypeObject;
+	typedef struct PyGetSetDef PyGetSefDef;
+	typedef struct PyMethodDef PyMethodDef;
 #endif
 
-class OP_NodeInfo;
+struct cudaArray;
+struct CUstream_st;
+typedef struct CUstream_st* cudaStream_t;
 
-// These are the definitions for the C-functions that are used to
-// load the library and create instances of the object you define
+class TOP_CPlusPlus;
+
+namespace TD
+{
+
+//class OP_NodeInfo;
+
 class CHOP_PluginInfo;
 class CHOP_CPlusPlusBase;
-typedef void (__cdecl *FILLCHOPPLUGININFO)(CHOP_PluginInfo *info);
-typedef CHOP_CPlusPlusBase* (__cdecl *CREATECHOPINSTANCE)(const OP_NodeInfo*);
-typedef void (__cdecl *DESTROYCHOPINSTANCE)(CHOP_CPlusPlusBase*);
-
 class DAT_PluginInfo;
 class DAT_CPlusPlusBase;
-typedef void(__cdecl *FILLDATPLUGININFO)(DAT_PluginInfo *info);
-typedef DAT_CPlusPlusBase* (__cdecl *CREATEDATINSTANCE)(const OP_NodeInfo*);
-typedef void(__cdecl *DESTROYDATINSTANCE)(DAT_CPlusPlusBase*);
-
 class TOP_PluginInfo;
 class TOP_CPlusPlusBase;
 class TOP_Context;
-typedef void (__cdecl *FILLTOPPLUGININFO)(TOP_PluginInfo* info);
-typedef TOP_CPlusPlusBase* (__cdecl *CREATETOPINSTANCE)(const OP_NodeInfo*, TOP_Context*);
-typedef void (__cdecl *DESTROYTOPINSTANCE)(TOP_CPlusPlusBase*, TOP_Context*);
-
 class SOP_PluginInfo;
 class SOP_CPlusPlusBase;
-typedef void(__cdecl *FILLSOPPLUGININFO)(SOP_PluginInfo *info);
-typedef SOP_CPlusPlusBase* (__cdecl *CREATESOPINSTANCE)(const OP_NodeInfo*);
-typedef void(__cdecl *DESTROYSOPINSTANCE)(SOP_CPlusPlusBase*);
-
-
-struct cudaArray;
 
 #pragma pack(push, 8)
 
-enum class OP_CPUMemPixelType : int32_t
+enum class OP_PixelFormat : int32_t
 {
+	Invalid = -1,
+
 	// 8-bit per color, BGRA pixels. This is preferred for 4 channel 8-bit data
 	BGRA8Fixed = 0,
-	// 8-bit per color, RGBA pixels. Only use this one if absolutely nesseary.
-	RGBA8Fixed,
-	// 32-bit float per color, RGBA pixels
-	RGBA32Float,
+	// 8-bit per color, RGBA pixels. Only use this one if absolutely nessessary.
+	RGBA8Fixed = 1,
+	RGBA16Fixed = 102,
+	RGBA16Float = 202,
+	RGBA32Float = 2,
 
-	// A few single and two channel versions of the above
-	R8Fixed,
-	RG8Fixed,
-	R32Float,
-	RG32Float,
+	Mono8Fixed = 3,
+	Mono16Fixed = 100,
+	Mono16Float = 200,
+	Mono32Float = 5,
 
-	R16Fixed = 100,
-	RG16Fixed,
-	RGBA16Fixed,
+	// RG two channel
+	RG8Fixed = 4,
+	RG16Fixed = 101,
+	RG16Float = 201,
+	RG32Float = 6,
 
-	R16Float = 200,
-	RG16Float,
-	RGBA16Float,
+	// Alpha only
+	A8Fixed = 300,
+	A16Fixed,
+	A16Float,
+	A32Float,
+
+	// Mono with Alpha
+	MonoA8Fixed = 400,
+	MonoA16Fixed,
+	MonoA16Float,
+	MonoA32Float,
+
+	// RGBX, Alpha channel is ignored, will be treated a 1.0 for operations.
+	RGBX16Float = 500,
+	RGBX32Float,
+
+	// sRGB. use SBGRA if possible since that's what most GPUs use
+	SBGRA8Fixed = 600,
+	SRGBA8Fixed,
+
+	RGB10A2Fixed = 700,
+	// 11-bit float, positive values only. B is actually 10 bits
+	RGB11Float,
+
+
+};
+
+typedef OP_PixelFormat OP_CPUMemPixelType;
+
+enum class OP_TexDim : int32_t
+{
+	eInvalid = -1,
+	e2D,
+	e2DArray,
+	e3D,
+	eCube,
 };
 
 class OP_String;
+class OP_TOPInputOpenGL;
+class OP_TOPInputDownloadOptionsOpenGL;
+
+class PY_GetInfo
+{
+public:
+	PY_GetInfo()
+	{
+		memset(this, 0, sizeof(PY_GetInfo));
+	}
+	// If this is set to true then the node will cook if it needs to before your class
+	// instance is returned. This should be set to true if the python code requires
+	// the node's state to be up-to-date before doing it's work.
+	bool	autoCook;
+
+	int32_t reserved[50];
+};
+
+class PY_Context
+{
+public:
+	virtual ~PY_Context()
+	{
+	}
+
+	// Returns a pointer to the instance of your CHOP_CPlusPlusBase, TOP_CPlusPlusBase etc. subclass
+	// for this node that you've defined in your project.
+	virtual void*	getNodeInstance(const PY_GetInfo& info, void* reserved = nullptr) = 0;
+
+	// If your python code is changing something in your node that should cause it to re-cook
+	// you should call this at the end of your python code.
+	virtual void	makeNodeDirty(void* reserved = nullptr) = 0;
+
+	int32_t			reserved[50];
+};
+
+#define OP_STRUCT_HEADER_ENTRIES	256
+#define OP_PYTHON_STRUCT_HEADER int32_t OP_PY_STRUCT_HEADER[OP_STRUCT_HEADER_ENTRIES];
+
+struct PY_Struct
+{
+public:
+	OP_PYTHON_STRUCT_HEADER
+
+	PY_Context*	context;
+
+	int32_t		reserved2[1024];
+};
+
+class TOP_Buffer;
+
+template<class T> class OP_SmartRef;
+
+// For classes that we want to be able to reference count, this will be their base class.
+// However management of the reference counting is done via the OP_SmartRef automatic
+// reference counting.
+class OP_RefCount
+{
+public:
+	virtual ~OP_RefCount() { }
+
+protected:
+	// Increase the reference count to this instance.
+	virtual void	acquire() = 0;
+	// Decrease the reference count to this instance. When the reference count reaches 0 the class will be deleted.
+	virtual void	release() = 0;
+
+	virtual void	reserved0() = 0;
+	virtual void	reserved1() = 0;
+	virtual void	reserved2() = 0;
+	virtual void	reserved3() = 0;
+	virtual void	reserved4() = 0;
+
+	template <class T>
+	friend class OP_SmartRef;
+};
+
+template <class T>
+class OP_SmartRef
+{
+public:
+
+	OP_SmartRef() :
+		myTarget(nullptr)
+	{
+	}
+
+	OP_SmartRef(T* t)
+	{
+		if (t)
+			t->acquire();
+		myTarget = t;
+	}
+
+	OP_SmartRef(const OP_SmartRef<T>& t) :
+		myTarget(nullptr)
+	{
+		operator=(t);
+	}
+
+	OP_SmartRef(OP_SmartRef<T>&& t) :
+		myTarget(nullptr)
+	{
+		operator=(std::move(t));
+	}
+
+	~OP_SmartRef()
+	{
+		release();
+	}
+
+	void
+	operator=(const OP_SmartRef<T>& t)
+	{
+		if (this == &t || myTarget == t.myTarget)
+			return;
+
+		if (myTarget)
+			myTarget->release();
+		if (t.myTarget)
+			t.myTarget->acquire();
+		myTarget = t.myTarget;
+	}
+
+	void
+	operator=(OP_SmartRef<T>&& t)
+	{
+		if (this == &t || myTarget == t.myTarget)
+			return;
+
+		if (myTarget)
+			myTarget->release();
+		myTarget = t.myTarget;
+		t.myTarget = nullptr;
+	}
+
+	void
+	release()
+	{
+		if (myTarget)
+		{
+			myTarget->release();
+			myTarget = nullptr;
+		}
+	}
+
+	T*
+	operator->() const
+	{
+		return myTarget;
+	}
+
+	operator bool() const
+	{
+		return myTarget != nullptr;
+	}
+
+private:
+	T*	myTarget;
+
+	friend class ::TOP_CPlusPlus;
+};
 
 // Used to describe this Plugin so it can be used as a custom OP.
 // Can be filled in as part of the Fill*PluginInfo() callback
@@ -118,7 +309,7 @@ public:
 	// Spaces are not allowed
 	OP_String*		opType;
 
-	// The english readable label for the node. This is what is shown in the 
+	// The english readable label for the node. This is what is shown in the
 	// OP Create Menu dialog.
 	// Spaces and other special characters are allowed.
 	// This can be a UTF-8 encoded string for non-english langauge label
@@ -161,7 +352,7 @@ public:
 	// If this Custom OP is using CPython objects (PyObject* etc.) obtained via
 	// getParPython() calls, this needs to be set to the Python
 	// version this plugin is compiled against.
-	// 
+	//
 	// This ensures when TD's Python version is upgraded the plugins will
 	// error cleanly. This should be set to PY_VERSION as defined in
 	// patchlevel.h from the Python include folder. (E.g, "3.5.1")
@@ -176,14 +367,89 @@ public:
 	// every-frame cooking.
 	bool			cookOnStart = false;
 
-	int32_t			reserved[97];
+	// If you provide either (or both) of these a custom Python class will be created for your Custom OP
+	// that contains these getters/setters and/or methods.
+	// These should be arrays of the given types, terminated by a {0} entry (as it CPython standard for working
+	// with these types
+	PyGetSetDef*	pythonGetSets = nullptr;
+	PyMethodDef*	pythonMethods = nullptr;
+	// The python documentation string for the class
+	const char*		pythonDoc = nullptr;
+
+	// If you want this node to have a Callback DAT parameter and
+	// your custom OP to be able call python callbacks the end-users fill in,
+	// then fill in the stub code for the DAT here.
+	// This will cause a Callbacks DAT parameter to be added to the first page of
+	// your node's parameters.
+	// This should be setup with empty/stub functions along with comments, 
+	// similar to the way other Callback DATs are pre-filled in other nodes in TouchDesigner.
+	// Note: This only works when the .dll is installed as a Custom OP, not as a C++ OP.
+	const char*		pythonCallbacksDAT = nullptr;
+
+	int32_t			reserved[88];
 };
 
+
+class OP_Context
+{
+public:
+	OP_Context()
+	{
+		memset(reserved, 0, sizeof(reserved));
+	}
+	virtual ~OP_Context()
+	{
+	}
+
+	// By convention all callbacks in TouchDesigner have the first argument as 'op' which is the OP that
+	// the callback originated from (your Custom Operator in this case).
+	// Use this function to create your 'arguments' tuple, the first entry will already be filled with the
+	// PyObject for 'op'. You should fill in the other entries you want, starting at index 1.
+	virtual PyObject* createArgumentsTuple(int numOtherArgs, void* reserved1) = 0;
+
+	// Call the function defined in the Callbacks DAT named 'functionName'.
+	// 'arguments' must be a PyTuple of arguments created with createArgumentsTuple()
+	// 'keywords' must be nullptr or a PyDict of keyword arguments that you create yourself.
+	// References to 'arguments' and 'keywords' are not stolen, so Py_DECREF if you are done with them after calling
+	// this function.
+	// This function will return the PyObject* returned by the callback.
+	// This function will return nullptr on error,
+	// If non-nullptr is returned, you are now the owner of it and must Py_DECREF it (or hold onto it for other usages).
+	// If the node does not have a callback DAT created, or no function matches the given functionName, then Py_None is returned.
+	// Py_None must also have Py_DECREF called on it.
+	virtual PyObject* callPythonCallback(const char* functionName, PyObject* arguments, PyObject* keywords,
+										 void* reserved1) = 0;
+
+	// All CUDA operations must occur on the main thread, and between calls to these
+	// functions. This is needed to ensure the order of operations between Vulkan
+	// and CUDA is properly managed.
+	virtual bool	beginCUDAOperations(void* reserved1) = 0;
+	virtual void	endCUDAOperations(void* reserved1) = 0;
+
+	int32_t			reserved[50];
+
+protected:
+	// Reserved for later use
+	virtual void*	reservedFunc0() = 0;
+	virtual void*	reservedFunc1() = 0;
+	virtual void*	reservedFunc2() = 0;
+	virtual void*	reservedFunc3() = 0;
+	virtual void*	reservedFunc4() = 0;
+	virtual void*	reservedFunc5() = 0;
+	virtual void*	reservedFunc6() = 0;
+	virtual void*	reservedFunc7() = 0;
+	virtual void*	reservedFunc8() = 0;
+	virtual void*	reservedFunc9() = 0;
+	virtual void*	reservedFunc10() = 0;
+	virtual void*	reservedFunc11() = 0;
+	virtual void*	reservedFunc12() = 0;
+	virtual void*	reservedFunc13() = 0;
+	virtual void*	reservedFunc14() = 0;
+};
 
 class OP_NodeInfo
 {
 public:
-
 	// The full path to the operator
 	const char*		opPath;
 
@@ -202,9 +468,11 @@ public:
 	// UTF8-8 encoded.
 	const char*		pluginPath;
 
-	int32_t			reserved[17];
-};
+	// Used to do other operations to the node such as call python callbacks
+	OP_Context*		context;
 
+	int32_t			reserved[15];
+};
 
 class OP_DATInput
 {
@@ -234,46 +502,140 @@ public:
 	int32_t			reserved[18];
 };
 
+class OP_TOPInputDownloadOptions
+{
+public:
+	OP_TOPInputDownloadOptions()
+	{
+		verticalFlip = false;
+		pixelFormat = OP_PixelFormat::Invalid;
+	}
+
+	// Set this to true if you want the image vertically flipped in the
+	// downloaded data
+	bool					verticalFlip;
+
+	// Set this to how you want the pixel data to be give to you in CPU memory.
+	// Leave this as Invalid if you want to download the texture in it's GPU native format.
+	// Only 2D textures can be converted to other formats. 3D/Cube/2DArray all must have this set as Invalid.
+	OP_PixelFormat			pixelFormat;
+};
+
+class OP_TextureDesc
+{
+public:
+	OP_TextureDesc()
+	{
+		memset(reserved, 0, sizeof(reserved));
+	}
+
+	uint32_t		width = 0;
+	uint32_t		height = 0;
+	// Depth for 3D and 2D_ARRAY textures, 1 for other texture types
+	uint32_t		depth = 1;
+
+	OP_TexDim		texDim = OP_TexDim::eInvalid;
+	OP_PixelFormat	pixelFormat = OP_PixelFormat::Invalid;
+
+	// If these are 0, then the aspect is simple the width and height ratio (square pixels).
+	float			aspectX = 0.0f;
+	float			aspectY = 0.0f;
+
+	int32_t			reserved[32];
+};
+
+// When you are given one of these you become the owner. You need to call release() on it when you
+// are done with it.
+class OP_TOPDownloadResult : public OP_RefCount
+{
+protected:
+	virtual ~OP_TOPDownloadResult()
+	{
+	}
+public:
+	OP_TOPDownloadResult()
+	{
+		memset(reserved, 0, sizeof(reserved));
+	}
+
+	// Stalls until the downloaded data is ready. If calling from the main thread, try to avoid calling this for at least
+	// 1 frame to avoid a CPU stall (See CPUMemoryTOP example).
+	// However, this call is thread safe so you can pass this class off to another thread and have it stall right away
+	// and start working on the data as soon as it's ready (such as outputting to an external device).
+	virtual void*		getData() = 0;
+
+	// The size in bytes of the data. 
+	uint64_t			size = 0;
+
+	OP_TextureDesc		textureDesc;
+
+	int32_t				reserved[32];
+};
+
+
+class OP_CUDAArrayInfo
+{
+public:
+	OP_CUDAArrayInfo()
+	{
+		memset(reserved, 0, sizeof(reserved));
+	}
+
+	// Description of the texture that cudaArray points to.
+	OP_TextureDesc		textureDesc;
+
+	// When you first obtain a pointer to the TOP_CUDAArrayInfo, this will be nullptr.
+	// It will get filled in with the correct memory address when you call
+	// OP_Context::beginCUDAOperations()
+	cudaArray*			cudaArray = nullptr;
+
+	uint32_t			reserved[25];
+};
+
+class OP_CUDAAcquireInfo
+{
+public:
+	OP_CUDAAcquireInfo()
+	{
+		memset(reserved, 0, sizeof(reserved));
+	}
+
+	cudaStream_t stream = 0;
+
+	uint32_t			reserved[25];
+};
 
 class OP_TOPInput
 {
+protected:
+	virtual ~OP_TOPInput()
+	{
+	}
 public:
+	// You become the owner of the returned OP_TOPDownloadResult.
+	// Call release() on it when you are done with it (or let the variable fall out of scope and destruct itself).
+	virtual OP_SmartRef<OP_TOPDownloadResult>	downloadTexture(const OP_TOPInputDownloadOptions& opts, void* reserved1) const = 0;
+
+	// Can only be called from a C++ TOP/Custom TOP that is working in TOP_ExecuteMode::CUDA. Will error/return nullptr in other
+	// cases. Should only be called from within execute(), and the returned pointer will remain valids until execute() returns.
+	// Returns a OP_CUDArrayInfo* that can be used to get the cudaArray* pointer for the texture memory for this TOP.
+	virtual const OP_CUDAArrayInfo*				getCUDAArray(const OP_CUDAAcquireInfo& info, void* reserved2) const = 0;
+
 	const char*		opPath;
 	uint32_t		opId;
 
-	int32_t			width;
-	int32_t			height;
-
-	// You can use OP_Inputs::getTOPDataInCPUMemory() to download the
-	// data from a TOP input into CPU memory easily.
-
-	// The OpenGL Texture index for this TOP.
-	// This is only valid when accessed from C++ TOPs.
-	// Other C++ OPs will have this value set to 0 (invalid).
-	GLuint			textureIndex;
-
-	// The OpenGL Texture target for this TOP.
-	// E.g GL_TEXTURE_2D, GL_TEXTURE_CUBE,
-	// GL_TEXTURE_2D_ARRAY
-	GLenum			textureType;
-
-	// Depth for 3D and 2D_ARRAY textures, undefined
-	// for other texture types
-	uint32_t		depth;
-
-	// contains the internalFormat for the texture
-	// such as GL_RGBA8, GL_RGBA32F, GL_R16
-	GLint			pixelFormat;
-
-	int32_t			reserved1;
-
-	// When the TOP_ExecuteMode is CUDA, this will be filled in
-	cudaArray*		cudaInput;
+	OP_TextureDesc	textureDesc;
 
 	// The number of times this node has cooked
 	int64_t			totalCooks;
 
 	int32_t			reserved[14];
+protected:
+	virtual void*	reserved0() = 0;
+	virtual void*	reserved1() = 0;
+	virtual void*	reserved2() = 0;
+	virtual void*	reserved3() = 0;
+	virtual void*	reserved4() = 0;
 };
 
 class OP_String
@@ -281,6 +643,7 @@ class OP_String
 protected:
 	OP_String()
 	{
+		memset(reserved, 0, sizeof(reserved));
 	}
 
 	virtual ~OP_String()
@@ -288,20 +651,15 @@ protected:
 	}
 
 public:
-
 	// val is expected to be UTF-8 encoded
 	virtual void	setString(const char* val) = 0;
 
-
 	int32_t			reserved[20];
-
 };
-
 
 class OP_CHOPInput
 {
 public:
-
 	const char*		opPath;
 	uint32_t		opId;
 
@@ -309,8 +667,6 @@ public:
 	int32_t			numSamples;
 	double			sampleRate;
 	double			startIndex;
-
-
 
 	// Retrieve a float array for a specific channel.
 	// 'i' ranges from 0 to numChannels-1
@@ -322,7 +678,6 @@ public:
 	{
 		return channelData[i];
 	}
-
 
 	// Retrieve the name of a specific channel.
 	// 'i' ranges from 0 to numChannels-1
@@ -339,15 +694,12 @@ public:
 
 	// The number of times this node has cooked
 	int64_t			totalCooks;
-
 	int32_t			reserved[18];
 };
-
 
 class OP_ObjectInput
 {
 public:
-
 	const char*		opPath;
 	uint32_t		opId;
 
@@ -360,7 +712,6 @@ public:
 
 	int32_t			reserved[18];
 };
-
 
 // The type of data the attribute holds
 enum class AttribType : int32_t
@@ -386,7 +737,6 @@ enum class PrimitiveType : int32_t
 	Invalid,
 	Polygon = 0,
 };
-
 
 class Vector
 {
@@ -605,7 +955,6 @@ public:
 	float z;
 };
 
-
 class Color
 {
 public:
@@ -630,7 +979,6 @@ public:
 	float b;
 	float a;
 };
-
 
 class TexCoord
 {
@@ -774,7 +1122,6 @@ public:
 
 };
 
-
 class SOP_NormalInfo
 {
 public:
@@ -825,8 +1172,6 @@ public:
 	int32_t			numTextureLayers;
 };
 
-
-
 // CustomAttribInfo, all the required data for each custom attribute
 // this info can be queried by calling getCustomAttribute() which accepts
 // two types of argument:
@@ -875,9 +1220,8 @@ public:
 		intData = nullptr;
 	}
 
-	const float*		floatData;
-	const int32_t*		intData;
-
+	float*			floatData;
+	int32_t*		intData;
 };
 
 // SOP_PrimitiveInfo, all the required data for each primitive
@@ -911,22 +1255,15 @@ public:
 
 };
 
-
-
-
 class OP_SOPInput
 {
 public:
-
 	virtual ~OP_SOPInput()
 	{
 	}
 
-
-
 	const char*		opPath;
 	uint32_t		opId;
-
 
 	// Returns the total number of points
 	virtual int32_t 		getNumPoints() const = 0;
@@ -978,7 +1315,7 @@ public:
 	virtual bool			isInside(const Position &pos) = 0;
 
 	// Returns true if the ray intersected with the geometry
-	virtual bool			sendRay(const Position &pos, const Vector &dir, 
+	virtual bool			sendRay(const Position &pos, const Vector &dir,
 								Position &hitPostion, float &hitLength, Vector &hitNormal,
 								float &hitU, float &hitV, int &hitPrimitiveIndex) = 0;
 
@@ -1004,45 +1341,6 @@ public:
 	int64_t			totalCooks;
 
 	int32_t			reserved[97];
-};
-
-
-
-enum class OP_TOPInputDownloadType : int32_t
-{
-	// The texture data will be downloaded and and available on the next frame.
-	// Except for the first time this is used, getTOPDataInCPUMemory()
-	// will return the texture data on the CPU from the previous frame.
-	// The first getTOPDataInCPUMemory() is called it will be nullptr.
-	// ** This mode should be used is most cases for performance reasons **
-	Delayed = 0,
-
-	// The texture data will be downloaded immediately and be available
-	// this frame. This can cause a large stall though and should be avoided
-	// in most cases
-	Instant,
-};
-
-class OP_TOPInputDownloadOptions
-{
-public:
-	OP_TOPInputDownloadOptions()
-	{
-		downloadType = OP_TOPInputDownloadType::Delayed;
-		verticalFlip = false;
-		cpuMemPixelType = OP_CPUMemPixelType::BGRA8Fixed;
-	}
-
-	OP_TOPInputDownloadType	downloadType;
-
-	// Set this to true if you want the image vertically flipped in the
-	// downloaded data
-	bool					verticalFlip;
-
-	// Set this to how you want the pixel data to be give to you in CPU
-	// memory. BGRA8Fixed should be used for 4 channel 8-bit data if possible
-	OP_CPUMemPixelType		cpuMemPixelType;
-
 };
 
 class OP_TimeInfo
@@ -1075,15 +1373,12 @@ public:
 	double	deltaFrames;
 
 	// The number of milliseconds that have elapsed since the last cook.
-	// Note that this isn't done via CPU timers, but is instead 
+	// Note that this isn't done via CPU timers, but is instead
 	// simply deltaFrames * milliSecondsPerFrame
 	double	deltaMS;
 
-
-
 	int32_t	reserved[40];
 };
-
 
 class OP_Inputs
 {
@@ -1099,9 +1394,10 @@ public:
 	// will return nullptr.
 	virtual int32_t		getNumInputs() const = 0;
 
-	// Will return nullptr when the input has nothing connected to it.
-	// only valid for C++ TOP operators
-	virtual const OP_TOPInput*		getInputTOP(int32_t index) const = 0;
+private:
+	// Deprecated, only declared here so legacy code can work.
+	virtual const OP_TOPInputOpenGL*		getInputTOPOpenGL(int32_t index) const = 0;
+public:
 	// Only valid for C++ CHOP operators
 	virtual const OP_CHOPInput*		getInputCHOP(int32_t index) const = 0;
 	// getInputSOP() declared later on in the class
@@ -1111,7 +1407,10 @@ public:
 	// may return nullptr when invalid input
 	// this value is valid until the parameters are rebuilt or it is called with the same parameter name.
 	virtual const OP_DATInput*		getParDAT(const char *name) const = 0;
-	virtual const OP_TOPInput*		getParTOP(const char *name) const = 0;
+private:
+	// Deprecated, only declared here so legacy code can work.
+	virtual const OP_TOPInputOpenGL*	getParTOPOpenGL(const char *name) const = 0;
+public:
 	virtual const OP_CHOPInput*		getParCHOP(const char *name) const = 0;
 	virtual const OP_ObjectInput*	getParObject(const char *name) const = 0;
 	// getParSOP() declared later on in the class
@@ -1152,34 +1451,27 @@ public:
 
 	// returns true on success
 	// from_name and to_name must be Object parameters
-	virtual bool	getRelativeTransform(const char* from_name, const char* to_name, double matrix[4][4]) const = 0;
-
+	virtual bool		getRelativeTransform(const char* from_name, const char* to_name, double matrix[4][4]) const = 0;
 
 	// disable or enable updating of the parameter
 	virtual void		 enablePar(const char* name, bool onoff) const = 0;
-
 
 	// these are defined by paths.
 	// may return nullptr when invalid input
 	// this value is valid until the parameters are rebuilt or it is called with the same parameter name.
 	virtual const OP_DATInput*		getDAT(const char *path) const = 0;
-	virtual const OP_TOPInput*		getTOP(const char *path) const = 0;
+private:
+	// Deprecated, only declared here so legacy code can work.
+	virtual const OP_TOPInputOpenGL*	getTOPOpenGL(const char *path) const = 0;
+public:
 	virtual const OP_CHOPInput*		getCHOP(const char *path) const = 0;
 	virtual const OP_ObjectInput*	getObject(const char *path) const = 0;
 
-
-	// This function can be used to retrieve the TOPs texture data in CPU
-	// memory. You must pass the OP_TOPInput object you get from
-	// getParTOP/getInputTOP into this, not a copy you've made
-	//
-	// Fill in a OP_TOPIputDownloadOptions class with the desired options set
-	//
-	// Returns the data, which will be valid until the end of execute()
-	// Returned value may be nullptr in some cases, such as the first call
-	// to this with options->downloadType == OP_TOP_DOWNLOAD_DELAYED.
-	virtual void* 					getTOPDataInCPUMemory(const OP_TOPInput *top,
-		const OP_TOPInputDownloadOptions *options) const = 0;
-
+private:
+	// Deprecated, only declared here so legacy code can work. Use the functions in OP_TOPInput instead.
+	virtual void* 					getTOPDataInCPUMemory(const OP_TOPInputOpenGL *top,
+															const OP_TOPInputDownloadOptionsOpenGL *options) const = 0;
+public:
 
 	virtual const OP_SOPInput*		getParSOP(const char *name) const = 0;
 	// only valid for C++ SOP operators
@@ -1196,12 +1488,14 @@ public:
 	// or else a memorky leak will occur.
 	virtual PyObject*				getParPython(const char* name) const = 0;
 
-
 	// Returns a class whose members gives you information about timing
 	// such as FPS and delta-time since the last cook.
 	// See OP_TimeInfo for more information
 	virtual const OP_TimeInfo*		getTimeInfo() const = 0;
 
+	virtual const OP_TOPInput*		getTOP(const char* path) const = 0;
+	virtual const OP_TOPInput*		getInputTOP(int32_t index) const = 0;
+	virtual const OP_TOPInput*		getParTOP(const char *name) const = 0;
 };
 
 class OP_InfoCHOPChan
@@ -1213,13 +1507,10 @@ public:
 	int32_t			reserved[10];
 };
 
-
 class OP_InfoDATSize
 {
 public:
-
 	// Set this to the size you want the table to be
-
 	int32_t			rows;
 	int32_t			cols;
 
@@ -1228,17 +1519,14 @@ public:
 	// Otherwise set to false, and you'll be expected to set them on
 	// a row by row basis.
 	// DEFAULT : false
-
 	bool			byColumn;
 
 	int32_t			reserved[10];
 };
 
-
 class OP_InfoDATEntries
 {
 public:
-
 	// This is an array of OP_String* pointers which you are expected to assign
 	// values to.
 	// e.g values[1]->setString("myColumnName");
@@ -1248,11 +1536,9 @@ public:
 	int32_t			reserved[10];
 };
 
-
 class OP_NumericParameter
 {
 public:
-
 	OP_NumericParameter(const char* iname = nullptr)
 	{
 		name = iname;
@@ -1294,11 +1580,9 @@ public:
 
 };
 
-
 class OP_StringParameter
 {
 public:
-
 	OP_StringParameter(const char* iname = nullptr)
 	{
 		name = iname;
@@ -1320,7 +1604,6 @@ public:
 	int32_t		reserved[20];
 };
 
-
 enum class OP_ParAppendResult : int32_t
 {
 	Success = 0,
@@ -1328,14 +1611,11 @@ enum class OP_ParAppendResult : int32_t
 	InvalidSize,	// size out of range
 };
 
-
 class OP_ParameterManager
 {
 
 public:
-
 	// Returns PARAMETER_APPEND_SUCCESS on succesful
-
 	virtual OP_ParAppendResult		appendFloat(const OP_NumericParameter &np, int32_t size = 1) = 0;
 	virtual OP_ParAppendResult		appendInt(const OP_NumericParameter &np, int32_t size = 1) = 0;
 
@@ -1380,7 +1660,6 @@ public:
 	// customOPInfo.pythonVersion member in Fill*PluginInfo.
 	virtual OP_ParAppendResult		appendPython(const OP_StringParameter &sp) = 0;
 
-
 	virtual OP_ParAppendResult		appendOP(const OP_StringParameter &sp) = 0;
 	virtual OP_ParAppendResult		appendCOMP(const OP_StringParameter &sp) = 0;
 	virtual OP_ParAppendResult		appendMAT(const OP_StringParameter &sp) = 0;
@@ -1423,17 +1702,11 @@ static_assert(offsetof(OP_DATInput, cellData) == 24, "Incorrect Alignment");
 static_assert(offsetof(OP_DATInput, totalCooks) == 32, "Incorrect Alignment");
 static_assert(sizeof(OP_DATInput) == 112, "Incorrect Size");
 
-static_assert(offsetof(OP_TOPInput, opPath) == 0, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, opId) == 8, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, width) == 12, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, height) == 16, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, textureIndex) == 20, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, textureType) == 24, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, depth) == 28, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, pixelFormat) == 32, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, cudaInput) == 40, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInput, totalCooks) == 48, "Incorrect Alignment");
-static_assert(sizeof(OP_TOPInput) == 112, "Incorrect Size");
+static_assert(offsetof(OP_TOPInput, opPath) == 8, "Incorrect Alignment");
+static_assert(offsetof(OP_TOPInput, opId) == 16, "Incorrect Alignment");
+static_assert(offsetof(OP_TOPInput, textureDesc) == 20, "Incorrect Alignment");
+static_assert(offsetof(OP_TOPInput, totalCooks) == 156 + 20, "Incorrect Alignment");
+static_assert(sizeof(OP_TOPInput) == 156 + 28 + 56, "Incorrect Size");
 
 static_assert(offsetof(OP_CHOPInput, opPath) == 0, "Incorrect Alignment");
 static_assert(offsetof(OP_CHOPInput, opId) == 8, "Incorrect Alignment");
@@ -1505,10 +1778,6 @@ static_assert(sizeof(SOP_PrimitiveInfo) == 24, "Incorrect Size");
 
 static_assert(sizeof(OP_SOPInput) == 440, "Incorrect Size");
 
-static_assert(offsetof(OP_TOPInputDownloadOptions, downloadType) == 0, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInputDownloadOptions, verticalFlip) == 4, "Incorrect Alignment");
-static_assert(offsetof(OP_TOPInputDownloadOptions, cpuMemPixelType) == 8, "Incorrect Alignment");
-static_assert(sizeof(OP_TOPInputDownloadOptions) == 12, "Incorrect Size");
 
 static_assert(offsetof(OP_InfoCHOPChan, name) == 0, "Incorrect Alignment");
 static_assert(offsetof(OP_InfoCHOPChan, value) == 8, "Incorrect Alignment");
@@ -1534,10 +1803,40 @@ static_assert(offsetof(OP_NumericParameter, minSliders) == 128, "Incorrect Align
 static_assert(offsetof(OP_NumericParameter, maxSliders) == 160, "Incorrect Alignment");
 static_assert(sizeof(OP_NumericParameter) == 272, "Incorrect Size");
 
+static_assert(offsetof(OP_TextureDesc, width) == 0, "Incorrect Alignment");
+static_assert(offsetof(OP_TextureDesc, height) == 4, "Incorrect Alignment");
+static_assert(offsetof(OP_TextureDesc, depth) == 8, "Incorrect Alignment");
+static_assert(offsetof(OP_TextureDesc, texDim) == 12, "Incorrect Alignment");
+static_assert(offsetof(OP_TextureDesc, pixelFormat) == 16, "Incorrect Alignment");
+static_assert(offsetof(OP_TextureDesc, aspectX) == 20, "Incorrect Alignment");
+static_assert(offsetof(OP_TextureDesc, aspectY) == 24, "Incorrect Alignment");
+static_assert(sizeof(OP_TextureDesc) == 156, "Incorrect Size");
+
 static_assert(offsetof(OP_StringParameter, name) == 0, "Incorrect Alignment");
 static_assert(offsetof(OP_StringParameter, label) == 8, "Incorrect Alignment");
 static_assert(offsetof(OP_StringParameter, page) == 16, "Incorrect Alignment");
 static_assert(offsetof(OP_StringParameter, defaultValue) == 24, "Incorrect Alignment");
 static_assert(sizeof(OP_StringParameter) == 112, "Incorrect Size");
 static_assert(sizeof(OP_TimeInfo) == 216, "Incorrect Size");
+static_assert(offsetof(PY_GetInfo, autoCook) == 0, "Incorrect Alignment");
+static_assert(sizeof(PY_GetInfo) == 204, "Incorrect Size");
+static_assert(sizeof(PY_Context) == 208, "Incorrect Size");
+static_assert(offsetof(PY_Struct, context) == OP_STRUCT_HEADER_ENTRIES * sizeof(int32_t), "Incorrect Alignment");
+};
+
+// These are the definitions for the C-functions that are used to
+// load the library and create instances of the object you define
+typedef void (__cdecl *FILLCHOPPLUGININFO)(TD::CHOP_PluginInfo *info);
+typedef TD::CHOP_CPlusPlusBase* (__cdecl *CREATECHOPINSTANCE)(const TD::OP_NodeInfo*);
+typedef void (__cdecl *DESTROYCHOPINSTANCE)(TD::CHOP_CPlusPlusBase*);
+typedef void(__cdecl *FILLDATPLUGININFO)(TD::DAT_PluginInfo *info);
+typedef TD::DAT_CPlusPlusBase* (__cdecl *CREATEDATINSTANCE)(const TD::OP_NodeInfo*);
+typedef void(__cdecl *DESTROYDATINSTANCE)(TD::DAT_CPlusPlusBase*);
+typedef void (__cdecl *FILLTOPPLUGININFO)(TD::TOP_PluginInfo* info);
+typedef TD::TOP_CPlusPlusBase* (__cdecl *CREATETOPINSTANCE)(const TD::OP_NodeInfo*, TD::TOP_Context*);
+typedef void (__cdecl *DESTROYTOPINSTANCE)(TD::TOP_CPlusPlusBase*, TD::TOP_Context*);
+typedef void(__cdecl *FILLSOPPLUGININFO)(TD::SOP_PluginInfo *info);
+typedef TD::SOP_CPlusPlusBase* (__cdecl *CREATESOPINSTANCE)(const TD::OP_NodeInfo*);
+typedef void(__cdecl *DESTROYSOPINSTANCE)(TD::SOP_CPlusPlusBase*);
+
 #endif

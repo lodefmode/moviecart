@@ -1,12 +1,16 @@
-/* Shared Use License: This file is owned by Derivative Inc. (Derivative) and
- * can only be used, and/or modified for use, in conjunction with 
- * Derivative's TouchDesigner software, and only if you are a licensee who has
- * accepted Derivative's TouchDesigner license or assignment agreement (which
- * also govern the use of this file).  You may share a modified version of this
- * file with another authorized licensee of Derivative's TouchDesigner software.
- * Otherwise, no redistribution or sharing of this file, with or without
- * modification, is permitted.
- */
+/* Shared Use License: This file is owned by Derivative Inc. (Derivative)
+* and can only be used, and/or modified for use, in conjunction with
+* Derivative's TouchDesigner software, and only if you are a licensee who has
+* accepted Derivative's TouchDesigner license or assignment agreement
+* (which also govern the use of this file). You may share or redistribute
+* a modified version of this file provided the following conditions are met:
+*
+* 1. The shared file or redistribution must retain the information set out
+* above and this list of conditions.
+* 2. Derivative's name (Derivative Inc.) or its trademarks may not be used
+* to endorse or promote products derived from this file without specific
+* prior written permission from Derivative.
+*/
 
 #include "ColorizeTOP.h"
 
@@ -29,9 +33,9 @@ FillTOPPluginInfo(TOP_PluginInfo *info)
 	info->apiVersion = TOPCPlusPlusAPIVersion;
 
 	// Change this to change the executeMode behavior of this plugin.
-	info->executeMode = TOP_ExecuteMode::CPUMemWriteOnly;
+	info->executeMode = TOP_ExecuteMode::CPUMem;
 
-	// The opType is the unique name for this TOP. It must start with a 
+	// The opType is the unique name for this TOP. It must start with a
 	// capital A-Z character, and all the following characters must lower case
 	// or numbers (a-z, 0-9)
 	info->customOPInfo.opType->setString("Colorize");
@@ -40,13 +44,13 @@ FillTOPPluginInfo(TOP_PluginInfo *info)
 	info->customOPInfo.opLabel->setString("Colorize");
 
 	// Will be turned into a 3 letter icon on the nodes
-	info->customOPInfo.opIcon->setString("COL");
+	info->customOPInfo.opIcon->setString("CLZ");
 
 	// Information about the author of this OP
 	info->customOPInfo.authorName->setString("Lodef Mode");
 	info->customOPInfo.authorEmail->setString("lodef.mode@gmail.com");
 
-	// This TOP works with 0 or 1 inputs connected
+	// This TOP works with 1 inputs connected
 	info->customOPInfo.minInputs = 1;
 	info->customOPInfo.maxInputs = 1;
 }
@@ -57,7 +61,7 @@ CreateTOPInstance(const OP_NodeInfo* info, TOP_Context* context)
 {
 	// Return a new instance of your class every time this is called.
 	// It will be called once per TOP that is using the .dll
-	return new CPUMemoryTOP(info);
+	return new ColorizeTOP(info, context);
 }
 
 DLLEXPORT
@@ -67,37 +71,10 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
 	// Delete the instance here, this will be called when
 	// Touch is shutting down, when the TOP using that instance is deleted, or
 	// if the TOP loads a different DLL
-	delete (CPUMemoryTOP*)instance;
+	delete (ColorizeTOP*)instance;
 }
 
 };
-
-
-CPUMemoryTOP::CPUMemoryTOP(const OP_NodeInfo* info) 
-{
-	myLastPal = nullptr;
-}
-
-CPUMemoryTOP::~CPUMemoryTOP()
-{
-}
-
-void
-CPUMemoryTOP::getGeneralInfo(TOP_GeneralInfo* ginfo, const OP_Inputs* inputs, void* reserved1)
-{
-    ginfo->memPixelType = OP_CPUMemPixelType::BGRA8Fixed;
-}
-
-bool
-CPUMemoryTOP::getOutputFormat(TOP_OutputFormat* format, const OP_Inputs* inputs, void* reserved1)
-{
-	// In this function we could assign variable values to 'format' to specify
-	// the pixel format/resolution etc that we want to output to.
-	// If we did that, we'd want to return true to tell the TOP to use the settings we've
-	// specified.
-	// In this example we'll return false and use the TOP's settings
-	return false;
-}
 
 const float	colorScales[3] = {0.299f, 0.587f, 0.114f};
 
@@ -239,7 +216,7 @@ nearest(struct kd_node_t *root, struct kd_node_t *nd, int i,
 }
  
 void
-CPUMemoryTOP::setup_kdtree(Array2D<float[3]>& fpal, int palSize)
+ColorizeTOP::setup_kdtree(Array2D<float[3]>& fpal, int palSize)
 {
 	if (palSize > 256)
 		palSize = 256;
@@ -281,7 +258,7 @@ search_kdtree(float r, float g, float b, kd_node_t* root)
 /////////////////////////////////////////////////////////
 
 void
-CPUMemoryTOP::buildColourMap() 
+ColorizeTOP::buildColourMap() 
 {
     for (int r = 0; r < 256; r++) 
 	{
@@ -487,7 +464,7 @@ unsigned int atari2600pal_palette[128*3] =
     236, 192, 156,
     252, 212, 176,
     
-    0, 100,  20,
+      0, 100,  20,
      32, 128,  52,
      60, 152,  80,
      88, 176, 108,
@@ -505,7 +482,7 @@ unsigned int atari2600pal_palette[128*3] =
     236, 156, 180,
     252, 176, 200,
     
-    0,  92,  92,
+      0,  92,  92,
      32, 116, 116,
      60, 140, 140,
      88, 164, 164,
@@ -523,7 +500,7 @@ unsigned int atari2600pal_palette[128*3] =
     208, 156, 208,
     224, 176, 224,
     
-    0,  60, 112,
+      0,  60, 112,
      28,  88, 136,
      56, 116, 160,
      80, 140, 180,
@@ -541,7 +518,7 @@ unsigned int atari2600pal_palette[128*3] =
     196, 156, 236,
     212, 176, 252,
     
-    0,  32, 112,
+      0,  32, 112,
      28,  60, 136,
      56,  88, 160,
      80, 116, 180,
@@ -550,7 +527,7 @@ unsigned int atari2600pal_palette[128*3] =
     144, 180, 236,
     164, 200, 252,
     
-    60,   0, 128,
+     60,   0, 128,
      84,  32, 148,
     108,  60, 168,
     128,  88, 188,
@@ -559,7 +536,7 @@ unsigned int atari2600pal_palette[128*3] =
     184, 156, 236,
     200, 176, 252,
     
-    0,   0, 136,
+      0,   0, 136,
      32,  32, 156,
      60,  60, 176,
      88,  88, 192,
@@ -568,7 +545,7 @@ unsigned int atari2600pal_palette[128*3] =
     156, 156, 236,
     176, 176, 252,
     
-    0,   0,   0,
+      0,   0,   0,
      40,  40,  40,
      80,  80,  80,
     116, 116, 116,
@@ -577,7 +554,7 @@ unsigned int atari2600pal_palette[128*3] =
     208, 208, 208,
     236, 236, 236,
     
-    0,   0,   0,
+      0,   0,   0,
      40,  40,  40,
      80,  80,  80,
     116, 116, 116,
@@ -934,7 +911,7 @@ lookupClosestInPalette(float cellColor[4], Array2D<float[3]>& fpal, const uint8_
 }
 
 inline void
-findClosest(float cellColor[4], const float *selectColor, const float *backColor)
+findClosest(float cellColor[4], const float* selectColor, const float* backColor)
 {
 	float distBlack = colorDist(cellColor, backColor);
 	float distWhite = colorDist(cellColor, selectColor);
@@ -950,8 +927,8 @@ findClosest(float cellColor[4], const float *selectColor, const float *backColor
 }
 
 inline void
-distributeError(int width, int height, float *mem,
-				int x, int y, float *quantError, float ratio)
+distributeError(int width, int height, float* mem,
+				int x, int y, float* quantError, float ratio)
 {
 	if (x >=0 && x<width && y>=0 && y<height)
 	{
@@ -997,7 +974,7 @@ enum
 };
 
 void
-getPalette(int palette, unsigned int *&pal, int &palSize)
+getPalette(int palette, unsigned int* &pal, int &palSize)
 {
 	switch(palette)
 	{
@@ -1052,9 +1029,9 @@ getPalette(int palette, unsigned int *&pal, int &palSize)
 
 
 void
-CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
-	float *curY, int palSize, float bleed, int matrix,
-	bool dither, float *curError,
+ColorizeTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
+	float* curY, int palSize, float bleed, int matrix,
+	bool dither, float* curError,
 	float bestError, bool searchForeground, bool fastPalette)
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
@@ -1299,183 +1276,216 @@ CPUMemoryTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, in
 }
 
 
-void
-CPUMemoryTOP::execute(TOP_OutputFormatSpecs* outputFormat,
-						const OP_Inputs* inputs,
-						TOP_Context *context,
-						void* reserved1)
+ColorizeTOP::ColorizeTOP(const OP_NodeInfo* info, TOP_Context* context) :
+	myContext(context)
 {
-	bool active = inputs->getParInt("Active") ? true:false;
-	int	palette = inputs->getParInt("Palette");
-	int	cellSize = inputs->getParInt("Cellsize");
+	myLastPal = nullptr;
+}
 
-	bool dither = inputs->getParInt("Dither") ? true:false;
-	float bleed = (float)inputs->getParDouble("Bleed");
-	bool bleedSearch = inputs->getParInt("Bleedsearch") ? true:false;
-
-	int matrix = inputs->getParInt("Matrix");
-
-	bool background = inputs->getParInt("Background") ? true:false;
-	bool fastPalette = (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain);
-	bool backgroundFast = background && fastPalette;
-
-	bool foreground = inputs->getParInt("Foreground") ? true:false;
-
-	unsigned int	*pal;
-	int				palSize;
-	getPalette(palette, pal, palSize);
-
-	if (pal != myLastPal)
-	{
-		myLastPal = pal;
-		myFPal.setSize(palSize, 1);
-
-		for (int i=0; i<palSize; i++)
-		{
-			myFPal(i, 0)[0] = pal[3*i + 0] / 255.0f;
-			myFPal(i, 0)[1] = pal[3*i + 1] / 255.0f;
-			myFPal(i, 0)[2] = pal[3*i + 2] / 255.0f;
-		}
-
-		setup_kdtree(myFPal, palSize);
-		buildColourMap();
-	}
-
-	if (!active)
-		return;
-
-	OP_TOPInputDownloadOptions dlOptions;
-	dlOptions.downloadType = OP_TOPInputDownloadType::Instant;
-	dlOptions.cpuMemPixelType = OP_CPUMemPixelType::RGBA32Float;
-
-
-
-	int textureMemoryLocation = 0;
-	int width = outputFormat->width;
-	int height = outputFormat->height;
-
-	setupStorage(width, outputFormat->height, cellSize);
-
-	// copy, will already be float format
-	{
-		const OP_TOPInput	*topInput = inputs->getInputTOP(0);
-		const uint8_t	*topMem = topInput ? (uint8_t *)inputs->getTOPDataInCPUMemory(topInput, &dlOptions) : nullptr;
-		if (topMem)
-			memcpy((float*)myMem.getData(), topMem, width * height * 4 * sizeof(float));
-	}
-
-	auto finishLine = [&](int y, int bidx, float* curY)
-	{
-		float	curError;
-		bool	finalB = true;
-
-		ditherLine(bidx, y, finalB, width, height, cellSize, curY, palSize, bleed, matrix, dither, &curError, HUGE_VAL, foreground, fastPalette);
-	};
-
-	if (!background)
-	{
-		bool	finalB = true;
-
-		myResultBK.zero();
-
-		for (int y = 0; y < outputFormat->height; y++)
-		{
-			float* curY = myMem(0, y);
-			int		bidx = 0;
-			finishLine(y, bidx, curY);
-		}
-	}
-	else
-	{
-
-		for (int y = 0; y < outputFormat->height; y++)
-		{
-			float* curY = myMem(0, y);
-			
-			int		bestB = 0;
-			float	bestError = HUGE_VAL;
-
-			auto testLine = [&](int bidx)
-			{
-				float	curError;
-				bool	finalB = false;
-				float	lbleed = bleedSearch ? bleed : 0.0f;
-
-				memcpy((float*)myMemBackup.getData(), curY, width*4 * sizeof(float));
-				ditherLine(bidx, y, finalB, width, height, cellSize, (float*)myMemBackup.getData(), palSize, lbleed, matrix, dither, &curError, bestError, foreground, fastPalette);
-
-				if (curError < bestError)
-				{
-					bestError = curError;
-					bestB = bidx;
-				}
-			};
-
-
-			if (backgroundFast)
-			{
-				// start with best color from previous frame
-				int		startB = (int)(myResultBK(0, y)[3]);
-
-				startB &= ~0x7;	//	round down to nearest 8 
-
-				// check one quarter
-				for (int b=0; b<palSize; b+=4)
-				{
-					int		bidx = (startB + b) % palSize;
-					testLine(bidx);
-				}
-
-				// now redo rest of hue
-				int b2 = bestB & ~0x7;	// round down to nearest 8
-
-				for (int b=0; b<8; b++)
-				{
-					// processed in original loop
-					if (b != 0 && b != 4)
-					{
-						int		bidx = b2 + b;
-						testLine(bidx);
-					}
-				}
-			}
-			else
-			{
-				// start with best color from previous frame
-				int		startB = (int)(myResultBK(0, y)[3]);
-
-				// search every color
-				for (int b=0; b<palSize; b++)
-				{
-					int		bidx = (startB + b) % palSize;
-					testLine(bidx);
-				}
-			}
-
-			// redo best color
-			{
-				int		bidx = bestB;
-				finishLine(y, bidx, curY);
-
-				myResultBK(0, y)[0] = myFPal(bidx,0)[0];
-				myResultBK(0, y)[1] = myFPal(bidx,0)[1];
-				myResultBK(0, y)[2] = myFPal(bidx,0)[2];
-				myResultBK(0, y)[3] = (float)bidx;
-			}
-		}
-	}
-
-	{
-		uint8_t* destMem = (uint8_t*)outputFormat->cpuPixelData[textureMemoryLocation];
-		storeResults(destMem, cellSize);
-	}
-
-    outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
-    textureMemoryLocation = !textureMemoryLocation;
+ColorizeTOP::~ColorizeTOP()
+{
 }
 
 void
-CPUMemoryTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
+ColorizeTOP::getGeneralInfo(TOP_GeneralInfo* ginfo, const OP_Inputs* inputs, void* reserved1)
+{
+	ginfo->cookEveryFrameIfAsked = true;
+}
+
+void
+ColorizeTOP::execute(TOP_Output* output, const OP_Inputs* inputs, void* reserved1)
+{
+    bool active = inputs->getParInt("Active") ? true:false;
+    int palette = inputs->getParInt("Palette");
+    int cellSize = inputs->getParInt("Cellsize");
+
+    bool dither = inputs->getParInt("Dither") ? true:false;
+    float bleed = (float)inputs->getParDouble("Bleed");
+    bool bleedSearch = inputs->getParInt("Bleedsearch") ? true:false;
+
+    int matrix = inputs->getParInt("Matrix");
+
+    bool background = inputs->getParInt("Background") ? true:false;
+    bool fastPalette = (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain);
+    bool backgroundFast = background && fastPalette;
+
+    bool foreground = inputs->getParInt("Foreground") ? true:false;
+
+	// cache palette
+
+    unsigned int*	pal;
+    int             palSize;
+    getPalette(palette, pal, palSize);
+    if (pal != myLastPal)
+    {
+        myLastPal = pal;
+        myFPal.setSize(palSize, 1);
+
+        for (int i=0; i<palSize; i++)
+        {
+            myFPal(i, 0)[0] = pal[3*i + 0] / 255.0f;
+            myFPal(i, 0)[1] = pal[3*i + 1] / 255.0f;
+            myFPal(i, 0)[2] = pal[3*i + 2] / 255.0f;
+        }
+
+        setup_kdtree(myFPal, palSize);
+        buildColourMap();
+    }
+
+	// active and input connected?
+
+    if (!active)
+        return;
+	if (inputs->getNumInputs() < 1)
+		return;
+	const OP_TOPInput* top = inputs->getInputTOP(0);
+	if (!top)
+		return;
+
+
+	// download input
+
+	OP_TOPInputDownloadOptions opts;
+	opts.pixelFormat = OP_PixelFormat::RGBA32Float;
+	OP_SmartRef<OP_TOPDownloadResult> downRes = top->downloadTexture(opts, nullptr);
+
+	if (downRes)
+	{
+		int width = downRes->textureDesc.width;
+		int height = downRes->textureDesc.height;
+		setupStorage(width, height, cellSize);
+
+		// the getData() call on OP_TOPDownloadResult will stall until the download is finished.
+		memcpy((float*)myMem.getData(), downRes->getData(), width * height * 4 * sizeof(float));
+
+
+
+		auto finishLine = [&](int y, int bidx, float* curY)
+		{
+			float	curError;
+			bool	finalB = true;
+
+			ditherLine(bidx, y, finalB, width, height, cellSize, curY, palSize, bleed,
+							 matrix, dither, &curError, HUGE_VAL, foreground, fastPalette);
+		};
+
+		if (!background)	// all zero backgrounds
+		{
+			myResultBK.zero();
+
+			for (int y = 0; y < height; y++)
+			{
+				float* curY = myMem(0, y);
+				int		bidx = 0;
+				finishLine(y, bidx, curY);
+			}
+		}
+		else
+		{
+
+			for (int y = 0; y < height; y++)
+			{
+				float* curY = myMem(0, y);
+				
+				int		bestB = 0;
+				float	bestError = HUGE_VAL;
+
+				auto testLine = [&](int bidx)
+				{
+					float	curError;
+					bool	finalB = false;
+					float	lbleed = bleedSearch ? bleed : 0.0f;
+
+					memcpy((float*)myMemBackup.getData(), curY, width*4 * sizeof(float));
+					ditherLine(bidx, y, finalB, width, height, cellSize, (float*)myMemBackup.getData(), palSize,
+							 lbleed, matrix, dither, &curError, bestError, foreground, fastPalette);
+
+					if (curError < bestError)
+					{
+						bestError = curError;
+						bestB = bidx;
+					}
+				};
+
+				if (backgroundFast)
+				{
+					// start with best color from previous frame
+					int		startB = (int)(myResultBK(0, y)[3]);
+
+					startB &= ~0x7;	//	round down to nearest 8 
+
+					// check one quarter
+					for (int b=0; b<palSize; b+=4)
+					{
+						int		bidx = (startB + b) % palSize;
+						testLine(bidx);
+					}
+
+					// now redo rest of hue
+					int b2 = bestB & ~0x7;	// round down to nearest 8
+
+					for (int b=0; b<8; b++)
+					{
+						// processed in original loop
+						if (b != 0 && b != 4)
+						{
+							int		bidx = b2 + b;
+							testLine(bidx);
+						}
+					}
+				}
+				else
+				{
+					// start with best color from previous frame
+					int		startB = (int)(myResultBK(0, y)[3]);
+
+					// search every color
+					for (int b=0; b<palSize; b++)
+					{
+						int		bidx = (startB + b) % palSize;
+						testLine(bidx);
+					}
+				}
+
+				// redo best color
+				{
+					int		bidx = bestB;
+					finishLine(y, bidx, curY);
+
+					myResultBK(0, y)[0] = myFPal(bidx,0)[0];
+					myResultBK(0, y)[1] = myFPal(bidx,0)[1];
+					myResultBK(0, y)[2] = myFPal(bidx,0)[2];
+					myResultBK(0, y)[3] = (float)bidx;
+				}
+			}
+		}
+
+		// now fill in output
+
+		{
+			int size = width * height * 4 * sizeof(uint8_t);
+
+			OP_SmartRef<TOP_Buffer> buf = myContext->createOutputBuffer(size, TOP_BufferFlags::None, nullptr);
+
+			uint8_t* destMem = (uint8_t*)buf->data;
+			storeResults(destMem, cellSize);
+
+
+			TOP_UploadInfo info;
+
+			info.textureDesc.width = width;
+			info.textureDesc.height = height;
+			info.textureDesc.texDim = OP_TexDim::e2D;
+			info.textureDesc.pixelFormat = OP_PixelFormat::BGRA8Fixed;
+
+			info.colorBufferIndex = 0;
+			output->uploadBuffer(&buf, info, nullptr);
+		}
+	}
+}
+
+void
+ColorizeTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
 {
 	myResultBK.setSize(1, outputHeight);
 	myMem.setSize(outputWidth, outputHeight);
@@ -1490,7 +1500,7 @@ CPUMemoryTOP::setupStorage(int outputWidth, int outputHeight, int cellSize)
 }
 
 void
-CPUMemoryTOP::storeResults(uint8_t *destMem, int cellSize)
+ColorizeTOP::storeResults(uint8_t *destMem, int cellSize)
 {
 	int outputWidth = myResultGraph.getWidth();
 	int	outputHeight = myResultGraph.getHeight();
@@ -1544,18 +1554,18 @@ CPUMemoryTOP::storeResults(uint8_t *destMem, int cellSize)
 }
 
 int32_t
-CPUMemoryTOP::getNumInfoCHOPChans(void *reserved1)
+ColorizeTOP::getNumInfoCHOPChans(void *reserved1)
 {
 	return 0;
 }
 
 void
-CPUMemoryTOP::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan, void* reserved1)
+ColorizeTOP::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan, void* reserved1)
 {
 }
 
 bool		
-CPUMemoryTOP::getInfoDATSize(OP_InfoDATSize* infoSize, void* reserved1)
+ColorizeTOP::getInfoDATSize(OP_InfoDATSize* infoSize, void* reserved1)
 {
 	infoSize->rows = myResultGraph.getHeight();
 	infoSize->cols = myResultGraph.getWidth() + myResultColor.getWidth() + 4;		// graph, color,  bkground
@@ -1567,12 +1577,12 @@ CPUMemoryTOP::getInfoDATSize(OP_InfoDATSize* infoSize, void* reserved1)
 }
 
 void
-CPUMemoryTOP::getInfoDATEntries(int32_t index,
+ColorizeTOP::getInfoDATEntries(int32_t index,
 								int32_t nCols,
 								OP_InfoDATEntries* entries,
 								void *reserved1)
 {
-	// It's safe to use static buffers here because Touch will make it's own
+	// It's safe to use static buffers here because TouchDesigner will make it's own
 	// copies of the strings immediately after this call returns
 	// (so the buffers can be reuse for each column/row)
 	static char intBuffer[256][4];
@@ -1645,7 +1655,7 @@ CPUMemoryTOP::getInfoDATEntries(int32_t index,
 }
 
 void
-CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
+ColorizeTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 {
 	{
 		OP_NumericParameter  sp;
@@ -1775,7 +1785,7 @@ CPUMemoryTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 }
 
 void
-CPUMemoryTOP::pulsePressed(const char* name, void *reserved1)
+ColorizeTOP::pulsePressed(const char* name, void *reserved1)
 {
 }
 
