@@ -1,0 +1,25 @@
+#
+# MovieCart Version 2
+#
+# Rob Bairos
+#
+
+Main improvements:
+
+ - Replaced bulky expensive obsolete through-hole IC's with modern SMD components
+   which can be fully created by PCB assembly houses.
+
+ - Drop in compatible with Combat cartridges. No cutting / drilling / gluing  required.
+
+ - Micro SD Card uses standard FAT file format, so standard copy / drag-n-drop of files works.
+   No longer requires separate utility to prepare card and playback no longer experiences
+   random noise
+
+ - Supports both NTSC and PAL formats.
+
+ - Enhanced video quality utilizing TIA background and playfield colors and
+   optimized color space searches.
+
+ - Reliable startup, as boot time is now 1.14 msec
+   (Flashback 2 boot time is 1.52 msec, while Atari 2600 boot time is about 25 msec).
+

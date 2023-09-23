@@ -1,29 +1,12 @@
-a26board.lbr
-	ATARI-2600		;various cartridge edge connectors, MED_NOHOLE used in this project
 
-atari.lbr
-	7130LA35PDG		;SRAM - Dual Port, Asynchronous Memory IC 8Kb (1K x 8) Parallel 35ns 48-PDIP
-	PIC18F47K42		;PIC - 18K Microcontroller IC 8-Bit 64MHz 128KB (8K RAM) FLASH 40-PDIP
+Each folder contains a PCB centered around a different package of dsPIC33CK64MC105.
+They are otherwise identical.
+Note that dsPIC33CK32MC105 is also a suitable drop in replacment at half the program size.
 
+48_TQFP_7x7:
+	DSPIC33CK32MC105-I/PT
 
-sparkfun.lbr:
-	USD_SHIFTER		;micro sd breakout board with level shifter
-
-
-atarimovie.brd
-atarimovie.sch
-
-	;version 1.1
-	; Errors:  Programmer header labels are too small / invisible.
-	;  Could it be a tad longer to insert into connector further?
+48_UQFN_6x6:
+	DSPIC33CK64MC105-I/M4
 
 
-Bom_2021_04_02.csv.csv
-	;digikey bill of materials May 4 2020
-
-
-Changes:
-
-  ; version 1.2
-	Programmer header labels increased
-	
