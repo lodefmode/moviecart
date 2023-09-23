@@ -15,20 +15,14 @@ Technical Specs:
    Each field consists of a checkerboard pattern of 10 x 262 cells.
    Each cell contains one of 128 colours and is 8 pixels wide by 1 pixel deep.
    This produces an effective resolution of 80 x 262 @ 30 frames per second, with 10 colors per line.
-
-   Each field requires 2.5K of data.
    
    Sound is 4 bit mono produced at 15.720 KHz.
 
-   A 1K Kernel is made available to the 6507 via a dual port ram.
-   A 16 MIPs microcontroller monitors 3 address lines to selectively update portions of the kernel with information streamed from an SD microcard.
    Joystick controls brightness, volume, and shuttle position.
    Console switches control b/w, ten second rewind and full rewind.
 
+   Each field requires 2.5K of data.
    Each second requires the equivalent of 75.5 Combat cartridges, or over half a million cartridges to produce a full length 2 hour movie.
-
-   Hardware consists of only 3 through-hole components, plus a few passives.
-   No assembly of SMT parts are required.
 
 For inquires please contact:
 
@@ -43,6 +37,4 @@ lodef.mode@gmail.com
 ![Booklet](docs/instructions2.jpg)
 
 *Copyright Disclaimer under Section 107 of the copyright act 1976, allowance is made for fair use for purposes such as criticism, comment, news reporting, scholarship, and research. Fair use is a use permitted by copyright statute that might otherwise be infringing. Non-profit, educational or personal use tips the balance in favour of fair use."
-
-
 
