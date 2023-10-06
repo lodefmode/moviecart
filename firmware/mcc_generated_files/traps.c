@@ -53,10 +53,12 @@
 
 extern void	flash_led(uint8_t num);
 
+#ifdef __DEBUG    
 /**
  * a private place to store the error code if we run into a severe error
  */
 static uint16_t TRAPS_error_code = -1;
+#endif
 
 /**
  * Halts 
@@ -65,11 +67,11 @@ static uint16_t TRAPS_error_code = -1;
  */
 void __attribute__((weak)) TRAPS_halt_on_error(uint16_t code)
 {
-    TRAPS_error_code = code;
 #ifdef __DEBUG    
+    TRAPS_error_code = code;
+#endif
     __builtin_software_breakpoint();
     /* If we are in debug mode, cause a software breakpoint in the debugger */
-#endif
     while(1)
 	{
 		flash_led(0);
@@ -79,6 +81,8 @@ void __attribute__((weak)) TRAPS_halt_on_error(uint16_t code)
     
 }
 
+// RB - Need the RAM, and this type of error isn't recoverable anyways
+#ifdef __DEBUG    
 /**
  * Sets the stack pointer to a backup area of memory, in case we run into
  * a stack error (in which case we can't really trust the stack pointer)
@@ -97,6 +101,7 @@ inline static void use_failsafe_stack(void)
     SPLIM = (uint16_t)(((uint8_t *)failsafe_stack) + sizeof(failsafe_stack) 
             - FAILSAFE_STACK_GUARDSIZE);
 }
+#endif
 
 
 /** Oscillator Fail Trap vector**/
@@ -112,7 +117,9 @@ void ERROR_HANDLER _StackError(void)
      * means that we cannot trust the stack to operate correctly unless
      * we set the stack pointer to a safe place.
      */
+#ifdef __DEBUG    
     use_failsafe_stack(); 
+#endif
     INTCON1bits.STKERR = 0;  //Clear the trap flag
     TRAPS_halt_on_error(TRAPS_STACK_ERR);
 }

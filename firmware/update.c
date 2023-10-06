@@ -41,197 +41,220 @@ const uint8_t scale10[16] = { 0, 0, 0, 0, 0, 1, 3, 6, 9, 12, 14, 15, 15, 15, 15,
 //const uint8_t *scaleList[11] = { scale0, scale1, scale2, scale3, scale4, scale5, scale6, scale7, scale8, scale9, scale10 };
 const uint8_t * const scaleList[11] = { scale0, scale1, scale2, scale3, scale4, scale5, scale6, scale7, scale8, scale9, scale10 };
 
+struct updateInfo
+{
+	uint_fast8_t    mode;
+	uint_fast8_t    drawLevelBars; // expressed in frames
+	uint_fast8_t    drawTimeCode; // expressed in frames
+	uint_fast8_t    volume;
+	uint_fast8_t    bright;
+	uint_fast8_t    joyRepeat;
+	bool            right;
+	bool            left;
+	uint_fast8_t    lastMainMode;
+	int8_t          speed;    // signed
+	int8_t          step; // signed
+	bool            lswcha_off;
+	uint_fast8_t    linpt4;
+	uint_fast8_t    lswchb;
+};
 
-uint_fast8_t    m_mode = MODE_VOLUME;
-uint_fast8_t    m_drawLevelBars = 0; // expressed in frames
-uint_fast8_t    m_drawTimeCode = 0; // expressed in frames
-uint_fast8_t    m_volume = DEFAULT_LEVEL;
-uint_fast8_t    m_bright = DEFAULT_LEVEL;
-uint_fast8_t    m_joyRepeat = 0x01;
-bool            m_right = false;
-bool            m_left = false;
-uint_fast8_t    m_lastMainMode = 0xff;
-int8_t          m_speed = 1;    // signed
-int8_t          m_step = 1; // signed
-bool            m_lswcha_off = true;
-uint_fast8_t    m_linpt4 = 0xff;
-uint_fast8_t    m_lswchb = 0xff;
+__attribute__((section(".updateInfo"))) struct updateInfo           uInfo;
+
+void
+updateInit()
+{
+	uInfo.mode = MODE_VOLUME;
+	uInfo.drawLevelBars = 0; // expressed in frames
+	uInfo.drawTimeCode = 0; // expressed in frames
+	uInfo.volume = DEFAULT_LEVEL;
+	uInfo.bright = DEFAULT_LEVEL;
+	uInfo.joyRepeat = 0x01;
+	uInfo.right = false;
+	uInfo.left = false;
+	uInfo.lastMainMode = 0xff;
+	uInfo.speed = 1;    // signed
+	uInfo.step = 1; // signed
+	uInfo.lswcha_off = true;
+	uInfo.linpt4 = 0xff;
+	uInfo.lswchb = 0xff;
+}
 
 void
 updateTransport(struct stateVars *state)
 {
-	m_lastMainMode = m_mode;
-	m_right = !(state->i_swcha & 0x80);
-	m_left = !(state->i_swcha & 0x40);
+	uInfo.lastMainMode = uInfo.mode;
+	uInfo.right = !(state->i_swcha & 0x80);
+	uInfo.left = !(state->i_swcha & 0x40);
 
 	// reset
 	if (!(state->i_swchb & 0x01))
 	{
 		state->io_frameNumber = 1;
 		state->io_playing = true;
-		m_drawTimeCode = OSD_FRAMES;
+		uInfo.drawTimeCode = OSD_FRAMES;
 	}
 
 	// select
-	if (!(state->i_swchb & 0x02) && (m_lswchb & 0x02))
+	if (!(state->i_swchb & 0x02) && (uInfo.lswchb & 0x02))
 	{
-		m_drawTimeCode = OSD_FRAMES;
+		uInfo.drawTimeCode = OSD_FRAMES;
 		state->io_frameNumber -= 60 *BACK_SECONDS + 1;
 	}
 
-	m_lswchb = state->i_swchb;
+	uInfo.lswchb = state->i_swchb;
 
 	// fire
-	if (!(state->i_inpt4 & 0x80) && (m_linpt4 & 0x80))
+	if (!(state->i_inpt4 & 0x80) && (uInfo.linpt4 & 0x80))
 		state->io_playing = !state->io_playing;
-	m_linpt4 = state->i_inpt4;
+	uInfo.linpt4 = state->i_inpt4;
 
 	if (!(state->i_swcha & 0x10))	// up
 	{
-		if (m_lswcha_off)
+		if (uInfo.lswcha_off)
 		{
-			if (m_mode == 0)
-				m_mode = MODE_LAST;
+			if (uInfo.mode == 0)
+				uInfo.mode = MODE_LAST;
 			else
-				m_mode--;
+				uInfo.mode--;
 		}
 	}
 
 	if (!(state->i_swcha & 0x20))	// down
 	{
-		if (m_lswcha_off)
+		if (uInfo.lswcha_off)
 		{
-			if (m_mode == MODE_LAST)
-				m_mode = 0;
+			if (uInfo.mode == MODE_LAST)
+				uInfo.mode = 0;
 			else
-				m_mode++;
+				uInfo.mode++;
 		}
 	}
 
-	if (m_left || m_right)
+	if (uInfo.left || uInfo.right)
 	{
-		m_joyRepeat++;
-		m_joyRepeat &= 0x0f;
+		uInfo.joyRepeat++;
+		uInfo.joyRepeat &= 0x0f;
 	}
 	else
 	{
-		m_joyRepeat = 0x01;
-		m_speed = 1;
+		uInfo.joyRepeat = 0x01;
+		uInfo.speed = 1;
 	}
 
-	if (!m_joyRepeat)
+	if (!uInfo.joyRepeat)
 	{
-		if (m_mode == MODE_TIME)
+		if (uInfo.mode == MODE_TIME)
 		{
-			m_drawTimeCode = OSD_FRAMES;
-			m_speed += 4;
-			if (m_speed < 0)
-				m_speed -= 4;
+			uInfo.drawTimeCode = OSD_FRAMES;
+			uInfo.speed += 4;
+			if (uInfo.speed < 0)
+				uInfo.speed -= 4;
 		}
 	}
 
-	if (!m_joyRepeat)
+	if (!uInfo.joyRepeat)
 	{
-		if (m_mode == MODE_VOLUME)
+		if (uInfo.mode == MODE_VOLUME)
 		{
-			m_drawLevelBars = OSD_FRAMES;
-			if (m_left)
+			uInfo.drawLevelBars = OSD_FRAMES;
+			if (uInfo.left)
 			{
-				if (m_volume)
-					m_volume--;
+				if (uInfo.volume)
+					uInfo.volume--;
 			}
 			else
 			{
-				m_volume++;
-				if (m_volume >= MAX_LEVEL)
-					m_volume--;
+				uInfo.volume++;
+				if (uInfo.volume >= MAX_LEVEL)
+					uInfo.volume--;
 			}
 		}
 	}
 
-	if (!m_joyRepeat)
+	if (!uInfo.joyRepeat)
 	{
-		if (m_mode == MODE_BRIGHT)
+		if (uInfo.mode == MODE_BRIGHT)
 		{
-			m_drawLevelBars = OSD_FRAMES;
-			if (m_left)
+			uInfo.drawLevelBars = OSD_FRAMES;
+			if (uInfo.left)
 			{
-				if (m_bright)
-					m_bright--;
+				if (uInfo.bright)
+					uInfo.bright--;
 			}
 			else
 			{
-				m_bright++;
-				if (m_bright >= MAX_LEVEL)
-					m_bright--;
+				uInfo.bright++;
+				if (uInfo.bright >= MAX_LEVEL)
+					uInfo.bright--;
 			}
 		}
 	}
 
-	switch (m_mode)
+	switch (uInfo.mode)
 	{
 		case MODE_TIME:
-			if (m_lastMainMode != m_mode)
-				m_drawTimeCode = OSD_FRAMES;
+			if (uInfo.lastMainMode != uInfo.mode)
+				uInfo.drawTimeCode = OSD_FRAMES;
 			break;
 
 		case MODE_BRIGHT:
 		case MODE_VOLUME:
 		default:
-			if (m_lastMainMode != m_mode)
-				m_drawLevelBars = OSD_FRAMES;
+			if (uInfo.lastMainMode != uInfo.mode)
+				uInfo.drawLevelBars = OSD_FRAMES;
 			break;
 	}
 
 	// just draw one
-	if (m_drawLevelBars > m_drawTimeCode)
-		m_drawTimeCode = 0;
+	if (uInfo.drawLevelBars > uInfo.drawTimeCode)
+		uInfo.drawTimeCode = 0;
 	else
-		m_drawLevelBars = 0;
+		uInfo.drawLevelBars = 0;
 
 	// update frame
-	m_step = (state->io_frameNumber & 1) ? -1 : 1; // signed
+	uInfo.step = (state->io_frameNumber & 1) ? -1 : 1; // signed
 
 	if (!state->io_playing)	// step while paused
 	{
-		if (m_mode == MODE_TIME)
+		if (uInfo.mode == MODE_TIME)
 		{
-			if (m_lswcha_off)
+			if (uInfo.lswcha_off)
 			{
-				if (m_right)
-					m_step = 2;
-				else if (m_left)
-					m_step = -2;
+				if (uInfo.right)
+					uInfo.step = 2;
+				else if (uInfo.left)
+					uInfo.step = -2;
 			}
 		}
 	}
 
 	if (state->io_playing)
 	{
-		m_step = 1;
-		if (m_mode == MODE_TIME)
+		uInfo.step = 1;
+		if (uInfo.mode == MODE_TIME)
 		{
-			if (m_right)
-				m_step = m_speed;
-			else if (m_left)
-				m_step = -m_speed;
+			if (uInfo.right)
+				uInfo.step = uInfo.speed;
+			else if (uInfo.left)
+				uInfo.step = -uInfo.speed;
 		}
 	}
 
-	m_lswcha_off = !(~state->i_swcha & 0xff);
-	state->io_frameNumber += m_step;
+	uInfo.lswcha_off = !(~state->i_swcha & 0xff);
+	state->io_frameNumber += uInfo.step;
 
 	if (state->i_numFramesInit && (state->io_frameNumber >= state->i_numFrames))
 	{
 		state->io_frameNumber -= 2;
-		m_joyRepeat = 0;
+		uInfo.joyRepeat = 0;
 		state->io_playing = false;
 	};
 
 	if (state->io_frameNumber < 1)
 	{
 		state->io_frameNumber = 1;
-		m_speed = 1;
+		uInfo.speed = 1;
 	}
 
 }
@@ -242,7 +265,7 @@ updateVolume(struct stateVars* state, struct frameInfo* fInfo)
 	const uint8_t*  volumeScale;
 
 	if (state->io_playing)
-		volumeScale = scaleList[m_volume];
+		volumeScale = scaleList[uInfo.volume];
 	else
 		volumeScale = scaleList[0];
 
@@ -278,18 +301,18 @@ updateColor(struct stateVars* state, struct frameInfo* fInfo)
 	const uint_fast16_t	offset22 = (fInfo->visibleLines - (LABEL_HEIGHT+LEVEL_HEIGHT))*5;
 	const uint_fast16_t	offsetTC = (fInfo->visibleLines - TIMECODE_HEIGHT)*5;
 
-	if (m_drawLevelBars)
+	if (uInfo.drawLevelBars)
 	{
-		m_drawLevelBars--;
+		uInfo.drawLevelBars--;
 		lines -= (LABEL_HEIGHT + LEVEL_HEIGHT);
 
 		uint8_t levelValue;
 		const uint8_t*	srcLabel;
 		const uint8_t*	srcLevel;
 
-		if (m_mode == MODE_BRIGHT)
+		if (uInfo.mode == MODE_BRIGHT)
 		{
-			levelValue = m_bright;
+			levelValue = uInfo.bright;
 			if (fInfo->odd)
 				srcLabel = brightLabelOdd;
 			else
@@ -297,7 +320,7 @@ updateColor(struct stateVars* state, struct frameInfo* fInfo)
 		}
 		else
 		{
-			levelValue = m_volume;
+			levelValue = uInfo.volume;
 			if (fInfo->odd)
 				srcLabel = volumeLabelOdd;
 			else
@@ -322,9 +345,9 @@ updateColor(struct stateVars* state, struct frameInfo* fInfo)
 		const uint_fast16_t offsetG = (fInfo->visibleLines - LEVEL_HEIGHT)*5;
 		memcpy(fInfo->graphBuf + offsetG, srcLevel,  LEVEL_HEIGHT*5);
 	}
-	else if (m_drawTimeCode)
+	else if (uInfo.drawTimeCode)
 	{
-		m_drawTimeCode--;
+		uInfo.drawTimeCode--;
 		lines -= TIMECODE_HEIGHT;
 
 		const uint_fast16_t	offset1 = (fInfo->visibleLines - TIMECODE_HEIGHT)*1;
@@ -341,7 +364,7 @@ updateColor(struct stateVars* state, struct frameInfo* fInfo)
 	while(t)
 	{
 		uint8_t r_data = *dst;
-		*dst++ = ((r_data & 0xf0) | shiftBright[(r_data & 0x0f) + m_bright]) & colorMask;
+		*dst++ = ((r_data & 0xf0) | shiftBright[(r_data & 0x0f) + uInfo.bright]) & colorMask;
 		t--;
 	};
 
@@ -351,7 +374,7 @@ updateColor(struct stateVars* state, struct frameInfo* fInfo)
 	while(t)
 	{
 		uint8_t r_data = *dst;
-		*dst++ = ((r_data & 0xf0) | shiftBright[(r_data & 0x0f) + m_bright]) & colorMask;
+		*dst++ = ((r_data & 0xf0) | shiftBright[(r_data & 0x0f) + uInfo.bright]) & colorMask;
 		t--;
 	};
 
@@ -380,7 +403,7 @@ updateColor(struct stateVars* state, struct frameInfo* fInfo)
 	fInfo->colorBKBuf[0] = 0;
 
 	// flat black line above time code
-	if (m_drawTimeCode)
+	if (uInfo.drawTimeCode)
 	{
 		uint8_t	*d = fInfo->odd ? (fInfo->graphBuf + offsetTC - 5) : (fInfo->graphBuf + offsetTC - 0);
 		*d++ = 0;
@@ -391,7 +414,7 @@ updateColor(struct stateVars* state, struct frameInfo* fInfo)
 	}
 
 	// flat black line above label
-	if (m_drawLevelBars)
+	if (uInfo.drawLevelBars)
 	{
 		uint8_t	*d = fInfo->odd ? (fInfo->graphBuf + offset22 - 5) : (fInfo->graphBuf + offset22 - 0);
 		*d++ = 0;

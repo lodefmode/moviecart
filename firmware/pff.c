@@ -35,8 +35,9 @@
 /                     Removed some code pages actually not valid.
 /----------------------------------------------------------------------------*/
 
-// Reduced greatly for moviecart application -> Rob Bairos 2021-2022
+// Reduced greatly for moviecart application -> Rob Bairos 2021-2023
 
+#include <string.h> // memcpy
 #include "pff.h"		// Petit FatFs configurations and declarations 
 #include "sd_reader.h"	// Declarations of low level disk I/O functions 
 #include "core.h"
@@ -110,23 +111,7 @@
 #define AM_MASK	0x3F	// Mask of defined bits 
 
 
-
-// File system object structure 
-
-uint8_t		fs_csize;		// Number of sectors per cluster N
-uint8_t		fs_csize_bits;	// number of bits 2^N
-uint8_t		fs_csize_mask;	// 2^N-1 
-
-uint16_t	fs_n_rootdir;	// Number of root directory entries (0 on FAT32) 
-uint32_t	fs_n_fatent;	// Number of FAT entries (= number of clusters + 2) 
-uint32_t	fs_fatbase;		// FAT start sector 
-uint32_t	fs_dirbase;		// Root directory start sector (Cluster# on FAT32) 
-uint32_t	fs_database;	// Data start sector 
-uint32_t	fs_fsize;		// File size 
-uint32_t	fs_org_clust;	// File start cluster 
-uint32_t	fs_curr_clust;	// File current cluster 
-uint32_t	fs_block;		// Current block, start of cluster 
-uint32_t	fs_file_block;	// block index within cluster 
+__attribute__((section(".fileSystemInfo"))) struct fileSystemInfo	fsInfo;
 
 //-----------------------------------------------------------------------
 // Load multi-byte word in the FAT structure                             
@@ -162,18 +147,18 @@ uint32_t ld_dword (const uint8_t* ptr) /* Load a 4-byte little-endian word */
 // Get sector# from cluster# / Get cluster field from directory entry    
 //-----------------------------------------------------------------------
 
-#define clust2sect(X) ((((X) - 2) << fs_csize_bits) + fs_database)
+#define clust2sect(X) ((((X) - 2) << fsInfo.csize_bits) + fsInfo.database)
 
 
 //-----------------------------------------------------------------------
 // FAT access - Read value of a FAT entry                                
 //-----------------------------------------------------------------------
 
-static uint32_t get_fat (
+uint32_t get_fat (
 	uint32_t clst	// Cluster# to get the link information 
 )
 {
-	uint8_t*	buf = disk_read_block1(fs_fatbase + (clst >> 7));
+	uint8_t*	buf = disk_read_block1(fsInfo.fatbase + (clst >> 7));
 	uint16_t	offset =  (((uint16_t)clst & 127) << 2);
 
 	return ld_dword(&buf[offset]) & 0x0FFFFFFF;
@@ -189,9 +174,15 @@ static uint32_t get_fat (
 #define QUEUE_SIZE	128
 #define QUEUE_MASK (QUEUE_SIZE-1)
 
-uint32_t	RAM_UNITIALIZED queue_block[QUEUE_SIZE];
-uint32_t	RAM_UNITIALIZED queue_clust[QUEUE_SIZE];
-uint8_t		queue_head = 0;
+struct queueInfo
+{
+	uint32_t	block[QUEUE_SIZE];
+	uint32_t	clust[QUEUE_SIZE];
+	uint8_t		head;
+};
+
+__attribute__((section(".queueInfo"))) struct queueInfo qinfo;
+
 
 bool pf_mount()
 {
@@ -202,10 +193,11 @@ bool pf_mount()
 	if (!disk_initialize())
 		return false;
 
+	qinfo.head = 0;
 	for (int i=0; i<QUEUE_SIZE; i++)
 	{
-		queue_block[i] = -1;
-		queue_clust[i] = -1;
+		qinfo.block[i] = -1;
+		qinfo.clust[i] = -1;
 	}
 
 	// Search FAT partition on the drive 
@@ -247,23 +239,23 @@ bool pf_mount()
 		fsize = ld_dword(buf+BPB_FATSz32);
 
 	fsize *= buf[BPB_NumFATs];						// Number of sectors in FAT area 
-	fs_fatbase = bsect + ld_word(buf+BPB_RsvdSecCnt); // FAT start sector (lba) 
-	fs_n_rootdir = ld_word(buf+BPB_RootEntCnt);		// Nmuber of root directory entries 
+	fsInfo.fatbase = bsect + ld_word(buf+BPB_RsvdSecCnt); // FAT start sector (lba) 
+	fsInfo.n_rootdir = ld_word(buf+BPB_RootEntCnt);		// Nmuber of root directory entries 
 
 
 	// Number of sectors per cluster 
 	
-	fs_csize = buf[BPB_SecPerClus];
-	fs_csize_bits = -1;
+	fsInfo.csize = buf[BPB_SecPerClus];
+	fsInfo.csize_bits = -1;
 
-	while(fs_csize)
+	while(fsInfo.csize)
 	{
-		fs_csize_bits++;
-		fs_csize >>= 1;
+		fsInfo.csize_bits++;
+		fsInfo.csize >>= 1;
 	}
 
-	fs_csize = 1 << fs_csize_bits;
-	fs_csize_mask = fs_csize - 1;
+	fsInfo.csize = 1 << fsInfo.csize_bits;
+	fsInfo.csize_mask = fsInfo.csize - 1;
 
 
 	tsect = ld_word(buf+BPB_TotSec16);				// Number of sectors on the file system 
@@ -271,13 +263,13 @@ bool pf_mount()
 		tsect = ld_dword(buf+BPB_TotSec32);
 
 	// Last cluster# + 1 
-	fs_n_fatent = ((tsect - ld_word(buf+BPB_RsvdSecCnt) - fsize - (fs_n_rootdir >> 4)) >> fs_csize_bits) + 2;
+	fsInfo.n_fatent = ((tsect - ld_word(buf+BPB_RsvdSecCnt) - fsize - (fsInfo.n_rootdir >> 4)) >> fsInfo.csize_bits) + 2;
 
-	fs_dirbase = ld_dword(buf+(BPB_RootClus));	// Root directory start cluster 
-	fs_database = fs_fatbase + fsize + (fs_n_rootdir >> 4);	// Data start sector (lba) 
+	fsInfo.dirbase = ld_dword(buf+(BPB_RootClus));	// Root directory start cluster 
+	fsInfo.database = fsInfo.fatbase + fsize + (fsInfo.n_rootdir >> 4);	// Data start sector (lba) 
 
 	// FS_FAT32;
-	if (fs_n_fatent >= 0xFFF7)
+	if (fsInfo.n_fatent >= 0xFFF7)
 		return true;
 
 	return false;
@@ -305,15 +297,15 @@ bool pf_seek_block (
 	uint8_t		check;
 	uint8_t		i;
 
-	check = queue_head - 1;
+	check = qinfo.head - 1;
 	check &= QUEUE_MASK;
 
 	for (i=0; i<QUEUE_SIZE; i++)
 	{
-		if (block >= queue_block[check])
+		if (block >= qinfo.block[check])
 		{
-			fs_block = queue_block[check];
-			fs_curr_clust = queue_clust[check];
+			fsInfo.block = qinfo.block[check];
+			fsInfo.curr_clust = qinfo.clust[check];
 			break;
 		}
 
@@ -321,17 +313,17 @@ bool pf_seek_block (
 		check &= QUEUE_MASK;
 	}
 
-	if (fs_block > block)
+	if (fsInfo.block > block)
 	{
-		fs_block = 0;
-		fs_curr_clust = fs_org_clust;
+		fsInfo.block = 0;
+		fsInfo.curr_clust = fsInfo.org_clust;
 	}
 
 	// Cluster following loop 
 	// Follow cluster chain 
 
 
-	while (block >= (fs_block + fs_csize))
+	while (block >= (fsInfo.block + fsInfo.csize))
 	{
 		skip++;
 
@@ -362,23 +354,23 @@ bool pf_seek_block (
 
 		if (!skip)
 		{
-			queue_clust[queue_head] =  fs_curr_clust;
-			queue_block[queue_head] =  fs_block;
-			queue_head++;
-			queue_head &= QUEUE_MASK;
+			qinfo.clust[qinfo.head] =  fsInfo.curr_clust;
+			qinfo.block[qinfo.head] =  fsInfo.block;
+			qinfo.head++;
+			qinfo.head &= QUEUE_MASK;
 		}
 
-		fs_curr_clust = get_fat(fs_curr_clust);
-		fs_block += fs_csize;
+		fsInfo.curr_clust = get_fat(fsInfo.curr_clust);
+		fsInfo.block += fsInfo.csize;
 	}
 
 
 	// Update start block for this cluster 
 
-	sect = clust2sect(fs_curr_clust);		// Get current sector 
-	cs = (uint8_t)(block & fs_csize_mask);	// Sector offset in the cluster 
+	sect = clust2sect(fsInfo.curr_clust);		// Get current sector 
+	cs = (uint8_t)(block & fsInfo.csize_mask);	// Sector offset in the cluster 
 
-	fs_file_block = sect + cs;
+	fsInfo.file_block = sect + cs;
 
 	return true;
 }
@@ -398,7 +390,7 @@ bool pf_open_first(
 	uint8_t*	dir;
 
 	uint16_t	dir_index = 0;			// Current read/write index number 
-	uint32_t	dir_clust = fs_dirbase;	// Current cluster 
+	uint32_t	dir_clust = fsInfo.dirbase;	// Current cluster 
 	uint32_t	dir_sect = clust2sect(dir_clust);	// Current sector 
 
 	*numFrames = 0;
@@ -423,7 +415,7 @@ bool pf_open_first(
 			if (dir[DIR_Attr] == AM_ARC)
 			{
 				// File start cluster 
-				uint8_t	*b = (uint8_t*)&fs_org_clust;
+				uint8_t	*b = (uint8_t*)&fsInfo.org_clust;
 
 				// little endian architecture
 				b[3] = dir[DIR_FstClusHI + 1];
@@ -431,13 +423,15 @@ bool pf_open_first(
 				b[1] = dir[DIR_FstClusLO + 1];
 				b[0] = dir[DIR_FstClusLO + 0];
 
-				fs_fsize = ld_dword(dir+DIR_FileSize);	// File size 
-				*numFrames = fs_fsize / (FIELD_NUM_BLOCKS * 512);
+				fsInfo.fsize = ld_dword(dir+DIR_FileSize);	// File size 
+				*numFrames = fsInfo.fsize / (FIELD_NUM_BLOCKS * 512);
 				*numFramesInit = true;
 
-				fs_block = 0;						// File pointer 
-				fs_curr_clust = fs_org_clust;
+				fsInfo.block = 0;						// File pointer 
+				fsInfo.curr_clust = fsInfo.org_clust;
 
+				// store 8.3 name
+				memcpy(fsInfo.name, &dir[DIR_Name], 11);
 				break;
 			}
 		}
@@ -455,16 +449,16 @@ bool pf_open_first(
 			// Static table 
 			if (dir_clust == 0)
 			{
-				if (dir_index >= fs_n_rootdir)
+				if (dir_index >= fsInfo.n_rootdir)
 					res = false;	// Report EOT when end of table 
 			}
 			else // Dynamic table 
 			{
 				// Cluster changed? 
-				if (((dir_index >> 4) & fs_csize_mask) == 0)
+				if (((dir_index >> 4) & fsInfo.csize_mask) == 0)
 				{
 					dir_clust = get_fat(dir_clust);		// Get next cluster 
-					if (dir_clust >= fs_n_fatent)
+					if (dir_clust >= fsInfo.n_fatent)
 						res = false;			// Report EOT when it reached end of dynamic table 
 					else
 						dir_sect = clust2sect(dir_clust);
@@ -481,6 +475,6 @@ bool pf_open_first(
 void
 pf_read_block(uint8_t *dst)
 {
-	disk_read_block2(fs_file_block++, dst);
+	disk_read_block2(fsInfo.file_block++, dst);
 }
 

@@ -20,6 +20,6 @@ Main improvements:
  - Enhanced video quality utilizing TIA background and playfield colors and
    optimized color space searches.
 
- - Reliable startup, as boot time is now 1.14 msec
+ - Reliable startup, as boot time is now 0.58 msec
    (Flashback 2 boot time is 1.52 msec, while Atari 2600 boot time is about 25 msec).
 

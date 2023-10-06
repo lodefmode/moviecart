@@ -1,4 +1,4 @@
-<config configName="default" projectName="moviecart_smd" configVersion="1.1" device="dsPIC33CK64MC105" deviceLibraryClass="com.microchip.mcc.mcu16.Mcu16PeripheralLibrary" coreVersion="5.4.2">
+<config configName="default" projectName="moviecart_smd" configVersion="1.1" device="dsPIC33CK64MC105" deviceLibraryClass="com.microchip.mcc.mcu16.Mcu16PeripheralLibrary" coreVersion="5.5.7">
    <usedPackages class="java.util.ArrayList"/>
    <usedClasses class="java.util.TreeMap">
       <entry>
@@ -8,6 +8,10 @@
       <entry>
          <string>DMT</string>
          <string>class com.microchip.mcc.mcu16.systemManager.dmt.DMT</string>
+      </entry>
+      <entry>
+         <string>FLASH</string>
+         <string>class com.microchip.mcc.mcu16.modules.flash.FLASH</string>
       </entry>
       <entry>
          <string>ICD</string>
@@ -816,6 +820,166 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="DMT" registerAlias="DMTPRECLR" settingAlias="STEP1"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="FLASH" name="DemoCodeGeneration"/>
+         <value>disabled</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="FLASH" name="FLASH_NVMIISRFunction"/>
+         <value>ISR_FLASH_NVMI</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="NVMOP" alias="Chip erase user memory (does not erase Device ID, customer OTP or executive memory)"/>
+         <value>14</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="NVMOP" alias="Double-word programming operation"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="NVMOP" alias="Erase a page of program or executive memory"/>
+         <value>3</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="NVMOP" alias="Row programming operation"/>
+         <value>2</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="NVMSIDL" alias="Flash voltage regulator goes into Standby mode during Idle mode"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="NVMSIDL" alias="Flash voltage regulator is active during Idle mode"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="RPDF" alias="Row data to be stored in RAM is in compressed format"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="RPDF" alias="Row data to be stored in RAM is in uncompressed format"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="URERR" alias="Indicates row programming operation has been terminated"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="URERR" alias="No data underrun error is detected"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WR" alias="Initiates a Flash memory program or erase operation"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WR" alias="Program or erase operation is complete and inactive"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WREN" alias="Enable Flash program/erase operations"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WREN" alias="Inhibit Flash program/erase operations"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WRERR" alias="An improper program or erase sequence attempt, or termination occurred"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WRERR" alias="The program or erase operation completed normally"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="FLASH" registerAlias="NVMADRH"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="FLASH" registerAlias="NVMADRL"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="FLASH" registerAlias="NVMCON"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="FLASH" registerAlias="NVMKEY"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="FLASH" registerAlias="NVMSRCADRH"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="FLASH" registerAlias="NVMSRCADRL"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMADRH" settingAlias="NVMADRH"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMADRL" settingAlias="NVMADRL"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="NVMOP"/>
+         <value>Double-word programming operation</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="NVMSIDL"/>
+         <value>Flash voltage regulator is active during Idle mode</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="RPDF"/>
+         <value>Row data to be stored in RAM is in uncompressed format</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="URERR"/>
+         <value>No data underrun error is detected</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WR"/>
+         <value>Program or erase operation is complete and inactive</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WREN"/>
+         <value>Inhibit Flash program/erase operations</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMCON" settingAlias="WRERR"/>
+         <value>The program or erase operation completed normally</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMI" settingAlias="context"/>
+         <value>OFF</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMI" settingAlias="enable"/>
+         <value>disabled</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMI" settingAlias="flag"/>
+         <value>disabled</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMI" settingAlias="priority"/>
+         <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMKEY" settingAlias="NVMKEY"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMSRCADRH" settingAlias="NVMSRCADRH"/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="FLASH" registerAlias="NVMSRCADRL" settingAlias="NVMSRCADRL"/>
          <value>0</value>
       </entry>
       <entry>
@@ -11383,94 +11547,102 @@
          <value>disabled</value>
       </entry>
    </tokenMap>
-   <generatedFileHashHistoryMap class="java.util.HashMap">
-      <entry>
-         <file>mcc_generated_files\mcc.h</file>
-         <hash>4a16b444b23eb8cac3ca22c673935bd038fbdf20fa3a5ae1468ff3f4e7bde671</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\interrupt_manager.h</file>
-         <hash>1d9eef2d8712072c21e3e2dbedde1552364285843b0fe496517426025d09f946</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\reset.c</file>
-         <hash>43b70450585f8d879e4ce0edae18b788305587eb489ba9b90bf41309d12588f9</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\clock.c</file>
-         <hash>af108c5d96119fb736a9d42e48890d451f9cdbc5189858ce215129d5cd3c6cd9</hash>
-      </entry>
+   <generatedFileHashHistoryMap class="java.util.TreeMap">
       <entry>
          <file>main.c</file>
          <hash>e50085d99efe179aa0f9b2cb1b9a6f6efa09a9d0705002a52a5dca65b532c5ac</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\spi1.h</file>
-         <hash>306e0c95cde7a0c67359cf24d02961e71bef3734f498fce40343e9f07dab55ce</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\pin_manager.h</file>
-         <hash>70e9caf01cb1412be6e0a94784e2ecfcef928b87f3d1891a33b2ec09f52eb54c</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\system_types.h</file>
-         <hash>67b77906f10fe27aa019d053583fb7f04df3530d04a481d197f12a8ab3c2e315</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\spi1.c</file>
-         <hash>a9d8e0b8516cd48f8b1ff0ae1bd51b8deecb30d66c86c7b8cccd0329d7ed151e</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\system.h</file>
-         <hash>ca359611c95076d9056f01ec6f4b51f1a608534e3bdb466af697e67dceca098f</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\pin_manager.c</file>
-         <hash>1562cd5b25ac71d0f6ed2dc85b462c5f9309359587607b04579450e627c1962d</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\system.c</file>
-         <hash>31967f544f00840945f7dab28dd030230c3bc814841623bcc191f539b9b22876</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\traps.c</file>
-         <hash>4587835e5d1274f6985a8a1455921652302bd7add2165e0b75062f8198ebb1e2</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\clc1.c</file>
          <hash>b25cb237d233575d03cb4a1326443165bd74bf8b7c367b082171ac49511449a7</hash>
       </entry>
       <entry>
+         <file>mcc_generated_files\clc1.h</file>
+         <hash>3d6ee4508525d8beb50e6f5b83faafa3c6aacb0131969841ac0041aa6583c4d7</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\clock.c</file>
+         <hash>af108c5d96119fb736a9d42e48890d451f9cdbc5189858ce215129d5cd3c6cd9</hash>
+      </entry>
+      <entry>
          <file>mcc_generated_files\clock.h</file>
          <hash>80fc7637fd9a86edf709a15f447b520a95aac7e5a0bf404ffb01174f7e360961</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\traps.h</file>
-         <hash>efd439e4a99297b3e38940cba16e7d37fa5665a1fa4c2935963f0ee9abb5a47a</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\mcc.c</file>
-         <hash>eb089a1588b2af8873b0e5132b359ae183d5fdc8f6ed968894906af1545bace1</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\interrupt_manager.c</file>
          <hash>26dd389b889a60dbc744de07c7c59639a3fee916aa1fedc05a528ea1dc9e55e5</hash>
       </entry>
       <entry>
+         <file>mcc_generated_files\interrupt_manager.h</file>
+         <hash>1d9eef2d8712072c21e3e2dbedde1552364285843b0fe496517426025d09f946</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\mcc.c</file>
+         <hash>eb089a1588b2af8873b0e5132b359ae183d5fdc8f6ed968894906af1545bace1</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\mcc.h</file>
+         <hash>d80aa2499a123a7a1ad7ecf39fa5b9e5d09183736ba01106c324bdd4e088bd6b</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\memory\flash.h</file>
+         <hash>38bb7c3b4a9e53f05ffab5c27ce524a417609eafa1ace3a373d3a5cebdecfa3c</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\memory\flash.s</file>
+         <hash>8db52b4349423833c28c1f432a818ab567833e7b16e5c559327cfad7ae2ee2a6</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\pin_manager.c</file>
+         <hash>4427dd996191b9cf821b5ef6eef84700c9798a285ddb8c6d9d80be2eeae049f4</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\pin_manager.h</file>
+         <hash>70e9caf01cb1412be6e0a94784e2ecfcef928b87f3d1891a33b2ec09f52eb54c</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\reset.c</file>
+         <hash>43b70450585f8d879e4ce0edae18b788305587eb489ba9b90bf41309d12588f9</hash>
+      </entry>
+      <entry>
          <file>mcc_generated_files\reset.h</file>
          <hash>c8cb919985961b4897d32e1706382c415549ddadde14e9b4fbe544912d9d94ac</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\clc1.h</file>
-         <hash>3d6ee4508525d8beb50e6f5b83faafa3c6aacb0131969841ac0041aa6583c4d7</hash>
+         <file>mcc_generated_files\reset_types.h</file>
+         <hash>d5badf8ea2a1e11b675816823178b37e2972a6970ba5543d6b800a808e56a21f</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\spi1.c</file>
+         <hash>a9d8e0b8516cd48f8b1ff0ae1bd51b8deecb30d66c86c7b8cccd0329d7ed151e</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\spi1.h</file>
+         <hash>306e0c95cde7a0c67359cf24d02961e71bef3734f498fce40343e9f07dab55ce</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\system.c</file>
+         <hash>8f5fcbf7c20f8fb8d004143032a42fb72ddb1f67668afdfb054dad6fb95702ba</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\system.h</file>
+         <hash>ca359611c95076d9056f01ec6f4b51f1a608534e3bdb466af697e67dceca098f</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\system_types.h</file>
+         <hash>67b77906f10fe27aa019d053583fb7f04df3530d04a481d197f12a8ab3c2e315</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\traps.c</file>
+         <hash>4587835e5d1274f6985a8a1455921652302bd7add2165e0b75062f8198ebb1e2</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\traps.h</file>
+         <hash>efd439e4a99297b3e38940cba16e7d37fa5665a1fa4c2935963f0ee9abb5a47a</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\watchdog.h</file>
          <hash>24d8f8798947e0a628e2a7a2ab0b506efb9df58e1333390029e6ac1d5ac8545a</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\reset_types.h</file>
-         <hash>d5badf8ea2a1e11b675816823178b37e2972a6970ba5543d6b800a808e56a21f</hash>
       </entry>
    </generatedFileHashHistoryMap>
 </config>

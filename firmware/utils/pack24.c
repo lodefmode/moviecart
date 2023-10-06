@@ -256,3 +256,78 @@ const uint8_t TitleBackColor2[192*1] =
 	160, 226, 134, 2, 162, 136, 154, 240, 0, 160, 0, 160
 };
 
+pack24C(const uint8_t* src, int size, const char* label)
+{
+	printf("\nconst uint32_t %s[] =\n", label);
+	printf("{");
+
+	int		row=0;
+
+	for (int i=0; i<size; i+=3)
+	{
+		uint32_t v = src[i] | (src[i+1]<<8) | (src[i+2]<<16);
+
+		if (row == 0)
+			printf("\n\t");
+
+		printf("0x%06x, ", v);
+
+		row++;
+		row %= 8;
+	}
+
+	printf("\n};\n");
+}
+
+pack24asm(const uint8_t* src, int size, const char* label)
+{
+	printf("\n.global _%s\n", label);
+	printf(".section .title,code\n");
+	printf("_%s:\n", label);
+
+	int		row=0;
+
+	for (int i=0; i<size; i+=3)
+	{
+		uint32_t v = src[i] | (src[i+1]<<8) | (src[i+2]<<16);
+
+		if (row == 0)
+			printf("\n\t.pword ");
+
+		printf("0x%06x", v);
+
+		if (row < 7)
+			printf(", ");
+
+		row++;
+		row %= 8;
+	}
+
+	printf("\n\n");
+}
+
+const uint8_t test[] = 
+{
+	0x01, 0x02, 0x03, 0x04,
+	0x05, 0x06, 0x07, 0x08
+};
+
+#define DUMP(X) {pack24asm(X, sizeof X, #X);}
+
+void
+main()
+{
+#if 0
+	DUMP(test);
+#else
+	DUMP(TitleGraph1);
+	DUMP(TitleGraph2);
+
+	DUMP(TitleColor1);
+	DUMP(TitleColor2);
+
+	DUMP(TitleBackColor1);
+	DUMP(TitleBackColor2);
+#endif
+}
+

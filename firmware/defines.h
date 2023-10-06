@@ -17,24 +17,10 @@
 // 3K
 #define FIELD_SIZE			(512*FIELD_MAX_BLOCKS) 
 
-struct frameInfo
-{
-	uint8_t*  		colorBKBuf;
-	uint8_t*  		colorBuf;
-	uint8_t*  		graphBuf;
-	uint8_t*        audioBuf;
-
-	uint_fast8_t    vsyncLines;
-	uint_fast8_t    blankLines;
-	uint_fast8_t    overscanLines;
-	uint_fast8_t	visibleLines;
-
-	uint8_t*        timecodeBuf;	// not used by kernel
-	uint_fast16_t	totalLines;		// not used by kernel
-	uint_fast8_t	numBlocks;		// not used by kernel
-
-	bool			odd;
-};
-
-
+#define TESTA0_LOW		IO_RA0_SetLow();
+#define TESTA0_HIGH		IO_RA0_SetHigh();
+#define TESTA1_LOW		IO_RA1_SetLow();
+#define TESTA1_HIGH		IO_RA1_SetHigh();
+#define TESTA2_LOW		IO_RA2_SetLow();
+#define TESTA2_HIGH		IO_RA2_SetHigh();
 #endif

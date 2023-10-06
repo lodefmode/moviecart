@@ -11,48 +11,55 @@
 #define ST_ON					0x84	// sty(2)
 #define ADDR_RIGHT_LINE			0x3e
 #define ADDR_END_LINES			0xb7
+
+// I/O mappings
+#define SET_DATA(X)     { LATB = (X); }
+#define READ_DATA()     PORTB
+#define DATA_OUTPUT     TRISB = 0x0000;
+#define DATA_INPUT      TRISB = 0xffff;
+#define DATA_OUTPUT_DIR IO_RA3_SetLow();
+#define DATA_INPUT_DIR  IO_RA3_SetHigh();
+#define LO_ADDRESS      (PORTC & 0x1FF)
+
+#define EMULATE_DONE \
+    { \
+    CNFC = 0; /* clear all flags */     \
+    IFS1bits.CNCIF = 0; /* clear flag */    \
+    return; \
+    }
+
+
 // 
 
-extern void	flash_led(uint8_t num);
-
-// used by main + interrupt
-volatile bool			mr_endFrame = 1;
-
-bool			mr_bufferIndex = false;
-
-uint_fast8_t	mr_swcha = 0xff;
-uint_fast8_t	mr_swchb = 0xff;
-uint_fast8_t	mr_inpt4 = 0xff;
-uint_fast8_t	mr_inpt5 = 0xff;	// not used
-
-// following r_* only used by interrupt code
-
-uint_fast8_t	r_peekBus = 0xff;
-uint_fast8_t*	r_storeAddress = &r_peekBus;
-
-uint_fast8_t	r_breakLoops = 255;	// break 255 times before starting main frame loop
-
-uint_fast8_t	r_lines = 190;
-
-struct frameInfo		r_frameInfo;
-struct frameInfo		mr_frameInfo1, mr_frameInfo2;
-
-uint_fast8_t	r_hiAddress = 0xf0;
-uint_fast8_t	r_vblankState = ST_OFF;
-uint_fast8_t	r_vsyncState = ST_OFF;
-uint_fast8_t	r_endState = 0;
-uint_fast8_t	r_nextLineJump = ADDR_RIGHT_LINE;
-uint_fast8_t	r_data = 0;
-
-
-
-bool			r_audioPushed = false;
-uint_fast8_t	r_audioVal;
+extern void				flash_led(uint8_t num);
+__attribute__((section(".coreInfo"))) struct coreInfo			r_coreInfo;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void
 coreInit()
 {
+	r_coreInfo.mr_endFrame = 1;
+	r_coreInfo.mr_bufferIndex = false;
+
+	r_coreInfo.mr_swcha = 0xff;
+	r_coreInfo.mr_swchb = 0xff;
+	r_coreInfo.mr_inpt4 = 0xff;
+	r_coreInfo.mr_inpt5 = 0xff;	// not used
+
+	r_coreInfo.peekBus = 0xff;
+	r_coreInfo.storeAddress = &r_coreInfo.peekBus;
+
+	r_coreInfo.breakLoops = 255;	// break 255 times before starting main frame loop
+
+	r_coreInfo.lines = 190;
+
+	r_coreInfo.hiAddress = 0xf0;
+	r_coreInfo.vblankState = ST_OFF;
+	r_coreInfo.vsyncState = ST_OFF;
+	r_coreInfo.endState = 0;
+	r_coreInfo.nextLineJump = ADDR_RIGHT_LINE;
+	r_coreInfo.data = 0;
+
 	DATA_OUTPUT_DIR;
 	DATA_OUTPUT;
 
@@ -111,7 +118,7 @@ void __attribute__((interrupt, no_auto_psv, context)) _CNCInterrupt(void)
 	goto *romData[LO_ADDRESS];
 
 gstore:
-	*r_storeAddress = LO_ADDRESS;
+	*r_coreInfo.storeAddress = LO_ADDRESS;
 	EMULATE_DONE
 
 g0x00:
@@ -366,11 +373,11 @@ g0x3d:
 
 g0x3e:
 	SET_DATA(0xa9); // lda #GDATA6 	// 2	// right_line
-	r_data = r_frameInfo.graphBuf[1];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[1];
 	EMULATE_DONE
 
 g0x3f:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 
@@ -393,21 +400,21 @@ g0x43:
 
 g0x44:
 	SET_DATA(0xa9); // lda #AUD_DATA 	// 2
-	r_data = r_audioPushed ? r_audioVal : *r_frameInfo.audioBuf++;
+	r_coreInfo.data = r_coreInfo.audioPushed ? r_coreInfo.audioVal : *r_coreInfo.frameInfo.audioBuf++;
 	EMULATE_DONE
 
 g0x45:
-	SET_DATA(r_data);
-	r_audioPushed = false;
+	SET_DATA(r_coreInfo.data);
+	r_coreInfo.audioPushed = false;
 	EMULATE_DONE
 
 g0x46:
 	SET_DATA(0xa2);	// ldx #GDATA9 	// 2
-	r_data = r_frameInfo.graphBuf[4];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[4];
 	EMULATE_DONE
 
 g0x47:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x48:
@@ -420,20 +427,20 @@ g0x49:
 
 g0x4a:
 	SET_DATA(0xa0); // ldy #GCOL9 	// 2
-	r_data = r_frameInfo.colorBuf[4];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[4];
 	EMULATE_DONE
 
 g0x4b:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x4c:
 	SET_DATA(0xa9); // lda #GCOL6 	// 2
-	r_data = r_frameInfo.colorBuf[1];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[1];
 	EMULATE_DONE
 
 g0x4d:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x4e:
@@ -447,11 +454,11 @@ g0x4f:
 
 g0x50:
 	SET_DATA(0xa9);	// lda #GDATA5 	// 2
-	r_data = r_frameInfo.graphBuf[0];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[0];
 	EMULATE_DONE
 
 g0x51:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x52:
@@ -464,11 +471,11 @@ g0x53:
 
 g0x54:
 	SET_DATA(0xa9); // lda #GCOL5 	// 2
-	r_data = r_frameInfo.colorBuf[0];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[0];
 	EMULATE_DONE
 
 g0x55:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x56:
@@ -481,11 +488,11 @@ g0x57:
 
 g0x58:
 	SET_DATA(0xa9);	// lda #GDATA8 	// 2
-	r_data = r_frameInfo.graphBuf[3];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[3];
 	EMULATE_DONE
 
 g0x59:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x5a:
@@ -498,11 +505,11 @@ g0x5b:
 
 g0x5c:
 	SET_DATA(0xa9);	// lda #$00 	// 2 background color
-	r_data = *r_frameInfo.colorBKBuf++;
+	r_coreInfo.data = *r_coreInfo.frameInfo.colorBKBuf++;
 	EMULATE_DONE
 
 g0x5d:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x5e:
@@ -515,11 +522,11 @@ g0x5f:
 
 g0x60:
 	SET_DATA(0xa9); // lda #GCOL7 	// 2
-	r_data = r_frameInfo.colorBuf[2];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[2];
 	EMULATE_DONE
 
 g0x61:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x62:
@@ -532,11 +539,11 @@ g0x63:
 
 g0x64:
 	SET_DATA(0xa9);	// lda #GDATA7 	// 2
-	r_data = r_frameInfo.graphBuf[2];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[2];
 	EMULATE_DONE
 
 g0x65:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x66:
@@ -549,11 +556,11 @@ g0x67:
 
 g0x68:
 	SET_DATA(0xa9); // lda #GCOL8 	// 2
-	r_data = r_frameInfo.colorBuf[3];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[3];
 	EMULATE_DONE
 
 g0x69:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x6a:
@@ -615,11 +622,11 @@ g0x77:
 
 g0x78:
 	SET_DATA(0xa9);	// lda #GDATA1 	// 2
-	r_data = r_frameInfo.graphBuf[6];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[6];
 	EMULATE_DONE
 
 g0x79:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x7a:
@@ -640,11 +647,11 @@ g0x7d:
 
 g0x7e:
 	SET_DATA(0xa9);	// lda #GCOL1 	// 2
-	r_data = r_frameInfo.colorBuf[6];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[6];
 	EMULATE_DONE
 
 g0x7f:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 
@@ -658,11 +665,11 @@ g0x81:
 
 g0x82:
 	SET_DATA(0xa9); // lda #AUD_DATA 	// 2
-	r_data = *r_frameInfo.audioBuf++;
+	r_coreInfo.data = *r_coreInfo.frameInfo.audioBuf++;
 	EMULATE_DONE
 
 g0x83:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x84:
@@ -675,29 +682,29 @@ g0x85:
 
 g0x86:
 	SET_DATA(0xa2); // ldx #GDATA4 	// 2
-	r_data = r_frameInfo.graphBuf[9];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[9];
 	EMULATE_DONE
 
 g0x87:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x88:
 	SET_DATA(0xa0); // ldy #GCOL4 	// 2
-	r_data = r_frameInfo.colorBuf[9];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[9];
 	EMULATE_DONE
 
 g0x89:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x8a:
 	SET_DATA(0xa9); // lda #GDATA0 	// 2
-	r_data = r_frameInfo.graphBuf[5];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[5];
 	EMULATE_DONE
 
 g0x8b:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x8c:
@@ -710,11 +717,11 @@ g0x8d:
 
 g0x8e:
 	SET_DATA(0xa9); // lda #GCOL0 	// 2
-	r_data = r_frameInfo.colorBuf[5];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[5];
 	EMULATE_DONE
 
 g0x8f:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x90:
@@ -727,11 +734,11 @@ g0x91:
 
 g0x92:
 	SET_DATA(0xa9); // lda #GDATA3 	// 2
-	r_data = r_frameInfo.graphBuf[8];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[8];
 	EMULATE_DONE
 
 g0x93:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x94:
@@ -744,11 +751,11 @@ g0x95:
 
 g0x96:
 	SET_DATA(0xa9);	// lda #$00 	// 2 playfield color
-	r_data = *r_frameInfo.colorBKBuf++;
+	r_coreInfo.data = *r_coreInfo.frameInfo.colorBKBuf++;
 	EMULATE_DONE
 
 g0x97:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x98:
@@ -761,11 +768,11 @@ g0x99:
 
 g0x9a:
 	SET_DATA(0xa9); // lda #GCOL2 	// 2
-	r_data = r_frameInfo.colorBuf[7];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[7];
 	EMULATE_DONE
 
 g0x9b:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0x9c:
@@ -778,11 +785,11 @@ g0x9d:
 
 g0x9e:
 	SET_DATA(0xa9); // lda #GDATA2 	// 2
-	r_data = r_frameInfo.graphBuf[7];
+	r_coreInfo.data = r_coreInfo.frameInfo.graphBuf[7];
 	EMULATE_DONE
 
 g0x9f:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0xa0:
@@ -795,11 +802,11 @@ g0xa1:
 
 g0xa2:
 	SET_DATA(0xa9); // lda #GCOL3 	// 2
-	r_data = r_frameInfo.colorBuf[8];
+	r_coreInfo.data = r_coreInfo.frameInfo.colorBuf[8];
 	EMULATE_DONE
 
 g0xa3:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0xa4:
@@ -848,26 +855,26 @@ g0xae:
 
 g0xaf:
 	SET_DATA(0x80);	// lda #$80 	// 2
-	r_lines -= 2;
+	r_coreInfo.lines -= 2;
 	EMULATE_DONE
 
 g0xb0:
 	SET_DATA(0x85);	// sta HMP0 	// 3
-	if (r_lines == 0)
+	if (r_coreInfo.lines == 0)
 	{
-		r_nextLineJump = ADDR_END_LINES;
+		r_coreInfo.nextLineJump = ADDR_END_LINES;
 
-		if (!r_frameInfo.odd)
-			r_lines = r_frameInfo.overscanLines;
+		if (!r_coreInfo.frameInfo.odd)
+			r_coreInfo.lines = r_coreInfo.frameInfo.overscanLines;
 		else
-			r_lines = r_frameInfo.overscanLines-1;
+			r_coreInfo.lines = r_coreInfo.frameInfo.overscanLines-1;
 
-		r_vblankState = ST_ON;
+		r_coreInfo.vblankState = ST_ON;
 	}
 	else
 	{
-		r_frameInfo.graphBuf += 10;
-		r_frameInfo.colorBuf += 10;
+		r_coreInfo.frameInfo.graphBuf += 10;
+		r_coreInfo.frameInfo.colorBuf += 10;
 	}
 	EMULATE_DONE
 
@@ -888,7 +895,7 @@ g0xb4:
 	EMULATE_DONE
 
 g0xb5:
-	SET_DATA(r_nextLineJump);
+	SET_DATA(r_coreInfo.nextLineJump);
 	EMULATE_DONE
 
 g0xb6:
@@ -912,7 +919,7 @@ g0xba:
 	EMULATE_DONE
 
 g0xbb:
-	SET_DATA(r_vsyncState);
+	SET_DATA(r_coreInfo.vsyncState);
 	EMULATE_DONE	// stx VSYNC	// beginning of new line
 
 g0xbc:
@@ -920,7 +927,7 @@ g0xbc:
 	EMULATE_DONE
 
 g0xbd:
-	SET_DATA(r_vblankState);
+	SET_DATA(r_coreInfo.vblankState);
 	EMULATE_DONE	// stx VBLANK
 
 g0xbe:
@@ -929,12 +936,12 @@ g0xbe:
 
 g0xbf:
 	SET_DATA(0xa9); // lda #AUD_DATA 	// 2
-	r_data = *r_frameInfo.audioBuf++;
+	r_coreInfo.data = *r_coreInfo.frameInfo.audioBuf++;
 	EMULATE_DONE
 
 
 g0xc0:
-	SET_DATA(r_data);
+	SET_DATA(r_coreInfo.data);
 	EMULATE_DONE
 
 g0xc1:
@@ -967,7 +974,7 @@ g0xc7:
 
 g0xc8:
 	SET_DATA(0xfe);
-	r_storeAddress = &mr_swcha;
+	r_coreInfo.storeAddress = &r_coreInfo.mr_swcha;
 	EMULATE_DONE
 
 g0xc9:
@@ -992,7 +999,7 @@ g0xcd:
 
 g0xce:
 	SET_DATA(0xfe);
-	r_storeAddress = &mr_swchb;
+	r_coreInfo.storeAddress = &r_coreInfo.mr_swchb;
 	EMULATE_DONE
 
 g0xcf:
@@ -1014,7 +1021,7 @@ g0xd2:
 
 g0xd3:
 	SET_DATA(0xfe);
-	r_storeAddress = &mr_inpt4;
+	r_coreInfo.storeAddress = &r_coreInfo.mr_inpt4;
 	EMULATE_DONE
 
 g0xd4:
@@ -1035,38 +1042,38 @@ g0xd7:
 
 g0xd8:
 	SET_DATA(0xfe);
-	r_storeAddress = &mr_inpt5;
+	r_coreInfo.storeAddress = &r_coreInfo.mr_inpt5;
 	EMULATE_DONE
 
 g0xd9:
 	SET_DATA(0xa2); // ldx   #0 
-	r_lines--;
-	if (r_lines == 0)
+	r_coreInfo.lines--;
+	if (r_coreInfo.lines == 0)
 	{
-		switch (r_endState)
+		switch (r_coreInfo.endState)
 		{
 			case 0:
 				TESTA1_HIGH
-				r_endState++;
-				r_lines = r_frameInfo.vsyncLines;
-				r_vsyncState = ST_ON;
+				r_coreInfo.endState++;
+				r_coreInfo.lines = r_coreInfo.frameInfo.vsyncLines;
+				r_coreInfo.vsyncState = ST_ON;
 
 				EMULATE_DONE
 
 			case 1:
-				r_endState++;
-				if (!r_frameInfo.odd)
-					r_lines = r_frameInfo.blankLines+1;
+				r_coreInfo.endState++;
+				if (!r_coreInfo.frameInfo.odd)
+					r_coreInfo.lines = r_coreInfo.frameInfo.blankLines+1;
 				else
-					r_lines = r_frameInfo.blankLines;
+					r_coreInfo.lines = r_coreInfo.frameInfo.blankLines;
 
-				r_vsyncState = ST_OFF;
+				r_coreInfo.vsyncState = ST_OFF;
 				EMULATE_DONE
 
 			case 2:
-				r_endState++;
-				r_vblankState = ST_OFF;
-				r_nextLineJump = ADDR_RIGHT_LINE;
+				r_coreInfo.endState++;
+				r_coreInfo.vblankState = ST_OFF;
+				r_coreInfo.nextLineJump = ADDR_RIGHT_LINE;
 				EMULATE_DONE
 		}
 	}
@@ -1074,104 +1081,104 @@ g0xd9:
 
 g0xda:
 	SET_DATA(0x00);
-	if (r_endState == 3)
+	if (r_coreInfo.endState == 3)
 	{
-		if (r_frameInfo.odd)
+		if (r_coreInfo.frameInfo.odd)
 		{
-			r_audioVal = *r_frameInfo.audioBuf++;
-			r_audioPushed = true;
+			r_coreInfo.audioVal = *r_coreInfo.frameInfo.audioBuf++;
+			r_coreInfo.audioPushed = true;
 		}
 	}
 	EMULATE_DONE
 
 g0xdb:
 	SET_DATA(0xea); // nop
-	if (r_endState == 3)
+	if (r_coreInfo.endState == 3)
 	{
-		if (mr_bufferIndex == 0)
+		if (r_coreInfo.mr_bufferIndex == 0)
 		{
-			r_frameInfo.colorBuf = mr_frameInfo2.colorBuf;
-			r_frameInfo.colorBKBuf = mr_frameInfo2.colorBKBuf;
+			r_coreInfo.frameInfo.colorBuf = r_coreInfo.mr_frameInfo2.colorBuf;
+			r_coreInfo.frameInfo.colorBKBuf = r_coreInfo.mr_frameInfo2.colorBKBuf;
 		}
 		else
 		{
-			r_frameInfo.colorBuf = mr_frameInfo1.colorBuf;
-			r_frameInfo.colorBKBuf = mr_frameInfo1.colorBKBuf;
+			r_coreInfo.frameInfo.colorBuf = r_coreInfo.mr_frameInfo1.colorBuf;
+			r_coreInfo.frameInfo.colorBKBuf = r_coreInfo.mr_frameInfo1.colorBKBuf;
 		}
 	}
 	EMULATE_DONE
 
 g0xdc:
 	SET_DATA(0xea); // nop
-	if (r_endState == 3)
+	if (r_coreInfo.endState == 3)
 	{
-		if (mr_bufferIndex == 0)
+		if (r_coreInfo.mr_bufferIndex == 0)
 		{
-			r_frameInfo.audioBuf = mr_frameInfo2.audioBuf;
-			r_frameInfo.graphBuf = mr_frameInfo2.graphBuf;
+			r_coreInfo.frameInfo.audioBuf = r_coreInfo.mr_frameInfo2.audioBuf;
+			r_coreInfo.frameInfo.graphBuf = r_coreInfo.mr_frameInfo2.graphBuf;
 		}
 		else
 		{
-			r_frameInfo.audioBuf = mr_frameInfo1.audioBuf;
-			r_frameInfo.graphBuf = mr_frameInfo1.graphBuf;
+			r_coreInfo.frameInfo.audioBuf = r_coreInfo.mr_frameInfo1.audioBuf;
+			r_coreInfo.frameInfo.graphBuf = r_coreInfo.mr_frameInfo1.graphBuf;
 		}
 	}
 	EMULATE_DONE
 
 g0xdd:
 	SET_DATA(0xea); // nop
-	if (r_endState == 3)
+	if (r_coreInfo.endState == 3)
 	{
-		if (mr_bufferIndex == 0)
+		if (r_coreInfo.mr_bufferIndex == 0)
 		{
-			r_frameInfo.visibleLines = mr_frameInfo2.visibleLines;
-			r_frameInfo.overscanLines = mr_frameInfo2.overscanLines;
+			r_coreInfo.frameInfo.visibleLines = r_coreInfo.mr_frameInfo2.visibleLines;
+			r_coreInfo.frameInfo.overscanLines = r_coreInfo.mr_frameInfo2.overscanLines;
 		}
 		else
 		{
-			r_frameInfo.visibleLines = mr_frameInfo1.visibleLines;
-			r_frameInfo.overscanLines = mr_frameInfo1.overscanLines;
+			r_coreInfo.frameInfo.visibleLines = r_coreInfo.mr_frameInfo1.visibleLines;
+			r_coreInfo.frameInfo.overscanLines = r_coreInfo.mr_frameInfo1.overscanLines;
 		}
 	}
 	EMULATE_DONE
 
 g0xde:
 	SET_DATA(0xea); // nop
-	if (r_endState == 3)
+	if (r_coreInfo.endState == 3)
 	{
-		if (mr_bufferIndex == 0)
+		if (r_coreInfo.mr_bufferIndex == 0)
 		{
-			r_frameInfo.vsyncLines = mr_frameInfo2.vsyncLines;
-			r_frameInfo.blankLines = mr_frameInfo2.blankLines;
+			r_coreInfo.frameInfo.vsyncLines = r_coreInfo.mr_frameInfo2.vsyncLines;
+			r_coreInfo.frameInfo.blankLines = r_coreInfo.mr_frameInfo2.blankLines;
 		}
 		else
 		{
-			r_frameInfo.vsyncLines = mr_frameInfo1.vsyncLines;
-			r_frameInfo.blankLines = mr_frameInfo1.blankLines;
+			r_coreInfo.frameInfo.vsyncLines = r_coreInfo.mr_frameInfo1.vsyncLines;
+			r_coreInfo.frameInfo.blankLines = r_coreInfo.mr_frameInfo1.blankLines;
 		}
 	}
 	EMULATE_DONE
 
 g0xdf:
 	SET_DATA(0xea); // nop
-	if (r_endState == 3)
+	if (r_coreInfo.endState == 3)
 	{
-		if (mr_bufferIndex == 0)
+		if (r_coreInfo.mr_bufferIndex == 0)
 		{
-			r_frameInfo.odd = mr_frameInfo2.odd;
+			r_coreInfo.frameInfo.odd = r_coreInfo.mr_frameInfo2.odd;
 		}
 		else
 		{
-			r_frameInfo.odd = mr_frameInfo1.odd;
+			r_coreInfo.frameInfo.odd = r_coreInfo.mr_frameInfo1.odd;
 		}
 	}
 	EMULATE_DONE	// nop
 
 g0xe0:
 	SET_DATA(0xea); // nop
-	if (r_endState == 3)
+	if (r_coreInfo.endState == 3)
 	{
-		mr_bufferIndex = !mr_bufferIndex;
+		r_coreInfo.mr_bufferIndex = !r_coreInfo.mr_bufferIndex;
 	}
 	EMULATE_DONE	// nop
 
@@ -1184,13 +1191,13 @@ g0xe2:
 	EMULATE_DONE	// nop
 
 g0xe3:
-	SET_DATA(r_vsyncState);	// stx VSYNC
-	if (r_endState == 3)
+	SET_DATA(r_coreInfo.vsyncState);	// stx VSYNC
+	if (r_coreInfo.endState == 3)
 	{
-		r_lines = r_frameInfo.visibleLines;
+		r_coreInfo.lines = r_coreInfo.frameInfo.visibleLines;
 
-		r_endState = 0;
-		mr_endFrame = true;
+		r_coreInfo.endState = 0;
+		r_coreInfo.mr_endFrame = true;
 		TESTA1_LOW
 	}
 	EMULATE_DONE
@@ -1200,7 +1207,7 @@ g0xe4:
 	EMULATE_DONE
 
 g0xe5:
-	SET_DATA(r_vblankState);	// stx VBLANK
+	SET_DATA(r_coreInfo.vblankState);	// stx VBLANK
 	EMULATE_DONE
 
 g0xe6:
@@ -1212,7 +1219,7 @@ g0xe7:
 	EMULATE_DONE
 
 g0xe8:
-	SET_DATA(r_nextLineJump);	//	 end_lines (b7)  right_line(3e)
+	SET_DATA(r_coreInfo.nextLineJump);	//	 end_lines (b7)  right_line(3e)
 	EMULATE_DONE
 
 g0xe9:
@@ -1286,10 +1293,10 @@ g0xf9:
    // break a number of times to make sure the system is actually stable
 
 g0xfa:
-	if (r_breakLoops)
+	if (r_coreInfo.breakLoops)
 	{
 		SET_DATA(0xf0); // .word.w main_start	// NMI
-		r_breakLoops--;
+		r_coreInfo.breakLoops--;
 	}
 	else
 	{
@@ -1302,10 +1309,10 @@ g0xfb:
 	EMULATE_DONE
 
 g0xfc:
-	if (r_breakLoops)
+	if (r_coreInfo.breakLoops)
 	{
 		SET_DATA(0xf0); // .word.w main_start	// RESET
-		r_breakLoops--;
+		r_coreInfo.breakLoops--;
 	}
 	else
 	{
@@ -1318,10 +1325,10 @@ g0xfd:
 	EMULATE_DONE
 
 g0xfe:
-	if (r_breakLoops)
+	if (r_coreInfo.breakLoops)
 	{
 		SET_DATA(0xf0); // .word.w main_start	// IRQ/BRK
-		r_breakLoops--;
+		r_coreInfo.breakLoops--;
 	}
 	else
 	{

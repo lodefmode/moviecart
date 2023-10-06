@@ -7,6 +7,9 @@
       <logicalFolder name="MCC Generated Files"
                      displayName="MCC Generated Files"
                      projectFiles="true">
+        <logicalFolder name="memory" displayName="memory" projectFiles="true">
+          <itemPath>mcc_generated_files/memory/flash.h</itemPath>
+        </logicalFolder>
         <itemPath>mcc_generated_files/pin_manager.h</itemPath>
         <itemPath>mcc_generated_files/system.h</itemPath>
         <itemPath>mcc_generated_files/clc1.h</itemPath>
@@ -20,15 +23,16 @@
         <itemPath>mcc_generated_files/watchdog.h</itemPath>
         <itemPath>mcc_generated_files/spi1.h</itemPath>
       </logicalFolder>
-      <itemPath>TitleScreen.h</itemPath>
       <itemPath>core.h</itemPath>
       <itemPath>pff.h</itemPath>
       <itemPath>sd_reader.h</itemPath>
       <itemPath>update.h</itemPath>
+      <itemPath>frame.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
                    projectFiles="true">
+      <itemPath>p33CK64MC105.gld</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
@@ -36,6 +40,9 @@
       <logicalFolder name="MCC Generated Files"
                      displayName="MCC Generated Files"
                      projectFiles="true">
+        <logicalFolder name="memory" displayName="memory" projectFiles="true">
+          <itemPath>mcc_generated_files/memory/flash.s</itemPath>
+        </logicalFolder>
         <itemPath>mcc_generated_files/system.c</itemPath>
         <itemPath>mcc_generated_files/traps.c</itemPath>
         <itemPath>mcc_generated_files/clc1.c</itemPath>
@@ -51,6 +58,8 @@
       <itemPath>sd_reader.c</itemPath>
       <itemPath>pff.c</itemPath>
       <itemPath>update.c</itemPath>
+      <itemPath>frame.c</itemPath>
+      <itemPath>TitleScreen.s</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -180,17 +189,17 @@
         <property key="boot-ram" value="no_ram"/>
         <property key="boot-write-protect" value="no_write_protect"/>
         <property key="enable-check-sections" value="false"/>
-        <property key="enable-data-init" value="true"/>
+        <property key="enable-data-init" value="false"/>
         <property key="enable-default-isr" value="true"/>
         <property key="enable-handles" value="true"/>
         <property key="enable-pack-data" value="true"/>
         <property key="extra-lib-directories" value=""/>
-        <property key="fill-flash-options-addr" value=""/>
+        <property key="fill-flash-options-addr" value="0x8000:0xA000"/>
         <property key="fill-flash-options-const" value=""/>
         <property key="fill-flash-options-how" value="0"/>
         <property key="fill-flash-options-inc-const" value="1"/>
         <property key="fill-flash-options-increment" value=""/>
-        <property key="fill-flash-options-seq" value=""/>
+        <property key="fill-flash-options-seq" value="0x00"/>
         <property key="fill-flash-options-what" value="0"/>
         <property key="general-code-protect" value="no_code_protect"/>
         <property key="general-write-protect" value="no_write_protect"/>
@@ -220,7 +229,7 @@
         <property key="warn-section-align" value="false"/>
       </C30-LD>
       <C30Global>
-        <property key="combine-sourcefiles" value="false"/>
+        <property key="combine-sourcefiles" value="true"/>
         <property key="common-include-directories" value=""/>
         <property key="dual-boot-partition" value="0"/>
         <property key="fast-math" value="false"/>
@@ -231,7 +240,7 @@
         <property key="omit-pack-options" value="1"/>
         <property key="output-file-format" value="elf"/>
         <property key="preserve-all" value="false"/>
-        <property key="preserve-file" value=""/>
+        <property key="preserve-file" value="firmware_stable.elf"/>
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
       </C30Global>
@@ -241,6 +250,8 @@
         <property key="codecoverage.outputfile" value=""/>
         <property key="debugoptions.debug-startup" value="Use system settings"/>
         <property key="debugoptions.reset-behaviour" value="Use system settings"/>
+        <property key="event.recorder.enabled" value="false"/>
+        <property key="event.recorder.scvd.files" value=""/>
         <property key="lastid" value=""/>
         <property key="oscillator.auxfrequency" value="120"/>
         <property key="oscillator.auxfrequencyunit" value="Mega"/>
@@ -546,7 +557,7 @@
                   value="report"/>
         <property key="warningmessagebreakoptions.W0247_ADC_CONVERSION_BAD_RESSEL"
                   value="report"/>
-        <property key="warningmessagebreakoptions.W0248_ADC_WR_BEFORE_KEY_SEQ"
+        <property key="warningmessagebreakoptions.W0300_NVM_WR_BEFORE_KEY_SEQ"
                   value="report"/>
         <property key="warningmessagebreakoptions.W0400_PWM_PWM_FASTER_THAN_FOSC"
                   value="report"/>
@@ -1089,6 +1100,8 @@
         <property key="warningmessagebreakoptions.W0247_ADC_CONVERSION_BAD_RESSEL"
                   value="report"/>
         <property key="warningmessagebreakoptions.W0248_ADC_WR_BEFORE_KEY_SEQ"
+                  value="report"/>
+        <property key="warningmessagebreakoptions.W0300_NVM_WR_BEFORE_KEY_SEQ"
                   value="report"/>
         <property key="warningmessagebreakoptions.W0400_PWM_PWM_FASTER_THAN_FOSC"
                   value="report"/>

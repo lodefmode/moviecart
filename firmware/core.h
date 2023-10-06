@@ -6,36 +6,47 @@ Main thread needs only maintain the buffer.
 
 */
 
+#ifndef __CORE__
+#define __CORE__
+
 #include <stdint.h>
 #include <stdbool.h>
 
 #include "defines.h"
+#include "frame.h"
 
-// I/O mappings
-#define SET_DATA(X)     { LATB = (X); }
-#define READ_DATA()     PORTB
-#define DATA_OUTPUT     TRISB = 0x0000;
-#define DATA_INPUT      TRISB = 0xffff;
-#define DATA_OUTPUT_DIR IO_RA3_SetLow();
-#define DATA_INPUT_DIR  IO_RA3_SetHigh();
-#define LO_ADDRESS      (PORTC & 0x1FF)
-#define TESTA0_LOW		 IO_RA0_SetLow();
-#define TESTA0_HIGH		 IO_RA0_SetHigh();
-#define TESTA1_LOW		 IO_RA1_SetLow();
-#define TESTA1_HIGH		 IO_RA1_SetHigh();
-#define TESTA2_LOW		 IO_RA2_SetLow();
-#define TESTA2_HIGH		 IO_RA2_SetHigh();
+struct coreInfo
+{
+	// mr_* used by both main + interrupt
 
-#define EMULATE_DONE \
-    { \
-    CNFC = 0; /* clear all flags */     \
-    IFS1bits.CNCIF = 0; /* clear flag */    \
-    return; \
-    }
-#define RAM_UNITIALIZED __attribute__((persistent))
+	volatile bool			mr_endFrame;
+	volatile bool			mr_bufferIndex;
+	volatile uint_fast8_t	mr_swcha;
+	volatile uint_fast8_t	mr_swchb;
+	volatile uint_fast8_t	mr_inpt4;
+	volatile uint_fast8_t	mr_inpt5;	// not used
+	struct frameInfo		mr_frameInfo1 , mr_frameInfo2;
 
+	// following only used by interrupt code
+
+	uint_fast8_t	peekBus;
+	volatile uint_fast8_t*	storeAddress;
+	uint_fast8_t	breakLoops;
+	uint_fast8_t	lines;
+
+	uint_fast8_t	hiAddress;
+	uint_fast8_t	vblankState;
+	uint_fast8_t	vsyncState;
+	uint_fast8_t	endState;
+	uint_fast8_t	nextLineJump;
+	uint_fast8_t	data;
+
+	bool			audioPushed;
+	uint_fast8_t	audioVal;
+
+	struct frameInfo	frameInfo;
+};
 
 extern void			coreInit();
-extern struct frameInfo	r_frameInfo;
-extern struct frameInfo	mr_frameInfo1, mr_frameInfo2;
 
+#endif

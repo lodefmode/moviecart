@@ -51,6 +51,8 @@
 #include "mcc_generated_files/system.h"
 #include "mcc_generated_files/pin_manager.h"
 #include "mcc_generated_files/spi1.h"
+#include "mcc_generated_files/memory/flash.h"
+#include "mcc_generated_files/interrupt_manager.h"
 
 
 #if 1
@@ -61,16 +63,13 @@
 #endif
 
 
-uint16_t		m_titleFrame = 300; // 5 seconds
-
+__attribute__((section(".newcode"),space(prog))) void main2(void);
 
 void flash_led(uint8_t num);
 
 #include "pff.h"
 #include "core.h"
 #include "update.h"
-
-#include "TitleScreen.h"
 
 void
 flash_led(uint8_t num)
@@ -85,6 +84,9 @@ flash_led(uint8_t num)
 		TESTA0_HIGH			// off
         __delay_ms(150);
     }
+	
+	if (!num)
+		__delay_ms(500);
 
 	__delay_ms(500);
 }
@@ -134,145 +136,85 @@ serialLED(uint8_t v)
  */
 
 
-
-extern uint_fast8_t	mr_swcha;
-extern uint_fast8_t	mr_swchb;
-extern uint_fast8_t	mr_inpt4;
-extern uint_fast8_t	mr_inpt5;	// not used
-extern bool			mr_bufferIndex;  // which buffer to fill
+extern struct coreInfo			r_coreInfo;
+extern struct fileSystemInfo	fsInfo;
 
 
-extern volatile bool            mr_endFrame;    // set to true at the end of each frame
+extern void updateInit();
 
-struct stateVars		state;
+
+__attribute__((section(".stateVars"))) struct stateVars		state;
+__attribute__((section(".mr_buffer1"))) uint8_t mr_buffer1[FIELD_SIZE];
+__attribute__((section(".mr_buffer2")))uint8_t mr_buffer2[FIELD_SIZE];
 
 // old format
-const uint8_t	header1[7] = { 'M', 'V', 'C', 0,  0, 0, 0 };
-const uint8_t	header2[7] = { 'M', 'V', 'C', 0,  0, 0, 1 };
+const uint8_t   header1[7] = { 'M', 'V', 'C', 0,  0, 0, 0 };
+const uint8_t   header2[7] = { 'M', 'V', 'C', 0,  0, 0, 1 };
 
-uint8_t RAM_UNITIALIZED mr_buffer1[FIELD_SIZE];
-uint8_t RAM_UNITIALIZED mr_buffer2[FIELD_SIZE];
-
-struct FrameFormat
-{
-	uint8_t version[4];   // ('M', 'V', 'C', 0)
-	uint8_t format;       // ( 1-------)
-	uint8_t timecode[4];  // (hour, minute, second, fame)
-	uint8_t vsync;        // eg 3
-	uint8_t vblank;       // eg 37
-	uint8_t overscan;     // eg 30
-	uint8_t visible;      // eg 192
-	uint8_t rate;         // eg 60
-    
-//    uint8_t dataStart;
-
-	// sound[vsync+blank+overscan+visible]
-	// graph[5 * visible]
-	// color[5 * visible]
-	// bkcolor[1 * visible]
-	// timecode[60]
-	// padding
-};
+// Allocate and reserve a page of flash for this test to use.  The compiler/linker will reserve this for data and not place any code here.
+//static __prog__  uint8_t flashTestPage[FLASH_ERASE_PAGE_SIZE_IN_PC_UNITS] __attribute__((space(prog),aligned(FLASH_ERASE_PAGE_SIZE_IN_PC_UNITS)));
 
 void
-initFrameInfo(struct frameInfo* fInfo, uint8_t* dst)
+copyFromFlash(uint8_t *dst, uint32_t src, int size)
 {
-	struct 		FrameFormat* ff = (struct FrameFormat* )dst;
-	uint16_t	headerSize;
-
-	if (ff->format & 0x80)
+	while (size > 0)
 	{
-		headerSize = sizeof(*ff);
+		uint32_t read_data = FLASH_ReadWord24(src);
 
-		fInfo->vsyncLines = ff->vsync;
-		fInfo->blankLines = ff->vblank;
-		fInfo->overscanLines = ff->overscan;
-		fInfo->visibleLines = ff->visible;
-        fInfo->odd = !(ff->timecode[3] & 1);
-		fInfo->totalLines = fInfo->vsyncLines + fInfo->blankLines + fInfo->overscanLines + fInfo->visibleLines;
+		*dst++ = (read_data & 0x0000ff) >> 0;
+		*dst++ = (read_data & 0x00ff00) >> 8;
+		*dst++ = (read_data & 0xff0000) >> 16;
 
-        fInfo->audioBuf    = dst + headerSize;        
-		fInfo->graphBuf    = fInfo->audioBuf + fInfo->totalLines;
-		fInfo->colorBuf    = ((uint8_t*)fInfo->graphBuf) + 5 * fInfo->visibleLines;
-		fInfo->colorBKBuf  = fInfo->colorBuf + 5 * fInfo->visibleLines;
-		fInfo->timecodeBuf = fInfo->colorBKBuf + 1 * fInfo->visibleLines;
+		src += 2;
+		size -= 3;
 	}
-	else
-	{
-		// old format
-		// 'M', 'V', 'C', 0, f2, f1, f0
-		headerSize = (4 + 3);
-
-		fInfo->vsyncLines = 3;
-		fInfo->blankLines = 37;
-		fInfo->overscanLines = 30;
-		fInfo->visibleLines = 192;
-		fInfo->odd = (dst[4 + 3 -1] & 1);
-		fInfo->totalLines = fInfo->vsyncLines + fInfo->blankLines + fInfo->overscanLines + fInfo->visibleLines;
-
-		fInfo->audioBuf    = dst + headerSize;
-		fInfo->graphBuf    = fInfo->audioBuf + fInfo->totalLines;
-		fInfo->timecodeBuf = ((uint8_t*)fInfo->graphBuf) + 5*fInfo->visibleLines;
-		fInfo->colorBuf    = ((uint8_t*)fInfo->timecodeBuf) + 60;
-		fInfo->colorBKBuf  = fInfo->colorBuf + 5*fInfo->visibleLines;
-	}
-
-	if (fInfo->odd)
-		fInfo->colorBKBuf++;
-
-
-	// Calculate total blocks needed
-
-	// sound[vsync+blank+overscan+visible]
-	// graph[5 * visible]
-	// color[5 * visible]
-	// bkcolor[1 * visible]
-	// timecode[60]
-	// padding
-
-	uint16_t		totalSize = fInfo->totalLines + fInfo->visibleLines*(5 + 5 + 1) + (5*12) + headerSize;
-
-	fInfo->numBlocks = (totalSize >> 9);	// 512 block chunks
-	if (totalSize & (512-1))
-		fInfo->numBlocks++;
 }
 
-
-int
-main(void)
+void
+setupTitle()
 {
-    // initialize the device
-    SYSTEM_Initialize();
-
+	// setup frame headers quickly
 	memcpy(mr_buffer1 , header1, sizeof(header1));
-	initFrameInfo(&r_frameInfo, mr_buffer1);
+	r_coreInfo.frameInfo.buffer = mr_buffer1;
+	frameInit(&r_coreInfo.frameInfo);
+	r_coreInfo.mr_frameInfo1.buffer = mr_buffer1;
+	frameInit(&r_coreInfo.mr_frameInfo1);
 
-	// safe to start
-	coreInit();
-
-	initFrameInfo(&mr_frameInfo1, mr_buffer1);
 	memcpy(mr_buffer2 , header2, sizeof(header2));
-	initFrameInfo(&mr_frameInfo2, mr_buffer2);
+	r_coreInfo.mr_frameInfo2.buffer = mr_buffer2;
+	frameInit(&r_coreInfo.mr_frameInfo2);
 
-	// copy title screen over, headers first in case they're accessed
+	// copy title screen over
 
-	int	lineTotal = mr_frameInfo1.visibleLines * 5;
-	
-	memcpy(mr_frameInfo1.graphBuf, TitleGraph1, lineTotal);
-	memcpy(mr_frameInfo1.colorBuf, TitleColor1, lineTotal);
-	memcpy(mr_frameInfo1.colorBKBuf, TitleBackColor1, mr_frameInfo1.visibleLines);
-	memset(mr_frameInfo1.audioBuf, 0, mr_frameInfo1.totalLines);
+	int	lineTotal = r_coreInfo.mr_frameInfo1.visibleLines * 5;
 
-	memcpy(mr_frameInfo2.graphBuf, TitleGraph2, lineTotal);
-	memcpy(mr_frameInfo2.colorBuf, TitleColor2, lineTotal);
-	memcpy(mr_frameInfo2.colorBKBuf, TitleBackColor2, mr_frameInfo2.visibleLines);
-	memset(mr_frameInfo2.audioBuf, 0, mr_frameInfo2.totalLines);
-            
+	extern uint16_t __attribute__((space(prog))) TitleGraph1[];
+	extern uint16_t __attribute__((space(prog))) TitleColor1[];
+	extern uint16_t __attribute__((space(prog))) TitleBackColor1[];
 
+	extern uint16_t __attribute__((space(prog))) TitleGraph2[];
+	extern uint16_t __attribute__((space(prog))) TitleColor2[];
+	extern uint16_t __attribute__((space(prog))) TitleBackColor2[];
+    
+	copyFromFlash(r_coreInfo.mr_frameInfo1.graphBuf, (uint16_t)TitleGraph1, lineTotal);
+	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBuf, (uint16_t)TitleColor1, lineTotal);
+	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBKBuf, (uint16_t)TitleBackColor1, r_coreInfo.mr_frameInfo1.visibleLines);
+
+	copyFromFlash(r_coreInfo.mr_frameInfo2.graphBuf, (uint16_t)TitleGraph2, lineTotal);
+	copyFromFlash(r_coreInfo.mr_frameInfo2.colorBuf, (uint16_t)TitleColor2, lineTotal);
+	copyFromFlash(r_coreInfo.mr_frameInfo2.colorBKBuf, (uint16_t)TitleBackColor2, r_coreInfo.mr_frameInfo2.visibleLines);
+
+	memset(r_coreInfo.mr_frameInfo1.audioBuf, 0, r_coreInfo.mr_frameInfo1.totalLines);
+	memset(r_coreInfo.mr_frameInfo2.audioBuf, 0, r_coreInfo.mr_frameInfo2.totalLines);
+}
+
+void
+setupDisk()
+{
 	// now load the file
 	while (!pf_mount())
 	{
-		flash_led(3);
+		flash_led(4);
 	}
 
 	// first available regular file
@@ -280,25 +222,211 @@ main(void)
 	state.io_playing = false;
 	while (!pf_open_first(&state.i_numFrames, &state.i_numFramesInit))
 	{
-		flash_led(4);
+		flash_led(3);
 	}
 
 	SPI1_HighSpeed();
+}
+
+void
+resetNewCode()
+{
+    FLASH_Unlock(FLASH_UNLOCK_KEY);
+    FLASH_ErasePage((uint16_t)&main2);
+	FLASH_WriteDoubleWord24((uint16_t)&main2, 0xFFFFFF, 0xFFFFFF);
+    FLASH_Lock();
+}
+
+void
+handleFirmwareUpdate()
+{
+	// is this an udpate file?
+	if (memcmp(fsInfo.name, "UPDATE  FRM", 11) != 0)
+        return;
+    
+	INTERRUPT_GlobalDisable();
+
+	// first pass write,
+	// second pass confirm
+
+	for (uint8_t i=0; i<2; i++)
+	{
+		if (i == 0)
+			FLASH_Unlock(FLASH_UNLOCK_KEY);
+
+		uint32_t	block = 0;	// blocks
+		uint32_t	dst = (uint16_t)&main2;
+		uint32_t	erased_pc = dst;
+
+		int32_t	size = fsInfo.fsize;
+		while(size > 0)
+		{
+			while (!pf_seek_block(block))
+			{
+				flash_led(2);
+			}
+
+			uint32_t*	buf = (uint32_t*)mr_buffer1;
+			pf_read_block(mr_buffer1);
 
 
-	uint_fast8_t	t = 0;
+			int32_t	remaining_chunk = 512;
+
+			while (remaining_chunk > 0)
+			{
+				uint32_t a = buf[0];
+				uint32_t b = buf[1];
+
+				// write
+				if (i == 0)
+				{
+					// make some space
+					while (erased_pc < (dst + 4))
+					{
+						if (!FLASH_ErasePage(erased_pc))
+							goto bad;
+						erased_pc += FLASH_ERASE_PAGE_SIZE_IN_PC_UNITS;	// 2K
+					}
+					
+					if (!FLASH_WriteDoubleWord24(dst, a, b))
+						goto bad;
+				}
+				else // confirm
+				{
+					if (FLASH_ReadWord24(dst+0) != a)
+						goto bad;
+
+					if (FLASH_ReadWord24(dst+2) != b)
+						goto bad;
+				}
+
+				dst  += 4;
+				buf  += 2;
+				
+				remaining_chunk -= 8;
+				size -= 8;
+				
+				// may happen for short blocks
+				if (size <= 0)
+					break;
+
+				// overwriting configuration memory?
+				if (dst >= 0xAF00)
+					goto bad;
+			}
+
+			block += 1; // next 512 bytes
+		};
+
+		if (i == 0)
+			FLASH_Lock();
+	}
+
+
+//good:
 
 	while(1)
 	{
+		flash_led(0);
+		flash_led(2);
+		flash_led(2);	// good
+	}
 
-		// wait for transition
-        TESTA2_LOW
-		while (!mr_endFrame)
-		{
+bad:
 
-		}
-		mr_endFrame = 0;
-		TESTA2_HIGH
+	// back to default
+	resetNewCode();
+
+	while(1)
+	{
+		flash_led(0);
+		flash_led(3);
+		flash_led(3);	// bad
+	}
+}
+
+void
+prepareNextFrame()
+{
+	struct frameInfo*	fInfo;
+
+	if (r_coreInfo.mr_bufferIndex)
+		fInfo = &r_coreInfo.mr_frameInfo1;
+	else
+		fInfo = &r_coreInfo.mr_frameInfo2;
+	
+	uint8_t*	dst = fInfo->buffer;
+	uint32_t	offset = (state.io_frameNumber * FIELD_NUM_BLOCKS);
+
+	while (!pf_seek_block(offset))
+	{
+		flash_led(4);
+	}
+
+	// first block
+	pf_read_block(dst);
+	dst += 512;
+	frameInit(fInfo);
+	
+	// remaining blocks
+	int nb = fInfo->numBlocks - 1;
+	while(nb)
+	{
+		pf_read_block(dst);
+		dst += 512;
+		nb--;
+	}
+				
+	updateBuffer(&state, fInfo);
+}
+
+void
+waitEndFrame()
+{
+	// wait for transition
+	TESTA2_LOW
+	while (!r_coreInfo.mr_endFrame)
+	{
+
+	}
+	r_coreInfo.mr_endFrame = 0;
+	TESTA2_HIGH
+}
+
+void
+runTitle()
+{
+	uint16_t		m_titleFrame = 300; // 5 seconds
+
+	while(m_titleFrame--)
+	{
+		waitEndFrame();
+
+		state.i_swcha = r_coreInfo.mr_swcha;
+		state.i_swchb = r_coreInfo.mr_swchb;
+		state.i_inpt4 = r_coreInfo.mr_inpt4;
+		state.i_inpt5 = r_coreInfo.mr_inpt5;
+
+		updateTransport(&state);
+
+		// if reset button pressed skip title frame
+		if (state.io_playing)
+			break;
+	}
+
+}
+
+void
+runFrameLoop()
+{
+	uint_fast8_t	t = 0;
+
+	state.io_frameNumber = 1;
+	state.io_playing = 1;
+
+	while(1)
+	{
+		waitEndFrame();
 
 		t++;
         if (t == 60)
@@ -311,72 +439,90 @@ main(void)
 			TESTA0_HIGH
         }
         
-		state.i_swcha = mr_swcha;
-		state.i_swchb = mr_swchb;
-		state.i_inpt4 = mr_inpt4;
-		state.i_inpt5 = mr_inpt5;
+		state.i_swcha = r_coreInfo.mr_swcha;
+		state.i_swchb = r_coreInfo.mr_swchb;
+		state.i_inpt4 = r_coreInfo.mr_inpt4;
+		state.i_inpt5 = r_coreInfo.mr_inpt5;
 
 		updateTransport(&state);
-
-		if (m_titleFrame)
-		{
-			// if button,reset pressed skip title frame
-			if (state.io_playing)
-				m_titleFrame = 0;
-			else
-				m_titleFrame--;
-
-			if (m_titleFrame == 0)
-			{
-				state.io_frameNumber = 1;
-				state.io_playing = 1;
-			}
-		}
-		else
-		{
-			uint8_t*	dst;
-			struct frameInfo*	fInfo;
-
-			if (mr_bufferIndex)
-			{
-				dst = mr_buffer1;
-				fInfo = &mr_frameInfo1;
-			}
-			else
-			{
-				dst = mr_buffer2;
-				fInfo = &mr_frameInfo2;
-			}
-			
-			uint8_t*	dst0 = dst;
-			uint32_t	offset = (state.io_frameNumber * FIELD_NUM_BLOCKS);
-
-			while (!pf_seek_block(offset))
-			{
-				flash_led(4);
-			}
-
-            // first block
-            pf_read_block(dst);
-			dst += 512;
-            initFrameInfo(fInfo, dst0);
-            
-            // remaining blocks
-            int nb = fInfo->numBlocks - 1;
-            while(nb)
-			{
-				pf_read_block(dst);
-				dst += 512;
-                nb--;
-			}
-						
-			updateBuffer(&state, fInfo);
-		}
+		prepareNextFrame();
 	}
-
-    return 1; 
 }
 
+
+int
+main(void)
+{    
+    // initialize the device
+    SYSTEM_Initialize();
+
+
+    // check for new code
+    {
+        uint32_t newCode = FLASH_ReadWord24((uint16_t)&main2);    
+        if (newCode != 0xFFFFFF && newCode != 0x60000)
+        {
+			// check for factory reset RB8(PGD) RB9(PGC) have WPU enabled
+			if (!_RB8 && _RB9)
+			{
+				resetNewCode();
+				while(1)
+				{
+					flash_led(4);
+					flash_led(4);
+				}
+			}
+			else
+			{
+				const void* address = &main2 + 2;
+				goto *address;
+			}
+        }
+    }
+    
+
+    // safe to start (will be in reset several times)
+	coreInit();
+
+#if 0 // Use this to test measure startup time
+    uint_fast8_t i, j;
+    for (i=10;i>0; i--)
+    {
+        for (int j=10; j>0; j--)
+            TESTA2_HIGH
+        for (int j=10; j>0; j--)
+            TESTA2_LOW    
+    }
+#endif
+
+	setupTitle();
+	setupDisk();
+
+	handleFirmwareUpdate();
+
+	updateInit();
+
+	runTitle();
+
+	runFrameLoop();
+}
+
+// new updates placed here
+// must be page_erase aligned
+__attribute__((section(".newcode"),space(prog))) void main2(void)
+{
+#if 0
+	while(1)
+	{
+		flash_led(1);
+		flash_led(2);
+		flash_led(3);
+	}
+#endif
+}
+
+
+        
 /**
  End of File
 */

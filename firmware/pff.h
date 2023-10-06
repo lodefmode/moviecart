@@ -26,4 +26,28 @@ bool		pf_open_first(uint32_t *numFrames, bool *numFramesInit);	/* Open first arc
 bool		pf_seek_block(uint32_t block);		/* Move file pointer of the open file */
 void        pf_read_block(uint8_t *dst);		/* Read full block*/
 
+// File system object structure 
+
+struct fileSystemInfo
+{
+    uint8_t		name[11];	// 8.3 format
+        
+	uint8_t		csize;		// Number of sectors per cluster N
+	uint8_t		csize_bits;	// number of bits 2^N
+	uint8_t		csize_mask;	// 2^N-1 
+
+	uint16_t	n_rootdir;	// Number of root directory entries (0 on FAT32) 
+	uint32_t	n_fatent;	// Number of FAT entries (= number of clusters + 2) 
+	uint32_t	fatbase;		// FAT start sector 
+	uint32_t	dirbase;		// Root directory start sector (Cluster# on FAT32) 
+	uint32_t	database;	// Data start sector 
+	uint32_t	fsize;		// File size 
+	uint32_t	org_clust;	// File start cluster 
+	uint32_t	curr_clust;	// File current cluster 
+	uint32_t	block;		// Current block, start of cluster 
+	uint32_t	file_block;	// block index within cluster 
+
+
+};
+
 #endif /* _PFATFS */

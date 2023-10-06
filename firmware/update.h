@@ -1,6 +1,11 @@
 
 
+
+#ifndef __UPDATE__
+#define __UPDATE__
+
 #include "defines.h"
+#include "frame.h"
 
 struct stateVars
 {
@@ -19,3 +24,4 @@ struct stateVars
 extern void updateTransport(struct stateVars* state);
 extern void updateBuffer(struct stateVars* state, struct frameInfo* fInfo);
 
+#endif
