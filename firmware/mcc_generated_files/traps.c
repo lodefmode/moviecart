@@ -143,11 +143,13 @@ void ERROR_HANDLER _SoftTrapError(void)
       TRAPS_halt_on_error(TRAPS_NVM_ERR);
     }
 
+#if 0
     if(INTCON3bits.DMT)
     {
       INTCON3bits.DMT = 0;  //Clear the trap flag
       TRAPS_halt_on_error(TRAPS_DMT_ERR);
     }
+#endif
 
     if(INTCON3bits.DOOVR)
     {
