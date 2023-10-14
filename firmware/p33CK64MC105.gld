@@ -237,7 +237,7 @@ SECTIONS
   { KEEP (*(__FOSCSEL.sec*))    } >FOSCSEL
   __FOSC :
   { KEEP (*(__FOSC.sec*))    } >FOSC
-uuuhjkjj  __FWDT :
+  __FWDT :
   { KEEP (*(__FWDT.sec*))    } >FWDT
   __FPOR :
   { KEEP (*(__FPOR.sec*))    } >FPOR
