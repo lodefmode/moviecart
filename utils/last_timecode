@@ -1,0 +1,10 @@
+#!/bin/bash 
+
+# last 4k
+# last 4 bytes of first characters
+
+# last_timecode street.mvc
+# hh mm ss ff
+
+tail -c 4096 $1 | head -c 9 | tail -c 4 | hexdump -C | cut -d ' ' -f 2-6 | head -1
+
