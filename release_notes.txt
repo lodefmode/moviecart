@@ -13,7 +13,7 @@ Main improvements:
 
  - Micro SD Card uses standard FAT file format, so standard copy / drag-n-drop of files works.
    No longer requires separate utility to prepare card and playback no longer experiences
-   random noise
+   random noise.
 
  - Supports both NTSC and PAL formats.
 
@@ -22,6 +22,8 @@ Main improvements:
 
  - Enhanced audio encoding that utilizes error diffusion which introduces constant hiss, but
    eliminates random drop outs and distortion during low volume.
+
+ - Encoding utility redesigned to be more intuitive.
 
  - Reliable startup, as boot time is now 0.58 msec from powerup.
    (Flashback 2 starts reading from the cart in 1.52 msec, while Atari 2600 around 25 msec).
