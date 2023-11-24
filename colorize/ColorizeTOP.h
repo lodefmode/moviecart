@@ -148,7 +148,7 @@ private:
     Array2D<float[4]>	myResultBK;
     Array2D<float[3]>	myFPal;
 
-    unsigned int*		myLastPal;
+    unsigned char *myLastPal;
     uint8_t				myColorLookup[256][256][256];
     void				buildColourMap();
 

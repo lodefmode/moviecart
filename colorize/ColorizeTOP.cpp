@@ -161,7 +161,7 @@ find_median(struct kd_node_t *start, struct kd_node_t *end, int idx)
 }
  
 static struct kd_node_t*
-make_tree(struct kd_node_t *t, int len, int i)
+make_tree(struct kd_node_t *t, long len, int i)
 {
     struct kd_node_t *n;
  
@@ -278,8 +278,8 @@ ColorizeTOP::buildColourMap()
     }
 }
 
-unsigned int
-rubik_palette[6*3] =
+unsigned char
+rubik_palette[] =
 {
   0x00, 0x9b, 0x48,
   0xff, 0xff, 0xff,
@@ -417,7 +417,7 @@ rubik_palette[6*3] =
  255 255 255     14
  */
 
-unsigned int atari2600pal_palette[128*3] = 
+unsigned char atari2600pal_palette[] =
 {
       0,   0,   0,
      40,  40,  40,
@@ -545,26 +545,26 @@ unsigned int atari2600pal_palette[128*3] =
     156, 156, 236,
     176, 176, 252,
     
-      0,   0,   0,
-     40,  40,  40,
-     80,  80,  80,
-    116, 116, 116,
-    148, 148, 148,
-    180, 180, 180,
-    208, 208, 208,
-    236, 236, 236,
-    
-      0,   0,   0,
-     40,  40,  40,
-     80,  80,  80,
-    116, 116, 116,
-    148, 148, 148,
-    180, 180, 180,
-    208, 208, 208,
-    236, 236, 236,
+//      0,   0,   0,
+//     40,  40,  40,
+//     80,  80,  80,
+//    116, 116, 116,
+//    148, 148, 148,
+//    180, 180, 180,
+//    208, 208, 208,
+//    236, 236, 236,
+//
+//      0,   0,   0,
+//     40,  40,  40,
+//     80,  80,  80,
+//    116, 116, 116,
+//    148, 148, 148,
+//    180, 180, 180,
+//    208, 208, 208,
+//    236, 236, 236,
 };
 
-unsigned int atari2600secam_palette[8*3] = 
+unsigned char atari2600secam_palette[] =
 {
       0,   0,   0,
      33,  33, 255,
@@ -577,8 +577,8 @@ unsigned int atari2600secam_palette[8*3] =
 };
 
 // stella uInt32 Console::ourNTSCPalette[128] = 
-unsigned int
-atari2600ntsc_palette[128*3] =
+unsigned char
+atari2600ntsc_palette[] =
 {
   0x00, 0x00, 0x00,
   0x4a, 0x4a, 0x4a,
@@ -711,8 +711,8 @@ atari2600ntsc_palette[128*3] =
 };
 
 // random terrain
-unsigned int
-atari2600randomterrain_palette[128*3] =
+unsigned char
+atari2600randomterrain_palette[] =
 {
 	0x00,0x00,0x00,
 	0x1A,0x1A,0x1A,
@@ -844,15 +844,15 @@ atari2600randomterrain_palette[128*3] =
 	0xFE,0xDF,0x70,
 };
 
-unsigned int
-bw2_palette[2*3] =
+unsigned char
+bw2_palette[] =
 {
 	0, 0, 0,
 	255, 255, 255
 };
 
-unsigned int
-bw4_palette[4*3] =
+unsigned char
+bw4_palette[] =
 {
 	0, 0, 0,
 	85, 85, 85,
@@ -860,8 +860,8 @@ bw4_palette[4*3] =
 	255, 255, 255
 };
 
-unsigned int
-rgb_palette[4*3] =
+unsigned char
+rgb_palette[] =
 {
 	0, 0, 0,
 	0, 0, 255,
@@ -871,7 +871,7 @@ rgb_palette[4*3] =
 
 
 // https://en.wikipedia.org/wiki/Texas_Instruments_TMS9918#Colors
-unsigned int colecovision_palette[16*3] = 
+unsigned char colecovision_palette[16*3] =
 {
 	0x00, 0x00, 0x00, // transparent	
 	0x00, 0x00, 0x00, // black	
@@ -973,56 +973,51 @@ enum
 	Matrix_Atkinson = 2
 };
 
+
+#define PAL(palette) \
+    pal = palette; \
+    palSize = sizeof(palette) / 3;
+
 void
-getPalette(int palette, unsigned int* &pal, int &palSize)
+getPalette(int palette, unsigned char* &pal, int &palSize)
 {
 	switch(palette)
 	{
 		case Palette_Atari2600NTSC:
 		default:
-			pal = atari2600ntsc_palette;
-			palSize = 128;
+			pal = PAL(atari2600ntsc_palette);
 			break;
 
 		case Palette_Atari2600PAL:
-			pal = atari2600pal_palette;
-			palSize = 128;
+			pal = PAL(atari2600pal_palette);
 			break;
 
 		case Palette_Atari2600SECAM:
-			pal = atari2600secam_palette;
-			palSize = 8;
+			pal = PAL(atari2600secam_palette);
 			break;
 
 		case Palette_Atari2600RandomTerrain:
-			pal = atari2600randomterrain_palette;
-			palSize = 128;
+			pal = PAL(atari2600randomterrain_palette);
 			break;
 
 		case Palette_BW2:
-			pal = bw2_palette;
-			palSize = 2;
+			pal = PAL(bw2_palette);
 			break;
 
 		case Palette_BW4:
-			pal = bw4_palette;
-			palSize = 4;
+			pal = PAL(bw4_palette);
 			break;
 
 		case Palette_RGB:
-			pal = rgb_palette;
-			palSize = 4;
+			pal = PAL(rgb_palette);
 			break;
 
-
 		case Palette_Rubik:
-			pal = rubik_palette;
-			palSize = 6;
+			pal = PAL(rubik_palette);
 			break;
 
 		case Palette_ColecoVision:
-			pal = colecovision_palette;
-			palSize = 16;
+			pal = PAL(colecovision_palette);
 			break;
 	}
 }
@@ -1063,7 +1058,7 @@ ColorizeTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int
 				float	maxError = HUGE_VAL;
 				int		bestF = 0;
 
-				// start with best color from previous frame
+				// start with best color from previous frame (+2% speed)
 				int		startB = myResultColor(xcell, y);
 
 				auto testForeground = [&](int bidx)
@@ -1306,14 +1301,14 @@ ColorizeTOP::execute(TOP_Output* output, const OP_Inputs* inputs, void* reserved
     int matrix = inputs->getParInt("Matrix");
 
     bool background = inputs->getParInt("Background") ? true:false;
-    bool fastPalette = (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain);
+    bool fastPalette = (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain || palette == Palette_Atari2600PAL);
     bool backgroundFast = background && fastPalette;
 
     bool foreground = inputs->getParInt("Foreground") ? true:false;
 
 	// cache palette
 
-    unsigned int*	pal;
+    unsigned char*	pal;
     int             palSize;
     getPalette(palette, pal, palSize);
     if (pal != myLastPal)
@@ -1427,7 +1422,7 @@ ColorizeTOP::execute(TOP_Output* output, const OP_Inputs* inputs, void* reserved
 					for (int b=0; b<8; b++)
 					{
 						// processed in original loop
-						if (b != 0 && b != 4)
+						if (b & 3)
 						{
 							int		bidx = b2 + b;
 							testLine(bidx);
