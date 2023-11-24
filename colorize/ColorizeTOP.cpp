@@ -1094,7 +1094,7 @@ ColorizeTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int
 					startB &= ~0x7;	//	round down to nearest 8 
 
 					// check one quarter
-					for (int b=0; b<palSize; b+=4)
+					for (int b=0; b<palSize; b+=8)
 					{
 						int		bidx = (startB + b) % palSize;
 						testForeground(bidx);
@@ -1106,7 +1106,7 @@ ColorizeTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int
 					for (int b=0; b<8; b++)
 					{
 						// processed in original loop
-						if (b != 0 && b != 4)
+						if (b) //b != 0 && b != 4)
 						{
 							int		bidx = b2 + b;
 							testForeground(bidx);
