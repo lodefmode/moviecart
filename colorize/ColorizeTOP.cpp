@@ -973,7 +973,6 @@ enum
 	Matrix_Atkinson = 2
 };
 
-
 #define PAL(palette) \
     pal = palette; \
     palSize = sizeof(palette) / 3;
@@ -1027,7 +1026,7 @@ void
 ColorizeTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int cellSize,
 	float* curY, int palSize, float bleed, int matrix,
 	bool dither, float* curError,
-	float bestError, bool searchForeground, int foregroundInc)
+	float bestError, int colorInc)
 {
 	float	cellColor[4] = { 1, 1, 1, 0 };
 	float	backColor[4];
@@ -1053,7 +1052,7 @@ ColorizeTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int
 
 		if (xpix == 0)	// first pixel of cell
 		{
-			if (searchForeground)
+			if (colorInc)
 			{
 				float	maxError = HUGE_VAL;
 				int		bestF = 0;
@@ -1089,16 +1088,16 @@ ColorizeTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int
 					}
 				};
 
-				startB &= ~(foregroundInc-1); // round down to nearest inc
-				for (int b=0; b<palSize; b+=foregroundInc)
+				startB &= ~(colorInc-1); // round down to nearest inc
+				for (int b=0; b<palSize; b+=colorInc)
 				{
 					int		bidx = (startB + b) % palSize;
 					testForeground(bidx);
 				}
 
 				// now redo rest of hue
-				int b2 = bestF & ~(foregroundInc-1);	// round down to nearest inc
-				for (int b=1; b<foregroundInc; b++)
+				int b2 = bestF & ~(colorInc-1);	// round down to nearest inc
+				for (int b=1; b<colorInc; b++)
 					testForeground(b2 + b);
 
 				cellColor[0] = myFPal(bestF,0)[0];
@@ -1106,7 +1105,7 @@ ColorizeTOP::ditherLine(int bidx, int y, bool finalB, int width, int height, int
 				cellColor[2] = myFPal(bestF,0)[2];
 				cellColor[3] = bestF;
 			}
-			else
+			else // average
 			{
 				float	total_weight = 0.0f;
 
@@ -1278,22 +1277,26 @@ ColorizeTOP::execute(TOP_Output* output, const OP_Inputs* inputs, void* reserved
 
     int matrix = inputs->getParInt("Matrix");
 
-    bool background = inputs->getParInt("Background") ? true:false;
-    bool foreground = inputs->getParInt("Foreground") ? true:false;
+    int colorSearch = inputs->getParInt("Colorsearch");
+	int colorInc = 1;
 
-	int backgroundInc = 1;
-	int foregroundInc = 1;
+	switch(colorSearch)
+	{
+		case 0: colorInc = 0; break;
+		case 1: colorInc = 8; break;
+		case 2: colorInc = 4; break;
+		case 3: colorInc = 2; break;
+		case 4: colorInc = 1; break;
+	}
 
-    if (palette == Palette_Atari2600NTSC || palette == Palette_Atari2600RandomTerrain)
+    if (palette != Palette_Atari2600NTSC &&
+	    palette != Palette_Atari2600RandomTerrain &&
+        palette != Palette_Atari2600PAL)
 	{
-		backgroundInc = 4;
-		foregroundInc = 4;
+		if (colorInc > 1)
+			colorInc = 1;
 	}
-	else if (palette == Palette_Atari2600PAL)
-	{
-		backgroundInc = 8;
-		foregroundInc = 8;
-	}
+
 
 	// cache palette
 
@@ -1350,10 +1353,10 @@ ColorizeTOP::execute(TOP_Output* output, const OP_Inputs* inputs, void* reserved
 			bool	finalB = true;
 
 			ditherLine(bidx, y, finalB, width, height, cellSize, curY, palSize, bleed,
-							 matrix, dither, &curError, HUGE_VAL, foreground, foregroundInc);
+							 matrix, dither, &curError, HUGE_VAL, colorInc);
 		};
 
-		if (!background)	// all zero backgrounds
+		if (!colorInc)
 		{
 			myResultBK.zero();
 
@@ -1382,7 +1385,7 @@ ColorizeTOP::execute(TOP_Output* output, const OP_Inputs* inputs, void* reserved
 
 					memcpy((float*)myMemBackup.getData(), curY, width*4 * sizeof(float));
 					ditherLine(bidx, y, finalB, width, height, cellSize, (float*)myMemBackup.getData(), palSize,
-							 lbleed, matrix, dither, &curError, bestError, foreground, foregroundInc);
+							 lbleed, matrix, dither, &curError, bestError, colorInc);
 
 					if (curError < bestError)
 					{
@@ -1391,23 +1394,22 @@ ColorizeTOP::execute(TOP_Output* output, const OP_Inputs* inputs, void* reserved
 					}
 				};
 
-				if (background)
 				{
 					// start with best color from previous frame
 					int		startB = (int)(myResultBK(0, y)[3]);
 
-					startB &= ~(backgroundInc-1);	// round down to nearest inc
+					startB &= ~(colorInc-1);	// round down to nearest inc
 
-					for (int b=0; b<palSize; b+=backgroundInc)
+					for (int b=0; b<palSize; b+=colorInc)
 					{
 						int		bidx = (startB + b) % palSize;
 						testLine(bidx);
 					}
 
 					// now redo rest of hue
-					int b2 = bestB & ~(backgroundInc-1);	// round down to nearest inc
+					int b2 = bestB & ~(colorInc-1);	// round down to nearest inc
 
-					for (int b=1; b<backgroundInc; b++)
+					for (int b=1; b<colorInc; b++)
 					{
 						int		bidx = b2 + b;
 						testLine(bidx);
@@ -1701,19 +1703,21 @@ ColorizeTOP::setupParameters(OP_ParameterManager* manager, void *reserved)
 	{
 		OP_NumericParameter  sp;
 
-		sp.name = "Background";
-		sp.label = "Background";
+		sp.name = "Colorsearch";
+		sp.label = "Color Search";
 
-		manager->appendToggle(sp);
-	}
+		sp.defaultValues[0] = 2;
 
-	{
-		OP_NumericParameter  sp;
+		sp.minValues[0] = 0;
+		sp.maxValues[0] = 4;
 
-		sp.name = "Foreground";
-		sp.label = "Foreground";
+		sp.clampMins[0] = true;
+		sp.clampMaxes[0] = true;
 
-		manager->appendToggle(sp);
+		sp.minSliders[0] = 0;
+		sp.maxSliders[0] = 4;
+
+		manager->appendInt(sp);
 	}
 
 	{
