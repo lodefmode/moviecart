@@ -28,3 +28,53 @@ Main improvements:
  - Reliable startup, as boot time is now 0.58 msec from powerup.
    (Flashback 2 starts reading from the cart in 1.52 msec, while Atari 2600 around 25 msec).
 
+
+#
+# Acknowledgements
+#
+
+Many thanks to the members of AtariAge for expert advise in kernel development, hardware considerations, user interface and general knowledge.
+
+Andrew Davie
+ZackAttack
+JetSetIlly
+Thomas Jentzch
+Shawn
+Dirty Harry
+ZeroPage Homebrew
+and many more.
+
+
+Night of the Living Dead
+	Directed by
+		George A. Romero
+    Screenplay by
+		John Russo
+		George A. Romero
+	Produced by
+		Russell W. Streiner
+	    Karl Hardman
+	Starring	
+		Judith O'Dea
+		Duane Jones
+		Marilyn Eastman
+		Karl Hardman
+		Judith Ridley
+		Keith Wayne
+	Distributed by Contential Distributing
+	Released October 1 1968 (Pittburgh, Pennsylvania)
+
+
+Colorized with De-Oldify python library:
+	MIT License
+	Copyright (c) 2018 Jason Antic
+
+
+Busy Street Demo:
+	colorize/test/street.mp4
+	https://www.pexels.com/video/people-walking-by-on-a-sidewalk-854100/
+
+
+
+
+  
