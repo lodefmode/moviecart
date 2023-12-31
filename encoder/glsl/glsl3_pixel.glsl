@@ -23,7 +23,6 @@ void main()
 
 	vec4 origColor = texture(sTD2DInputs[0], vUV.st);
 	
-	uint graph = uint(origColor.r * 255.0);
 	uint findex = uint(origColor.g * 255.0);
 
 	// bindex should be identical throughout the entire line, so just use at pixel 0 to confirm
@@ -34,12 +33,14 @@ void main()
 	vec4 foreColor = texelFetch(sTD2DInputs[1], ivec2(findex, 0), 0);
 	vec4 backColor = texelFetch(sTD2DInputs[1], ivec2(bindex, 0), 0);
 
-	uint x8 = 7-x&7;
+	vec4 outColor = mix(backColor, foreColor, origColor.r);
+	fragColor = TDOutputSwizzle(outColor);
 
-	uint bit = ((1<<x8) & graph);
+#if 0	// debug background color
+	if (x<2)
+		fragColor = backColor;
+	if (x == 2)
+		fragColor = vec4(bindex, bindex, bindex, 1);
+#endif
 
-	if (bit != 0)
-		fragColor = TDOutputSwizzle(foreColor);
-	else
-		fragColor = TDOutputSwizzle(backColor);
 }

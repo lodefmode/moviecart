@@ -133,11 +133,11 @@ main()
 		ivec2	backCoord = ivec2(bidx, 0);
 		vec4	backColor = texelFetch(sTD2DInputs[1], backCoord, 0);
 
+		currOffset = vec4(0);
+		barrier();
+
 		for (uint x=0; x<width; x+=8)
 		{
-			currOffset = vec4(0);
-			barrier();
-
 			// calculate cell distance (floyd-steinberg) 
 			{
 				float		cellDist = 0.0f;
@@ -223,7 +223,12 @@ main()
 
 			if (f < 8)
 			{
-				vec4	cdata = vec4(foreGraph[bestF]/255.0f, bestF/255.0f, bidx/255.0f, 1);
+				uint	gdata = (foreGraph[bestF] & (1<<(7-f8)));
+
+				if (gdata != 0)
+					gdata = 1;
+
+				vec4	cdata = vec4(gdata, bestF/255.0f, bidx/255.0f, 1);
 				imageStore(mTDComputeOutputs[0], ivec2(x + f, y), cdata);
 			}
 

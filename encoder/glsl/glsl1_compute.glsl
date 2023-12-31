@@ -88,12 +88,13 @@ main()
     uint	width = uint(uTD2DInfos[0].res.z);
     uint	height = uint(uTD2DInfos[0].res.w);
 
+	vec4	currOffset = vec4(0);
+
 	for (uint x=0; x<width; x+=8)
 	{
 		// calculate cell distance (floyd-steinberg) 
 		{
 			float	cellDist = 0.0f;
-			vec4	currOffset = vec4(0);
 
 			for (uint c=0; c<8; c++)
 			{
@@ -137,18 +138,6 @@ main()
 
 
 	// now store float lineDist at (bidx,y)
-
-#if 0
-	int		c = int(lineDist * 256*256.0f);	// numbers are small, scale them up
-
-	vec4	outColor;
-	outColor.r = ((c & 0xFF000000) >> 24) / 255.0f;
-	outColor.g = ((c & 0x00FF0000) >> 16) / 255.0f;
-	outColor.b = ((c & 0x0000FF00) >> 8) / 255.0f;
-	outColor.a = ((c & 0x000000FF) >> 0) / 255.0f;
-
-#endif
-
 	vec4 outColor = vec4(lineDist, 0, 0, 1);
 
 	imageStore(mTDComputeOutputs[0], ivec2(bidx, y), outColor);
