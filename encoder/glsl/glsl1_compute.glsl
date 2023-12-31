@@ -96,8 +96,8 @@ main()
 			{
 				uint xx = x+c;
 				
-				vec4	color = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0) + currOffset;
-				currOffset = vec4(0);
+				vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
+				vec4	color = tcolor + currOffset;
 						
 				float distf = colorDist(color, foreColor);
 				float distb = colorDist(color, backColor);
@@ -116,7 +116,7 @@ main()
 				}
 				
 				vec4 diffColor = color - oc;
-				currOffset = diffColor * (1.0f / 16.0f);
+				currOffset = diffColor * (7.0f / 16.0f);
 			}
 
 			// stuff in results

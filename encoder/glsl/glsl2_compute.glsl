@@ -24,6 +24,8 @@ shared uint backIndex[128];
 shared vec4	currLine[128];
 shared vec4	nextLine[128+2];
 
+shared vec4 currOffset;
+
 float
 colorDist(const vec4 a, const vec4 b)
 {
@@ -131,18 +133,21 @@ main()
 
 		for (uint x=0; x<width; x+=8)
 		{
+			currOffset = vec4(0);
+			barrier();
+
 			// calculate cell distance (floyd-steinberg) 
 			{
-				float	cellDist = 0.0f;
-				vec4	currOffset = vec4(0);
-				uint	graph = 0;
+				float		cellDist = 0.0f;
+				uint		graph = 0;
+				vec4		currOffset2 = currOffset;
 
 				for (uint c=0; c<8; c++)
 				{
 					uint xx = x+c;
 					
-					vec4	color = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0) + currOffset + currLine[xx];
-					currOffset = vec4(0);
+					vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
+					vec4	color = tcolor + currOffset2 + currLine[xx];
 							
 					float distf = colorDist(color, foreColor);
 					float distb = colorDist(color, backColor);
@@ -164,7 +169,7 @@ main()
 					}
 					
 					vec4 diffColor = color - oc;
-					currOffset = diffColor * (1.0f / 16.0f);
+					currOffset2 = diffColor * (7.0f / 16.0f);
 				}
 
 				// stuff in results
@@ -178,7 +183,6 @@ main()
 			// find best on each thread
 			uint	bestF = sortForeArray(f);
 
-
 			// only one thread to update
 			if (gl_LocalInvocationID == vec3(0))
 			{
@@ -186,14 +190,12 @@ main()
 				vec4	foreColor = texelFetch(sTD2DInputs[1], ivec2(bestF, 0), 0);
 				uint	graph = foreGraph[bestF];
 
-				vec4	currOffset = vec4(0);
-
 				for (uint c=0; c<8; c++)
 				{
 					uint xx = x+c;
 					
-					vec4	color = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0) + currOffset + currLine[xx];
-					currOffset = vec4(0);
+					vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
+					vec4	color = tcolor + currOffset + currLine[xx];
 							
 					float distf = colorDist(color, foreColor);
 					float distb = colorDist(color, backColor);
@@ -208,8 +210,7 @@ main()
 					graph <<= 1;
 					
 					vec4 diffColor = color - oc;
-					
-					currOffset += diffColor * (1.0f / 16.0f);
+					currOffset = diffColor * (7.0f / 16.0f);
 
 					nextLine[xx-1 + 1] += diffColor * (3.0f / 16.0f);
 					nextLine[xx+0 + 1] += diffColor * (5.0f / 16.0f);
