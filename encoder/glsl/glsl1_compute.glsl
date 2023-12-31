@@ -11,6 +11,9 @@
 //layout (local_size_x = 8, local_size_y = 4, local_size_z = 4) in;
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
+
+uniform float bleedScale;
+
 shared float foreDist[128]; // shared implies coherent
 shared uint foreIndex[128];
 
@@ -115,7 +118,7 @@ main()
 					cellDist += distb;
 				}
 				
-				vec4 diffColor = color - oc;
+				vec4 diffColor = (color - oc) * bleedScale;
 				currOffset = diffColor * (7.0f / 16.0f);
 			}
 
