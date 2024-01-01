@@ -19,6 +19,8 @@ uniform vec4 weight0;
 
 shared float foreDist[128]; // shared implies coherent
 shared uint foreIndex[128];
+shared vec4 foreOffset1[128];
+shared vec4 foreOffset2[128];
 
 
 float
@@ -42,8 +44,11 @@ sortForeArray(uint f)
 		uint	i2 = (f | fbit);
 
 		float   d1 = foreDist[i1];
+
 		float   d2 = foreDist[i2];
 		uint	f2 = foreIndex[i2];
+		vec4	o12 = foreOffset1[i2];
+		vec4	o22 = foreOffset2[i2];
 
 #if 0	// not faster?
 		uint	f1 = foreIndex[i1];
@@ -53,12 +58,15 @@ sortForeArray(uint f)
 
 		foreDist[f] = minD;
 		foreIndex[f] = uint(minF);
+		foreOffset1[f] = ... 
 #else
 
 		if (d2 < d1)
 		{
 			foreDist[f] = d2;
 			foreIndex[f] = f2;
+			foreOffset1[f] = o12;
+			foreOffset2[f] = o22;
 		}
 #endif
 
@@ -91,8 +99,8 @@ main()
     uint	width = uint(uTD2DInfos[0].res.z);
     uint	height = uint(uTD2DInfos[0].res.w);
 
-	vec4	currOffset1 = vec4(0);
-	vec4	currOffset2 = vec4(0);
+	vec4	currOffset1 = texelFetch(sTD2DInputs[0], ivec2(0, y), 0);
+	vec4	currOffset2 = texelFetch(sTD2DInputs[0], ivec2(1, y), 0);
 
 	for (uint x=0; x<width; x+=8)
 	{
@@ -104,8 +112,8 @@ main()
 			{
 				uint xx = x+c;
 				
-				vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
-				vec4	color = tcolor + currOffset1;
+				vec4	color = currOffset1;
+				clamp(color, 0, 1);
 						
 				float distf = colorDist(color, foreColor);
 				float distb = colorDist(color, backColor);
@@ -125,19 +133,28 @@ main()
 				
 				vec4 diffColor = (color - oc) * bleedScale;
 				currOffset1 = diffColor * weight0[2] + currOffset2;
-				currOffset2 = diffColor * weight0[3];
+				clamp(currOffset1, 0, 1);
+
+				vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx+2, y), 0);
+				currOffset2 = diffColor * weight0[3] + tcolor;
+				clamp(currOffset2, 0, 1);
 			}
 
 			// stuff in results
 			foreDist[f] = cellDist;
 			foreIndex[f] = f;
+			foreOffset1[f] = currOffset1;
+			foreOffset2[f] = currOffset2;
 			barrier();
 		}
 
 		
 		// find best on each thread
 		uint	bestF = sortForeArray(f);
+
 		lineDist += foreDist[bestF];
+		currOffset1 = foreOffset1[bestF];
+		currOffset2 = foreOffset2[bestF];
 
 	} // x
 

@@ -113,9 +113,9 @@ main()
 	ivec2	foreCoord = ivec2(f, 0);
 	vec4	foreColor = texelFetch(sTD2DInputs[1], foreCoord, 0);
 
-	currLine[f] = vec4(0);
-	nextLine1[f] = vec4(0);
-	nextLine2[f] = vec4(0);
+	currLine[f] = texelFetch(sTD2DInputs[0], ivec2(f, 0), 0);
+	nextLine1[f] = texelFetch(sTD2DInputs[0], ivec2(f, 1), 0);
+	nextLine2[f] = texelFetch(sTD2DInputs[0], ivec2(f, 2), 0);
 	barrier();
 
 	uint	width = uint(uTD2DInfos[0].res.z);
@@ -157,8 +157,8 @@ main()
 				{
 					uint xx = x+c;
 					
-					vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
-					vec4	color = tcolor + currOffsetA + currLine[xx];
+					vec4	color = currOffsetA + currLine[xx];
+					clamp(color, 0, 1);
 							
 					float distf = colorDist(color, foreColor);
 					float distb = colorDist(color, backColor);
@@ -206,8 +206,8 @@ main()
 				{
 					uint xx = x+c;
 					
-					vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
-					vec4	color = tcolor + currOffset1 + currLine[xx];
+					vec4	color = currOffset1 + currLine[xx];
+					clamp(color, 0, 1);
 							
 					float distf = colorDist(color, foreColor);
 					float distb = colorDist(color, backColor);
@@ -226,10 +226,16 @@ main()
 					currOffset2 = diffColor * weight0[3];
 
 					nextLine1[xx-1 + 1] += diffColor * weight1[0];
+					clamp(nextLine1[xx-1 + 1], 0, 1);
+
 					nextLine1[xx+0 + 1] += diffColor * weight1[1];
+					clamp(nextLine1[xx+0 + 1], 0, 1);
+
 					nextLine1[xx+1 + 1] += diffColor * weight1[2];
+					clamp(nextLine1[xx+1 + 1], 0, 1);
 
 					nextLine2[xx+0 + 1] += diffColor * weight2[1];
+					clamp(nextLine2[xx+0 + 1], 0, 1);
 				}
 			}
 			barrier();
@@ -254,7 +260,7 @@ main()
 		nextLine1[f] = nextLine2[f];
 		barrier();
 
-		nextLine2[f] = vec4(0);
+		nextLine2[f] = texelFetch(sTD2DInputs[0], ivec2(f, y+2), 0);
 		barrier();
 
 
