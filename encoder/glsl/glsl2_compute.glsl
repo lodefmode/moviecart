@@ -16,6 +16,10 @@ layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
 uniform float bleedScale;
 
+uniform vec4 weight0;
+uniform vec4 weight1;
+uniform vec4 weight2;
+
 shared float foreDist[128]; // shared implies coherent
 shared uint foreIndex[128];
 shared uint foreGraph[128];
@@ -24,9 +28,11 @@ shared float backDist[128]; // shared implies coherent
 shared uint backIndex[128];
 
 shared vec4	currLine[128];
-shared vec4	nextLine[128+2];
+shared vec4	nextLine1[128+2];
+shared vec4	nextLine2[128+2];
 
-shared vec4 currOffset;
+shared vec4 currOffset1;
+shared vec4 currOffset2;
 
 float
 colorDist(const vec4 a, const vec4 b)
@@ -108,7 +114,8 @@ main()
 	vec4	foreColor = texelFetch(sTD2DInputs[1], foreCoord, 0);
 
 	currLine[f] = vec4(0);
-	nextLine[f] = vec4(0);
+	nextLine1[f] = vec4(0);
+	nextLine2[f] = vec4(0);
 	barrier();
 
 	uint	width = uint(uTD2DInfos[0].res.z);
@@ -133,7 +140,8 @@ main()
 		ivec2	backCoord = ivec2(bidx, 0);
 		vec4	backColor = texelFetch(sTD2DInputs[1], backCoord, 0);
 
-		currOffset = vec4(0);
+		currOffset1 = vec4(0);
+		currOffset2 = vec4(0);
 		barrier();
 
 		for (uint x=0; x<width; x+=8)
@@ -142,14 +150,15 @@ main()
 			{
 				float		cellDist = 0.0f;
 				uint		graph = 0;
-				vec4		currOffset2 = currOffset;
+				vec4		currOffsetA = currOffset1;
+				vec4		currOffsetB = currOffset2;
 
 				for (uint c=0; c<8; c++)
 				{
 					uint xx = x+c;
 					
 					vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
-					vec4	color = tcolor + currOffset2 + currLine[xx];
+					vec4	color = tcolor + currOffsetA + currLine[xx];
 							
 					float distf = colorDist(color, foreColor);
 					float distb = colorDist(color, backColor);
@@ -171,7 +180,8 @@ main()
 					}
 					
 					vec4 diffColor = (color - oc) * bleedScale;
-					currOffset2 = diffColor * (7.0f / 16.0f);
+					currOffsetA = diffColor * weight0[2] + currOffsetB;
+					currOffsetB = diffColor * weight0[3];
 				}
 
 				// stuff in results
@@ -197,7 +207,7 @@ main()
 					uint xx = x+c;
 					
 					vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
-					vec4	color = tcolor + currOffset + currLine[xx];
+					vec4	color = tcolor + currOffset1 + currLine[xx];
 							
 					float distf = colorDist(color, foreColor);
 					float distb = colorDist(color, backColor);
@@ -212,11 +222,14 @@ main()
 					graph <<= 1;
 					
 					vec4 diffColor = (color - oc) * bleedScale;
-					currOffset = diffColor * (7.0f / 16.0f);
+					currOffset1 = diffColor * weight0[2] + currOffset2;
+					currOffset2 = diffColor * weight0[3];
 
-					nextLine[xx-1 + 1] += diffColor * (3.0f / 16.0f);
-					nextLine[xx+0 + 1] += diffColor * (5.0f / 16.0f);
-					nextLine[xx+1 + 1] += diffColor * (1.0f / 16.0f);
+					nextLine1[xx-1 + 1] += diffColor * weight1[0];
+					nextLine1[xx+0 + 1] += diffColor * weight1[1];
+					nextLine1[xx+1 + 1] += diffColor * weight1[2];
+
+					nextLine2[xx+0 + 1] += diffColor * weight2[1];
 				}
 			}
 			barrier();
@@ -235,10 +248,13 @@ main()
 		} // for x
 
 
-		currLine[f] = nextLine[f + 1];
+		currLine[f] = nextLine1[f + 1];
 		barrier();
 
-		nextLine[f] = vec4(0);
+		nextLine1[f] = nextLine2[f];
+		barrier();
+
+		nextLine2[f] = vec4(0);
 		barrier();
 
 

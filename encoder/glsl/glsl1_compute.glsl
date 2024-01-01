@@ -13,6 +13,9 @@ layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
 
 uniform float bleedScale;
+uniform vec4 weight0;
+//uniform vec4 weight1;
+//uniform vec4 weight2;
 
 shared float foreDist[128]; // shared implies coherent
 shared uint foreIndex[128];
@@ -88,7 +91,8 @@ main()
     uint	width = uint(uTD2DInfos[0].res.z);
     uint	height = uint(uTD2DInfos[0].res.w);
 
-	vec4	currOffset = vec4(0);
+	vec4	currOffset1 = vec4(0);
+	vec4	currOffset2 = vec4(0);
 
 	for (uint x=0; x<width; x+=8)
 	{
@@ -101,7 +105,7 @@ main()
 				uint xx = x+c;
 				
 				vec4	tcolor = texelFetch(sTD2DInputs[0], ivec2(xx, y), 0);
-				vec4	color = tcolor + currOffset;
+				vec4	color = tcolor + currOffset1;
 						
 				float distf = colorDist(color, foreColor);
 				float distb = colorDist(color, backColor);
@@ -120,7 +124,8 @@ main()
 				}
 				
 				vec4 diffColor = (color - oc) * bleedScale;
-				currOffset = diffColor * (7.0f / 16.0f);
+				currOffset1 = diffColor * weight0[2] + currOffset2;
+				currOffset2 = diffColor * weight0[3];
 			}
 
 			// stuff in results
