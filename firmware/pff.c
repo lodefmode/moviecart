@@ -380,8 +380,7 @@ bool pf_seek_block (
 //-----------------------------------------------------------------------
 
 bool pf_open_first(
-		uint32_t *numFrames,
-		bool	 *numFramesInit
+		uint32_t *numFrames
 		)
 {
 	bool		res = true;
@@ -394,7 +393,6 @@ bool pf_open_first(
 	uint32_t	dir_sect = clust2sect(dir_clust);	// Current sector 
 
 	*numFrames = 0;
-	*numFramesInit = false;
 
 	do 
 	{
@@ -425,7 +423,6 @@ bool pf_open_first(
 
 				fsInfo.fsize = ld_dword(dir+DIR_FileSize);	// File size 
 				*numFrames = fsInfo.fsize / (FIELD_NUM_BLOCKS * 512);
-				*numFramesInit = true;
 
 				fsInfo.block = 0;						// File pointer 
 				fsInfo.curr_clust = fsInfo.org_clust;

@@ -220,7 +220,7 @@ setupDisk()
 	// first available regular file
 	state.io_frameNumber = 1;
 	state.io_playing = false;
-	while (!pf_open_first(&state.i_numFrames, &state.i_numFramesInit))
+	while (!pf_open_first(&state.i_numFrames))
 	{
 		flash_led(3);
 	}

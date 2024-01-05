@@ -244,7 +244,7 @@ updateTransport(struct stateVars *state)
 	uInfo.lswcha_off = !(~state->i_swcha & 0xff);
 	state->io_frameNumber += uInfo.step;
 
-	if (state->i_numFramesInit && (state->io_frameNumber >= state->i_numFrames))
+	if (state->i_numFrames && (state->io_frameNumber >= state->i_numFrames))
 	{
 		state->io_frameNumber -= 2;
 		uInfo.joyRepeat = 0;
