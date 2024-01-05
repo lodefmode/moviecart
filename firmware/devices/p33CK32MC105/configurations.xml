@@ -76,7 +76,7 @@
     <conf name="default" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
-        <targetDevice>dsPIC33CK64MC105</targetDevice>
+        <targetDevice>dsPIC33CK32MC105</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
         <platformTool>snap</platformTool>
