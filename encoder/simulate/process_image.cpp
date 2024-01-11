@@ -596,6 +596,15 @@ main()
 	originalInput.readInput();
 
 	tempInput.copy(originalInput);
+	// setup first lines
+	for (uint y=0; y < 128*3; y++)
+	{
+		for (uint x=0; x < originalInput.width; x++)
+		{
+			uint y1 = y%3;
+			tempInput.get(x, y + originalInput.height) = originalInput.get(x, y1);
+		}
+	}
 
 	// loop all
 	for (uint pass=0; pass<originalInput.height; pass++)
@@ -614,7 +623,6 @@ main()
 
 		tempInput.copy(finalOutput);
 	}
-
 
 	finalOutput.writeOutput();
 }
