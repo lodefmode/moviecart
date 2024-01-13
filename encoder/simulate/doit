@@ -1,0 +1,1 @@
+(cl.exe -O2 process_image.cpp) && (./process_image.exe < sample_input.tsv > sample_output.txt)
