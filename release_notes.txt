@@ -24,6 +24,9 @@ Main improvements:
    eliminates random drop outs and distortion during low volume.
 
  - Encoding utility redesigned to be more intuitive.
+ 
+ - Encoding utility GPU accelerated. Speed increase of 2x to 20x depending on video card from previous encoder.
+   2 hour movie can be encoded in 30 minutes to 1 hour, instead of a full day.
 
  - Reliable startup, as boot time is now 0.58 msec from powerup.
    (Flashback 2 starts reading from the cart in 1.52 msec, while Atari 2600 around 25 msec).
