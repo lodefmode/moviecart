@@ -7,6 +7,8 @@
 #include "defines.h"
 #include "frame.h"
 
+#define STATE_PLAYING	0x01
+
 struct stateVars
 {
 	int32_t io_frameNumber;
@@ -17,7 +19,7 @@ struct stateVars
 	uint8_t i_inpt4;
 	uint8_t i_inpt5;
 
-	bool io_playing;
+	uint8_t io_bits;
 };
 
 extern void updateTransport(struct stateVars* state);

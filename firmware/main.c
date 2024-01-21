@@ -219,7 +219,7 @@ setupDisk()
 
 	// first available regular file
 	state.io_frameNumber = 1;
-	state.io_playing = false;
+	state.io_bits &= ~STATE_PLAYING;
 	while (!pf_open_first(&state.i_numFrames))
 	{
 		flash_led(3);
@@ -410,7 +410,7 @@ runTitle()
 		updateTransport(&state);
 
 		// if reset button pressed skip title frame
-		if (state.io_playing)
+		if (state.io_bits & STATE_PLAYING)
 			break;
 	}
 
@@ -422,7 +422,7 @@ runFrameLoop()
 	uint_fast8_t	t = 0;
 
 	state.io_frameNumber = 1;
-	state.io_playing = 1;
+	state.io_bits =  STATE_PLAYING;
 
 	while(1)
 	{

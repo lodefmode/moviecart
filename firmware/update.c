@@ -91,7 +91,7 @@ updateTransport(struct stateVars *state)
 	if (!(state->i_swchb & 0x01))
 	{
 		state->io_frameNumber = 0;
-		state->io_playing = true;
+		state->io_bits |= STATE_PLAYING;
 		uInfo.drawTimeCode = OSD_FRAMES;
 	}
 
@@ -106,7 +106,7 @@ updateTransport(struct stateVars *state)
 
 	// fire
 	if (!(state->i_inpt4 & 0x80) && (uInfo.linpt4 & 0x80))
-		state->io_playing = !state->io_playing;
+		state->io_bits ^= STATE_PLAYING;
 	uInfo.linpt4 = state->i_inpt4;
 
 	if (!(state->i_swcha & 0x10))	// up
@@ -215,7 +215,7 @@ updateTransport(struct stateVars *state)
 	// update frame
 	uInfo.step = (state->io_frameNumber & 1) ? -1 : 1; // signed
 
-	if (!state->io_playing)	// step while paused
+	if (!(state->io_bits & STATE_PLAYING))	// step while paused
 	{
 		if (uInfo.mode == MODE_TIME)
 		{
@@ -229,7 +229,7 @@ updateTransport(struct stateVars *state)
 		}
 	}
 
-	if (state->io_playing)
+	if (state->io_bits & STATE_PLAYING)
 	{
 		uInfo.step = 1;
 		if (uInfo.mode == MODE_TIME)
@@ -261,7 +261,7 @@ updateVolume(struct stateVars* state, struct frameInfo* fInfo)
 {
 	const uint8_t*  volumeScale;
 
-	if (state->io_playing)
+	if (state->io_bits & STATE_PLAYING)
 		volumeScale = scaleList[uInfo.volume];
 	else
 		volumeScale = scaleList[0];
