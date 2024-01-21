@@ -90,7 +90,7 @@ updateTransport(struct stateVars *state)
 	// reset
 	if (!(state->i_swchb & 0x01))
 	{
-		state->io_frameNumber = 1;
+		state->io_frameNumber = 0;
 		state->io_playing = true;
 		uInfo.drawTimeCode = OSD_FRAMES;
 	}
@@ -99,7 +99,7 @@ updateTransport(struct stateVars *state)
 	if (!(state->i_swchb & 0x02) && (uInfo.lswchb & 0x02))
 	{
 		uInfo.drawTimeCode = OSD_FRAMES;
-		state->io_frameNumber -= 60 *BACK_SECONDS + 1;
+		state->io_frameNumber -= 60 *BACK_SECONDS;
 	}
 
 	uInfo.lswchb = state->i_swchb;
@@ -244,19 +244,16 @@ updateTransport(struct stateVars *state)
 	uInfo.lswcha_off = !(~state->i_swcha & 0xff);
 	state->io_frameNumber += uInfo.step;
 
-	if (state->i_numFrames && (state->io_frameNumber >= state->i_numFrames))
+	// check negative before unsigned comparison below
+	if (state->io_frameNumber < 0)
 	{
-		state->io_frameNumber -= 2;
-		uInfo.joyRepeat = 0;
-		state->io_playing = false;
-	};
-
-	if (state->io_frameNumber < 1)
-	{
-		state->io_frameNumber = 1;
-		uInfo.speed = 1;
+		state->io_frameNumber = (state->io_frameNumber & 1) ? 1 : 0;
 	}
 
+	if (state->i_numFrames && (state->io_frameNumber >= state->i_numFrames))
+	{
+		state->io_frameNumber = (state->io_frameNumber & 1) ? state->i_numFrames-1 : state->i_numFrames-2;
+	};
 }
 
 void
