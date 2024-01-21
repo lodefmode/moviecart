@@ -8,6 +8,8 @@
 #include "frame.h"
 
 #define STATE_PLAYING	0x01
+#define STATE_MUTE0		0x02
+#define STATE_MUTE1		0x04
 
 struct stateVars
 {

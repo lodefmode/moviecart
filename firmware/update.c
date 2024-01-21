@@ -90,9 +90,11 @@ updateTransport(struct stateVars *state)
 	// reset
 	if (!(state->i_swchb & 0x01))
 	{
-		state->io_frameNumber = 0;
+		state->io_frameNumber = (state->io_frameNumber) ? 0 : 1;
 		state->io_bits |= STATE_PLAYING;
+		state->io_bits |= STATE_MUTE0;
 		uInfo.drawTimeCode = OSD_FRAMES;
+		return;
 	}
 
 	// select
@@ -248,11 +250,15 @@ updateTransport(struct stateVars *state)
 	if (state->io_frameNumber < 0)
 	{
 		state->io_frameNumber = (state->io_frameNumber & 1) ? 1 : 0;
+		state->io_bits |= STATE_MUTE0;
+		state->io_bits |= STATE_MUTE1;
 	}
 
 	if (state->i_numFrames && (state->io_frameNumber >= state->i_numFrames))
 	{
 		state->io_frameNumber = (state->io_frameNumber & 1) ? state->i_numFrames-1 : state->i_numFrames-2;
+		state->io_bits |= STATE_MUTE0;
+		state->io_bits |= STATE_MUTE1;
 	};
 }
 
@@ -261,10 +267,24 @@ updateVolume(struct stateVars* state, struct frameInfo* fInfo)
 {
 	const uint8_t*  volumeScale;
 
-	if (state->io_bits & STATE_PLAYING)
-		volumeScale = scaleList[uInfo.volume];
-	else
+	if (state->io_bits & STATE_MUTE0)
+	{
 		volumeScale = scaleList[0];
+		state->io_bits &= ~STATE_MUTE0;
+	}
+	else if (state->io_bits & STATE_MUTE1)
+	{
+		volumeScale = scaleList[0];
+		state->io_bits &= ~STATE_MUTE1;
+	}
+	else
+	{
+		if (state->io_bits & STATE_PLAYING)
+			volumeScale = scaleList[uInfo.volume];
+		else
+			volumeScale = scaleList[0];
+	}
+
 
 	uint_fast16_t	t = fInfo->totalLines;
 	uint8_t*		dst = fInfo->audioBuf;
