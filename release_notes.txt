@@ -17,13 +17,12 @@ Main improvements:
 
  - Supports both NTSC and PAL formats.
 
- - Enhanced video quality utilizing TIA background and playfield colors and
-   optimized color space searches.
+ - Enhanced video quality utilizing TIA background and playfield colors.
 
  - Enhanced audio encoding that utilizes error diffusion which introduces constant hiss, but
    eliminates random drop outs and distortion during low volume.
 
- - Encoding utility redesigned to be more intuitive.
+ - Encoding utility redesigned with more features including re-takes.
  
  - Encoding utility GPU accelerated. Speed increase of 2x to 20x depending on video card from previous encoder.
    2 hour movie can be encoded in 30 minutes to 1 hour, instead of a full day.
