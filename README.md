@@ -25,12 +25,15 @@ Technical Specs:
    Each second requires the equivalent of 75.5 Combat cartridges, or over half a million cartridges to produce a full length 2 hour movie.
 
 Pre-Order Kits at:
+
 https://www.tindie.com/products/lodefmode/moviecart-atari-2600/
 
-Full tutorials:
+Encoding tutorial:
+
 https://www.youtube.com/watch?v=WSy6kNrYDSo&list=PLHJZWs7or3edcvVHDeNzGSZABx2JN1WZH
 
 Thanks,
+
 lodef.mode@gmail.com
 
 [![Video](docs/screenshot_play.jpg)](https://www.youtube.com/watch?v=PMp-7_ekibU)
