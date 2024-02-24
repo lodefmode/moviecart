@@ -27,6 +27,9 @@ Technical Specs:
 Pre-Order Kits at:
 https://www.tindie.com/products/lodefmode/moviecart-atari-2600/
 
+Full tutorials:
+https://www.youtube.com/watch?v=WSy6kNrYDSo&list=PLHJZWs7or3edcvVHDeNzGSZABx2JN1WZH
+
 Thanks,
 lodef.mode@gmail.com
 
