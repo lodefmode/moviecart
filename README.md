@@ -24,8 +24,10 @@ Technical Specs:
    Each field requires 2.5K of data.
    Each second requires the equivalent of 75.5 Combat cartridges, or over half a million cartridges to produce a full length 2 hour movie.
 
-For inquires please contact:
+Pre-Order Kits at:
+https://www.tindie.com/products/lodefmode/moviecart-atari-2600/
 
+Thanks,
 lodef.mode@gmail.com
 
 [![Video](docs/screenshot_play.jpg)](https://www.youtube.com/watch?v=PMp-7_ekibU)
