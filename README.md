@@ -1,7 +1,16 @@
 # moviecart
 Software and Hardware to create full length color movie + audio cartridges for stock Atari 2600
 
+Encoding tutorial:
+
+https://www.youtube.com/watch?v=WSy6kNrYDSo&list=PLHJZWs7or3edcvVHDeNzGSZABx2JN1WZH
+
+Pre-Order Kits at:
+
+https://www.tindie.com/products/lodefmode/moviecart-atari-2600/
+
 September 11 1977
+-
 
 Introducing MovieCart.
 
@@ -24,13 +33,6 @@ Technical Specs:
    Each field requires 2.5K of data.
    Each second requires the equivalent of 75.5 Combat cartridges, or over half a million cartridges to produce a full length 2 hour movie.
 
-Pre-Order Kits at:
-
-https://www.tindie.com/products/lodefmode/moviecart-atari-2600/
-
-Encoding tutorial:
-
-https://www.youtube.com/watch?v=WSy6kNrYDSo&list=PLHJZWs7or3edcvVHDeNzGSZABx2JN1WZH
 
 Thanks,
 
