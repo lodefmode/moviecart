@@ -3,14 +3,15 @@
 	include vcs.h
 
 ;user memory 128 to 255
-DUMMY	equ $80
-
+DUMMY			equ $80
+FIELD			equ $81
 
 GAUDIO	equ #0
 NUM_LINES equ	33
+PREROLL			equ 50
 
-#if 1	; NTSC
-VISIBLE_LINES	equ (192 - NUM_LINES*2)
+#if 0	; NTSC
+VISIBLE_LINES	equ (192 - NUM_LINES*2 - PREROLL + 1)
 GCOL0			equ $42	;red
 GCOL5			equ $36	;orange
 GCOL1			equ $EC	;yellow
@@ -25,7 +26,7 @@ GBKCOLOR		equ $0E ; white
 
 #else	; PAl
 
-VISIBLE_LINES	equ (242 - NUM_LINES*2)
+VISIBLE_LINES	equ (242 - NUM_LINES*2 - PREROLL + 1)
 GCOL0			equ $44	;red
 GCOL5			equ $46	;orange
 GCOL1			equ $2C	;yellow
@@ -195,24 +196,36 @@ line0
 		line_pair
 	REPEND
 
-	right_line
-;	left_line
-;	jmp line8
-
-	;clear
 end_lines
 
+	;clear
 	lda #0
 	sta GRP0
 	sta GRP1
 	sta GRP0
 
-	; remainder of lines
 	ldx #VISIBLE_LINES
 	jsr wait_lines
 
-	; overscan 30
-	ldx #30
+
+	inc FIELD
+    lda FIELD
+    lsr
+    bcc .start_odd
+
+.start_even
+
+	ldx #29	; overscan
+	ldy #PREROLL
+	jmp	.start3
+
+.start_odd
+
+	ldx #30	; overscan
+	ldy #(PREROLL+1)
+
+.start3
+
 	jsr wait_lines
 
 	; vsync 3
@@ -231,8 +244,16 @@ end_lines
 	lda  #0
 	sta  VBLANK	
 
+	; preroll
+	tya
+	tax
+	jsr wait_lines
+
+
 	;; wait...
 
+	lda  #0
+	sta DUMMY
 	sta DUMMY
 	sta DUMMY
 	sta DUMMY
