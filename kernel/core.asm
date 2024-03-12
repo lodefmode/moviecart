@@ -10,7 +10,7 @@ GAUDIO	equ #0
 NUM_LINES equ	33
 PREROLL			equ 50
 
-#if 0	; NTSC
+#if 1	; NTSC
 VISIBLE_LINES	equ (192 - NUM_LINES*2 - PREROLL + 1)
 GCOL0			equ $42	;red
 GCOL5			equ $36	;orange
