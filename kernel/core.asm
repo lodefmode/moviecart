@@ -3,12 +3,14 @@
 	include vcs.h
 
 ;user memory 128 to 255
+DUMMY	equ $80
 
 
 GAUDIO	equ #0
+NUM_LINES equ	33
 
 #if 1	; NTSC
-VISIBLE_LINES	equ (192 - 8*2)
+VISIBLE_LINES	equ (192 - NUM_LINES*2)
 GCOL0			equ $42	;red
 GCOL5			equ $36	;orange
 GCOL1			equ $EC	;yellow
@@ -23,7 +25,7 @@ GBKCOLOR		equ $0E ; white
 
 #else	; PAl
 
-VISIBLE_LINES	equ (242 - 8*2)
+VISIBLE_LINES	equ (242 - NUM_LINES*2)
 GCOL0			equ $44	;red
 GCOL5			equ $46	;orange
 GCOL1			equ $2C	;yellow
@@ -55,6 +57,16 @@ GDATA9	set	%11100100
 	seg
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	MAC line_pair
+
+	right_line
+	left_line
+	jmp .lineX
+.lineX
+
+	ENDM
+
 
 	MAC left_line
 
@@ -178,41 +190,11 @@ wait_cnt
 	nop
 
 line0
-	right_line
-	left_line
-	jmp line1
 
-line1
-	right_line
-	left_line
-	jmp line2
+	REPEAT (NUM_LINES-1)
+		line_pair
+	REPEND
 
-line2
-	right_line
-	left_line
-	jmp line3
-
-line3
-	right_line
-	left_line
-	jmp line4
-
-line4
-	right_line
-	left_line
-	jmp line5
-
-line5
-	right_line
-	left_line
-	jmp line6
-
-line6
-	right_line
-	left_line
-	jmp line7
-
-line7
 	right_line
 ;	left_line
 ;	jmp line8
@@ -251,17 +233,17 @@ end_lines
 
 	;; wait...
 
-	sta $80
-	sta $80
-	sta $80
+	sta DUMMY
+	sta DUMMY
+	sta DUMMY
 
 	ldx #7
 busy_wait
 	dex		
 	bne	busy_wait
 
-	sta $80
-	sta $80
+	sta DUMMY
+	sta DUMMY
 	nop
 
 	jmp line0
