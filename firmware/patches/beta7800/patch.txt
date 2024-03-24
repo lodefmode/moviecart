@@ -1,0 +1,23 @@
+    9,217    4800          000000       main2      NOP                                           
+    9,218    4802          000000                  NOP                                           
+    9,219    4804          EB0000                  CLR W0                                        
+    9,220    4806          200551                  MOV #0x55, W1                                 
+    9,221    4808          8846B1                  MOV W1, NVMKEY                                
+    9,222    480A          200AA1                  MOV #0xAA, W1                                 
+    9,223    480C          8846B1                  MOV W1, NVMKEY                                
+    9,224    480E          886800                  MOV W0, RPCON                                 
+    9,225    4810          B3C3C0                  MOV.B #0x3C, W0                               
+    9,226    4812          B7ED5F                  MOV.B WREG, 0xD5F                             
+    9,227    4814          208000                  MOV #0x800, W0                                
+    9,228    4816          200551                  MOV #0x55, W1                                 
+    9,229    4818          8846B1                  MOV W1, NVMKEY                                
+    9,230    481A          200AA1                  MOV #0xAA, W1                                 
+    9,231    481C          8846B1                  MOV W1, NVMKEY                                
+    9,232    481E          886800                  MOV W0, RPCON                                 
+    9,233    4820          07EAE1                  RCALL coreInit                                
+    9,234    4822          07EA5D                  RCALL setupTitle                              
+    9,235    4824          07EF35                  RCALL setupDisk                               
+    9,236    4826          07EFBC                  RCALL handleFirmwareUpdate                    
+    9,237    4828          07F092                  RCALL updateInit                              
+    9,238    482A          07EAB6                  RCALL runTitle                                
+    9,239    482C          37EF7F                  BRA runFrameLoop                              

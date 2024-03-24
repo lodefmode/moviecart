@@ -512,24 +512,32 @@ main(void)
 __attribute__((section(".newcode"),space(prog))) void main2(void)
 {
 #if 0
-	// test patch
-	while(1)
-	{
-		flash_led(1);
-		flash_led(2);
-		flash_led(3);
-	}
-#endif
+	// add these always since its not clear if we need to jump to main or main+2
+    asm("nop");
+    asm("nop");
 
-#if 0
+	// March 24 204
+	// 7800 needs to select on A12, not A11 unfortunately
+	// make official if successful
+
+	__builtin_write_RPCON(0x0000); // unlock PPS
+
+//    RPINR45bits.CLCINAR = 0x003B;    //RC11->CLC1:CLCINA
+    RPINR45bits.CLCINAR = 0x003C;    //RC12->CLC1:CLCINA
+
+    __builtin_write_RPCON(0x0800); // lock PPS
+
+
+	// same as before
+	coreInit();
+	setupTitle();
+	setupDisk();
+	handleFirmwareUpdate();
+	updateInit();
+	runTitle();
+	runFrameLoop();
+	
 	/*
-	patch March 9 2024
-	Remove A12 from interrupt on change
-	Add A12 pullup
-
-	This should be officially added if successfuly on 7800s, where A12 falls to zero briefly
-	*/
-
     9,217    4800          000000       main2      NOP                                           
     9,218    4802          000000                  NOP                                           
     9,219    4804          20FFF0                  MOV #0xFFF, W0                                
@@ -543,24 +551,8 @@ __attribute__((section(".newcode"),space(prog))) void main2(void)
     9,227    4814          07F09C                  RCALL updateInit                              
     9,228    4816          07EAC0                  RCALL runTitle                                
     9,229    4818          37EF89                  BRA runFrameLoop                              
+	*/
 
-	// add these since its not clear if we need to jump to main or main+2
-    asm("nop");
-    asm("nop");
-
-	// no interrupt on A12
-	CNEN1C = 0x0fff;  // interrupt on change 1
-	// pullup on A12
-	CNPUC = 0x3F00;	// pullup
-
-	// same as before
-	coreInit();
-	setupTitle();
-	setupDisk();
-	handleFirmwareUpdate();
-	updateInit();
-	runTitle();
-	runFrameLoop();
 #endif
 }
 
