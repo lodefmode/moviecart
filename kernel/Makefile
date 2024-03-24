@@ -1,6 +1,6 @@
 
 core.bin: core.asm 
-	./dasm_exe/dasm.exe core.asm -f3 -Idasm/machines/atari2600/ -ocore.bin -lcore.lst -score.sym
+	./dasm/dasm.exe core.asm -f3 -Idasm/machines/atari2600/ -ocore.bin -lcore.lst -score.sym
 	"C:/Program Files/Stella/Stella.exe" core.bin &
 
 clean:

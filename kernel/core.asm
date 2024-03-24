@@ -7,7 +7,7 @@ DUMMY			equ $80
 FIELD			equ $81
 
 GAUDIO	equ #0
-NUM_LINES equ	33
+NUM_LINES equ	8
 PREROLL			equ 50
 
 #if 1	; NTSC
@@ -17,12 +17,12 @@ GCOL5			equ $36	;orange
 GCOL1			equ $EC	;yellow
 GCOL6			equ $D8	;light green
 GCOL2			equ $72	;blue
-GCOL7			equ $62	;purple
+GCOL7			equ $64	;purple
 GCOL3			equ $B8	;cyan
 GCOL8			equ $6C	;light purple
 GCOL4			equ $06	;dark grey
 GCOL9			equ $0A	;light grey
-GBKCOLOR		equ $0E ; white
+GBKCOLOR		equ $02 ;dark grey
 
 #else	; PAl
 
@@ -39,59 +39,72 @@ GCOL8			equ $AC	;light purple
 
 GCOL4			equ $F8	;dark grey
 GCOL9			equ $FC	;light grey
-GBKCOLOR		equ $0E ; white
+GBKCOLOR		equ $04 ;dark grey
 #endif
-
-GDATA0	set	%01111110
-GDATA5	set	%10111101
-GDATA1	set	%11011011
-GDATA6	set	%11100111
-GDATA2	set	%11101011
-GDATA7	set	%11011101
-GDATA3	set	%10111110
-GDATA8	set	%11010101
-GDATA4	set	%11101011
-GDATA9	set	%11100100
-
 
 
 	seg
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	MAC line_pair
+	MAC kernel
 
-	right_line
-	left_line
-	jmp .lineX
-.lineX
-
-	ENDM
+	; right_line
 
 
-	MAC left_line
+	lda #{4}		; 2
+	sta GRP1		; 3 VDELed
+	sta HMOVE		; 3 @03 +8 pixel
+	lda #GAUDIO		; 2
+	ldx #{10}		; 2
+	sta AUDV0		; 3 @10
+	ldy #GCOL9		; 2
+	lda #GCOL6		; 2
+	sta COLUP1		; 3
+	lda #{2}		; 2
+	sta GRP0		; 3
+	lda #GCOL5		; 2
+	sta COLUP0		; 3
+	lda #{8}		; 2
+	sta GRP1		; 3 VDELed
+	lda #GBKCOLOR	; 2
+	sta COLUBK		; 3 background color
+	lda #GCOL7		; 2
+	sta COLUP0		; 3 @42! end of GRP0a display
+	lda #{6}		; 2
+	sta GRP0		; 3 @47! end of GRP1a display
+	lda #GCOL8		; 2
+	sta COLUP1		; 3 @52
+	stx GRP0		; 3 @55
+	sty COLUP0		; 3 @58<=@60
+	lda #$00		; 2 turn off background color
+	sta COLUBK		; 3 background color
+	sta HMCLR		; 3
+
+
+	; left_line
 
 	lda #$00		; 2 dummy
-	lda #GDATA1		; 2
+	lda #{3}		; 2
 	sta HMOVE		;back 8, late hmove    ;needs to be on cycle 71
 	sta GRP1		; 3 VDELed
 	lda #GCOL1		; 2
 	sta COLUP1		; 3
 	lda #GAUDIO		; 2
 	sta AUDV0		; 3 @10
-	ldx #GDATA4		; 2
+	ldx #{9}		; 2
 	ldy #GCOL4		; 2
-	lda #GDATA0		; 2
+	lda #{1} 		; 2
 	sta GRP0		; 3
 	lda #GCOL0		; 2
 	sta COLUP0		; 3
-	lda #GDATA3		; 2
+	lda #{7}		; 2
 	sta GRP1		; 3 VDELed
 	lda #GBKCOLOR	; 2 playfield color
 	sta COLUPF		; 3 playfield color
 	lda #GCOL2		; 2
 	sta COLUP0		; 3 @39! end of GRP0a display
-	lda #GDATA2		; 2
+	lda #{5}		; 2
 	sta GRP0		; 3 @44! end of GRP1a display
 	lda #GCOL3		; 2
 	sta COLUP1		; 3 @49
@@ -103,45 +116,14 @@ GDATA9	set	%11100100
 	sta HMP0		; 3
 	sta HMP1		; 3 @63
 
-	ENDM
-
-
-	MAC right_line
-
-	lda #GDATA6		; 2
-	sta GRP1		; 3 VDELed
-	sta HMOVE		; 3 @03 +8 pixel
-	lda #GAUDIO		; 2
-	ldx #GDATA9		; 2
-	sta AUDV0		; 3 @10
-	ldy #GCOL9		; 2
-	lda #GCOL6		; 2
-	sta COLUP1		; 3
-	lda #GDATA5		; 2
-	sta GRP0		; 3
-	lda #GCOL5		; 2
-	sta COLUP0		; 3
-	lda #GDATA8		; 2
-	sta GRP1		; 3 VDELed
-	lda #GBKCOLOR	; 2
-	sta COLUBK		; 3 background color
-	lda #GCOL7		; 2
-	sta COLUP0		; 3 @42! end of GRP0a display
-	lda #GDATA7		; 2
-	sta GRP0		; 3 @47! end of GRP1a display
-	lda #GCOL8		; 2
-	sta COLUP1		; 3 @52
-	stx GRP0		; 3 @55
-	sty COLUP0		; 3 @58<=@60
-	lda #$00		; 2 turn off background color
-	sta COLUBK		; 3 background color
-	sta HMCLR		; 3
+	jmp .lineX
+.lineX
 
 	ENDM
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	org $F000 
+	org $FC00 
 
 main_start
 
@@ -192,9 +174,13 @@ wait_cnt
 
 line0
 
-	REPEAT (NUM_LINES-1)
-		line_pair
-	REPEND
+	kernel %01111100, %00110000, %01111100, %01111100, %00011100, %11111110, %01111100, %11111110, %01111100, %01111100
+	kernel %10000110, %01010000, %10000010, %10000010, %00100100, %10000000, %10000010, %00000010, %10000010, %10000010
+	kernel %10001010, %10010000, %00000100, %00000100, %01000100, %10000000, %10000000, %00000100, %10000010, %10000001
+	kernel %10010010, %00010000, %00011000, %00111000, %10000100, %01111100, %11111100, %00001000, %01111100, %10000011
+	kernel %10100010, %00010000, %01100000, %00000100, %11111110, %00000010, %10000010, %00010000, %10000010, %01111101
+	kernel %11000010, %00010000, %11000000, %10000010, %00000100, %10000010, %10000010, %00100000, %10000010, %00000001
+	kernel %01111100, %11111110, %11111110, %01111100, %00000100, %01111100, %01111100, %01000000, %01111100, %11111110
 
 end_lines
 
