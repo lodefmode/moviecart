@@ -108,6 +108,7 @@ void PIN_MANAGER_Initialize (void)
     __builtin_write_RPCON(0x0000); // unlock PPS
 
     RPINR45bits.CLCINAR = 0x003B;    //RC11->CLC1:CLCINA
+    RPINR46bits.CLCINBR = 0x003C;    //RC12->CLC1:CLCINB
     RPINR20bits.SCK1R = 0x0048;    //RD8->SPI1:SCK1
     RPOR15bits.RP72R = 0x0006;    //RD8->SPI1:SCK1
     RPOR15bits.RP65R = 0x0028;    //RD1->CLC1:CLC1OUT

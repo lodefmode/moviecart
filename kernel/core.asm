@@ -149,7 +149,7 @@ ClearMem
 	lda #$CC
 	sta PF2
 
-	nop
+	ldx #$30  ; going into HMP0 later
 	sta RESP0
 	nop
 	sta RESP1
@@ -158,18 +158,22 @@ ClearMem
 	lda #$02  ;2 copies medium
 	sta NUSIZ1
 
-	lda #$10
-	sta HMP0
-	lda #$00
+	stx HMP0
+
+	lda #$20
 	sta HMP1
+
+	; HMOVE needs to be after WSYNC here
+	sta WSYNC
 	sta HMOVE
 
-	ldx #15
+	ldx #12
 wait_cnt
 	dex
 	bne wait_cnt
 
 	sta HMCLR
+	nop
 	nop
 
 line0

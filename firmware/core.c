@@ -142,15 +142,15 @@ g0x04:
 	EMULATE_DONE
 
 g0x05:
-	SET_DATA(0x85); // sta WSYNC
+	SET_DATA(0xa9); // lda #0	//zero memory
 	EMULATE_DONE
 
 g0x06:
-	SET_DATA(0x02);
+	SET_DATA(0x00);
 	EMULATE_DONE
 
 g0x07:
-	SET_DATA(0xa9); // lda #0	//zero memory
+	SET_DATA(0x95); // sta 0,X	// ClearMem
 	EMULATE_DONE
 
 g0x08:
@@ -158,213 +158,213 @@ g0x08:
 	EMULATE_DONE
 
 g0x09:
-	SET_DATA(0x95); // sta 0,X	// ClearMem
-	EMULATE_DONE
-
-g0x0a:
-	SET_DATA(0x00);
-	EMULATE_DONE
-
-g0x0b:
 	SET_DATA(0xca); // dex
 	EMULATE_DONE
 
-g0x0c:
+g0x0a:
 	SET_DATA(0xd0); // bne ClearMem
 	EMULATE_DONE
 
-g0x0d:
+g0x0b:
 	SET_DATA(0xfb);
 	EMULATE_DONE
 
-g0x0e:
+g0x0c:
 	SET_DATA(0xa9); // lda #1
 	EMULATE_DONE
 
-g0x0f:
+g0x0d:
 	SET_DATA(0x01);
 	EMULATE_DONE
 
-g0x10:
+g0x0e:
 	SET_DATA(0x85); // sta VDELP1
 	EMULATE_DONE
 
-g0x11:
+g0x0f:
 	SET_DATA(0x26);
 	EMULATE_DONE
 
-g0x12:
+g0x10:
 	SET_DATA(0xa9); // lda #$CF
 	EMULATE_DONE
 
-g0x13:
+g0x11:
 	SET_DATA(0xcf);
 	EMULATE_DONE
 
-g0x14:
+g0x12:
 	SET_DATA(0x85); // sta PF0
 	EMULATE_DONE
 
-g0x15:
+g0x13:
 	SET_DATA(0x0d);
 	EMULATE_DONE
 
-g0x16:
+g0x14:
 	SET_DATA(0xa9); // lda #$33
 	EMULATE_DONE
 
-g0x17:
+g0x15:
 	SET_DATA(0x33);
 	EMULATE_DONE
 
-g0x18:
+g0x16:
 	SET_DATA(0x85); // sta PF1
 	EMULATE_DONE
 
-g0x19:
+g0x17:
 	SET_DATA(0x0e);
 	EMULATE_DONE
 
-g0x1a:
+g0x18:
 	SET_DATA(0xa9); // lda #$CC
 	EMULATE_DONE
 
-g0x1b:
+g0x19:
 	SET_DATA(0xcc);
 	EMULATE_DONE
 
-g0x1c:
+g0x1a:
 	SET_DATA(0x85); //sta PF2
 	EMULATE_DONE
 
-g0x1d:
+g0x1b:
 	SET_DATA(0x0f);
 	EMULATE_DONE
 
+g0x1c:
+	SET_DATA(0xa2); // ldx #$30
+	EMULATE_DONE
+
+g0x1d:
+	SET_DATA(0x30);
+	EMULATE_DONE
+
 g0x1e:
-	SET_DATA(0xea); // nop
+	SET_DATA(0x85); // sta RESP0
 	EMULATE_DONE
 
 g0x1f:
-	SET_DATA(0x85); // sta RESP0
+	SET_DATA(0x10);
 	EMULATE_DONE
 
 
 g0x20:
-	SET_DATA(0x10);
-	EMULATE_DONE
-
-g0x21:
 	SET_DATA(0xea); // nop
 	EMULATE_DONE
 
-g0x22:
+g0x21:
 	SET_DATA(0x85); //sta RESP1
 	EMULATE_DONE
 
-g0x23:
+g0x22:
 	SET_DATA(0x11);
 	EMULATE_DONE
 
-g0x24:
+g0x23:
 	SET_DATA(0xa9); // lda #$06	//3 copies medium
 	EMULATE_DONE
 
-g0x25:
+g0x24:
 	SET_DATA(0x06); // lda #$06	//3 copies medium
 	EMULATE_DONE
 
-g0x26:
+g0x25:
 	SET_DATA(0x85); // sta NUSIZ0
 	EMULATE_DONE
 
-g0x27:
+g0x26:
 	SET_DATA(0x04);
 	EMULATE_DONE
 
-g0x28:
+g0x27:
 	SET_DATA(0xa9); // lda #$02	//2 copies medium
 	EMULATE_DONE
 
-g0x29:
+g0x28:
 	SET_DATA(0x02);
 	EMULATE_DONE
 
-g0x2a:
+g0x29:
 	SET_DATA(0x85); // sta NUSIZ1
 	EMULATE_DONE
 
-g0x2b:
+g0x2a:
 	SET_DATA(0x05);
 	EMULATE_DONE
 
+g0x2b:
+	SET_DATA(0x86); // stx HMP0
+	EMULATE_DONE
+
 g0x2c:
-	SET_DATA(0xa9); // lda #$10
+	SET_DATA(0x20);
 	EMULATE_DONE
 
 g0x2d:
-	SET_DATA(0x10);
+	SET_DATA(0xa9); // lda #$20
 	EMULATE_DONE
 
 g0x2e:
-	SET_DATA(0x85); // sta HMP0
+	SET_DATA(0x20);
 	EMULATE_DONE
 
 g0x2f:
-	SET_DATA(0x20);
+	SET_DATA(0x85); // sta HMP1
 	EMULATE_DONE
 
 
 g0x30:
-	SET_DATA(0xa9); // lda #$00
-	EMULATE_DONE
-
-g0x31:
-	SET_DATA(0x00);
-	EMULATE_DONE
-
-g0x32:
-	SET_DATA(0x85); // sta HMP1
-	EMULATE_DONE
-
-g0x33:
 	SET_DATA(0x21);
 	EMULATE_DONE
 
-g0x34:
+g0x31:
+	SET_DATA(0x85); // sta WSYNC
+	EMULATE_DONE
+
+g0x32:
+	SET_DATA(0x02);
+	EMULATE_DONE
+
+g0x33:
 	SET_DATA(0x85); // sta HMOVE
 	EMULATE_DONE
 
-g0x35:
+g0x34:
 	SET_DATA(0x2a);
 	EMULATE_DONE
 
+g0x35:
+	SET_DATA(0xa2); // ldx #12
+	EMULATE_DONE
+
 g0x36:
-	SET_DATA(0xa2); // ldx #15
+	SET_DATA(0x0c);
 	EMULATE_DONE
 
 g0x37:
-	SET_DATA(0x0f);
-	EMULATE_DONE
-
-g0x38:
 	SET_DATA(0xca); // dex ; wait_cnt
 	EMULATE_DONE
 
-g0x39:
+g0x38:
 	SET_DATA(0xd0); // bne wait_cnt
 	EMULATE_DONE
 
-g0x3a:
+g0x39:
 	SET_DATA(0xfd);
 	EMULATE_DONE
 
-g0x3b:
+g0x3a:
 	SET_DATA(0x85); // sta HMCLR
 	EMULATE_DONE
 
-g0x3c:
+g0x3b:
 	SET_DATA(0x2b);
+	EMULATE_DONE
+
+g0x3c:
+	SET_DATA(0xea); // nop
 	EMULATE_DONE
 
 g0x3d:

@@ -536,11 +536,11 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CLC1" registerAlias="CLCCONH"/>
-         <value>2</value>
+         <value>12</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CLC1" registerAlias="CLCCONL"/>
-         <value>32928</value>
+         <value>32930</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CLC1" registerAlias="CLCGLSH"/>
@@ -548,7 +548,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CLC1" registerAlias="CLCGLSL"/>
-         <value>2</value>
+         <value>2050</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CLC1" registerAlias="CLCSELL"/>
@@ -560,15 +560,15 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CLC1" registerAlias="CLCCONH" settingAlias="LCG2POL"/>
-         <value>inverted</value>
+         <value>not_inverted</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CLC1" registerAlias="CLCCONH" settingAlias="LCG3POL"/>
-         <value>not_inverted</value>
+         <value>inverted</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CLC1" registerAlias="CLCCONH" settingAlias="LCG4POL"/>
-         <value>not_inverted</value>
+         <value>inverted</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CLC1" registerAlias="CLCCONL" settingAlias="LCEN"/>
@@ -584,7 +584,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CLC1" registerAlias="CLCCONL" settingAlias="LCMODE"/>
-         <value>AND-OR</value>
+         <value>4-input AND</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CLC1" registerAlias="CLCCONL" settingAlias="LCOE"/>
@@ -708,7 +708,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CLC1" registerAlias="CLCGLSL" settingAlias="LCG2D2T"/>
-         <value>disabled</value>
+         <value>enabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CLC1" registerAlias="CLCGLSL" settingAlias="LCG2D3N"/>
@@ -3340,7 +3340,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="Custom Name RC12"/>
-         <value>IO_RC12</value>
+         <value/>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="Custom Name RC13"/>
@@ -3536,7 +3536,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="RC12"/>
-         <value>input</value>
+         <value>disabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="RC13"/>
@@ -7712,7 +7712,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="Pin Module" registerAlias="RPINR46"/>
-         <value>65535</value>
+         <value>65340</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="Pin Module" registerAlias="RPINR47"/>
@@ -9424,7 +9424,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="Pin Module" registerAlias="RPINR46" settingAlias="CLCINBR"/>
-         <value>255</value>
+         <value>60</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="Pin Module" registerAlias="RPINR46" settingAlias="CLCINCR"/>
@@ -11547,102 +11547,102 @@
          <value>disabled</value>
       </entry>
    </tokenMap>
-   <generatedFileHashHistoryMap class="java.util.TreeMap">
-      <entry>
-         <file>main.c</file>
-         <hash>e50085d99efe179aa0f9b2cb1b9a6f6efa09a9d0705002a52a5dca65b532c5ac</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\clc1.c</file>
-         <hash>b25cb237d233575d03cb4a1326443165bd74bf8b7c367b082171ac49511449a7</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\clc1.h</file>
-         <hash>3d6ee4508525d8beb50e6f5b83faafa3c6aacb0131969841ac0041aa6583c4d7</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\clock.c</file>
-         <hash>af108c5d96119fb736a9d42e48890d451f9cdbc5189858ce215129d5cd3c6cd9</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\clock.h</file>
-         <hash>80fc7637fd9a86edf709a15f447b520a95aac7e5a0bf404ffb01174f7e360961</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\interrupt_manager.c</file>
-         <hash>26dd389b889a60dbc744de07c7c59639a3fee916aa1fedc05a528ea1dc9e55e5</hash>
-      </entry>
+   <generatedFileHashHistoryMap class="java.util.HashMap">
       <entry>
          <file>mcc_generated_files\interrupt_manager.h</file>
          <hash>1d9eef2d8712072c21e3e2dbedde1552364285843b0fe496517426025d09f946</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\mcc.c</file>
-         <hash>eb089a1588b2af8873b0e5132b359ae183d5fdc8f6ed968894906af1545bace1</hash>
-      </entry>
-      <entry>
          <file>mcc_generated_files\mcc.h</file>
-         <hash>d80aa2499a123a7a1ad7ecf39fa5b9e5d09183736ba01106c324bdd4e088bd6b</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\memory\flash.h</file>
-         <hash>38bb7c3b4a9e53f05ffab5c27ce524a417609eafa1ace3a373d3a5cebdecfa3c</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\memory\flash.s</file>
-         <hash>8db52b4349423833c28c1f432a818ab567833e7b16e5c559327cfad7ae2ee2a6</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\pin_manager.c</file>
-         <hash>4427dd996191b9cf821b5ef6eef84700c9798a285ddb8c6d9d80be2eeae049f4</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\pin_manager.h</file>
-         <hash>70e9caf01cb1412be6e0a94784e2ecfcef928b87f3d1891a33b2ec09f52eb54c</hash>
+         <hash>70da5399f60403e64c94cc29658c5fefb88f4dbc96466fa6dd4c26339e228ab2</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\reset.c</file>
          <hash>43b70450585f8d879e4ce0edae18b788305587eb489ba9b90bf41309d12588f9</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\reset.h</file>
-         <hash>c8cb919985961b4897d32e1706382c415549ddadde14e9b4fbe544912d9d94ac</hash>
+         <file>mcc_generated_files\clock.c</file>
+         <hash>af108c5d96119fb736a9d42e48890d451f9cdbc5189858ce215129d5cd3c6cd9</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\reset_types.h</file>
-         <hash>d5badf8ea2a1e11b675816823178b37e2972a6970ba5543d6b800a808e56a21f</hash>
+         <file>main.c</file>
+         <hash>e50085d99efe179aa0f9b2cb1b9a6f6efa09a9d0705002a52a5dca65b532c5ac</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\spi1.c</file>
-         <hash>a9d8e0b8516cd48f8b1ff0ae1bd51b8deecb30d66c86c7b8cccd0329d7ed151e</hash>
+         <file>mcc_generated_files\pin_manager.h</file>
+         <hash>8c106079e2c6f640985a06834243b7af8ab445fe32abb1bc14845f40f1107f58</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\spi1.h</file>
          <hash>306e0c95cde7a0c67359cf24d02961e71bef3734f498fce40343e9f07dab55ce</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\system.c</file>
-         <hash>8f5fcbf7c20f8fb8d004143032a42fb72ddb1f67668afdfb054dad6fb95702ba</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files\system.h</file>
-         <hash>ca359611c95076d9056f01ec6f4b51f1a608534e3bdb466af697e67dceca098f</hash>
+         <file>mcc_generated_files\memory\flash.s</file>
+         <hash>8db52b4349423833c28c1f432a818ab567833e7b16e5c559327cfad7ae2ee2a6</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\system_types.h</file>
          <hash>67b77906f10fe27aa019d053583fb7f04df3530d04a481d197f12a8ab3c2e315</hash>
       </entry>
       <entry>
+         <file>mcc_generated_files\pin_manager.c</file>
+         <hash>45aaa4f85ddda787c1b2956e919261606234e7fa662b2458b241d6b63dafdbec</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\system.h</file>
+         <hash>ca359611c95076d9056f01ec6f4b51f1a608534e3bdb466af697e67dceca098f</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\spi1.c</file>
+         <hash>a9d8e0b8516cd48f8b1ff0ae1bd51b8deecb30d66c86c7b8cccd0329d7ed151e</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\system.c</file>
+         <hash>8f5fcbf7c20f8fb8d004143032a42fb72ddb1f67668afdfb054dad6fb95702ba</hash>
+      </entry>
+      <entry>
          <file>mcc_generated_files\traps.c</file>
          <hash>4587835e5d1274f6985a8a1455921652302bd7add2165e0b75062f8198ebb1e2</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\clc1.c</file>
+         <hash>36eb93d2f577d1db391feb4968c34aac39ddf422523d7f7697c27245f5f8d891</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\traps.h</file>
          <hash>efd439e4a99297b3e38940cba16e7d37fa5665a1fa4c2935963f0ee9abb5a47a</hash>
       </entry>
       <entry>
+         <file>mcc_generated_files\clock.h</file>
+         <hash>80fc7637fd9a86edf709a15f447b520a95aac7e5a0bf404ffb01174f7e360961</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\memory\flash.h</file>
+         <hash>38bb7c3b4a9e53f05ffab5c27ce524a417609eafa1ace3a373d3a5cebdecfa3c</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\interrupt_manager.c</file>
+         <hash>26dd389b889a60dbc744de07c7c59639a3fee916aa1fedc05a528ea1dc9e55e5</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\mcc.c</file>
+         <hash>eb089a1588b2af8873b0e5132b359ae183d5fdc8f6ed968894906af1545bace1</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\reset.h</file>
+         <hash>c8cb919985961b4897d32e1706382c415549ddadde14e9b4fbe544912d9d94ac</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\clc1.h</file>
+         <hash>3d6ee4508525d8beb50e6f5b83faafa3c6aacb0131969841ac0041aa6583c4d7</hash>
+      </entry>
+      <entry>
          <file>mcc_generated_files\watchdog.h</file>
          <hash>24d8f8798947e0a628e2a7a2ab0b506efb9df58e1333390029e6ac1d5ac8545a</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\reset_types.h</file>
+         <hash>d5badf8ea2a1e11b675816823178b37e2972a6970ba5543d6b800a808e56a21f</hash>
       </entry>
    </generatedFileHashHistoryMap>
 </config>

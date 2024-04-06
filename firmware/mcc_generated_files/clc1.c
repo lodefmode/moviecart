@@ -56,13 +56,13 @@ void CLC1_Initialize(void)
 {
     // Set the CLC1 to the options selected in the User Interface
 
-	CLC1CONL = 0x80A0 & ~(0x8000);
+	CLC1CONL = 0x80A2 & ~(0x8000);
 
-    CLC1CONH = 0x02;
+    CLC1CONH = 0x0C;
 
     CLC1SELL = 0x5000;
 
-    CLC1GLSL = 0x02;
+    CLC1GLSL = 0x802;
 
     CLC1GLSH = 0x00;
 
