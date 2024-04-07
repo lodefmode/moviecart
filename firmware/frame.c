@@ -84,7 +84,36 @@ frameInit(struct frameInfo* fInfo)
 	fInfo->numBlocks = (totalSize >> 9);	// 512 block chunks
 	if (totalSize & (512-1))
 		fInfo->numBlocks++;
+}
 
-	fInfo->buffer = dst;
+// maximum space between sections since title height adjustable
+
+void
+frameInitTitle(struct frameInfo* fInfo, bool odd)
+{
+	uint8_t*	dst = fInfo->buffer;
+
+	int maxVisible = 250;	// any larger runs off FIELD_SIZE
+
+	fInfo->vsyncLines = 3;
+	fInfo->blankLines = 37;
+	fInfo->overscanLines = 30;
+	fInfo->odd = odd;
+
+	fInfo->timecodeBuf = dst; // not used
+
+	fInfo->graphBuf    = dst; dst += 5*maxVisible;
+	fInfo->colorBuf    = dst; dst += 5*maxVisible;
+	fInfo->colorBKBuf  = dst; dst += 1*maxVisible;
+	fInfo->audioBuf	   = dst; //dst += totalLines;
+
+	if (fInfo->odd)
+		fInfo->colorBKBuf++;
+
+	// default title height
+	fInfo->visibleLines = 192;
+	fInfo->totalLines = fInfo->vsyncLines + fInfo->blankLines + fInfo->overscanLines + fInfo->visibleLines;
+
+	fInfo->numBlocks = 0; // not used
 }
 

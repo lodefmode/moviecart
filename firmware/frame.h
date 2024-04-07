@@ -33,5 +33,6 @@ struct frameInfo
 };
 
 extern void frameInit(struct frameInfo* fInfo);
+extern void frameInitTitle(struct frameInfo* fInfo, bool odd);
 
 #endif

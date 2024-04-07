@@ -147,10 +147,6 @@ __attribute__((section(".stateVars"))) struct stateVars		state;
 __attribute__((section(".mr_buffer1"))) uint8_t mr_buffer1[FIELD_SIZE];
 __attribute__((section(".mr_buffer2")))uint8_t mr_buffer2[FIELD_SIZE];
 
-// old format
-const uint8_t   header1[7] = { 'M', 'V', 'C', 0,  0, 0, 0 };
-const uint8_t   header2[7] = { 'M', 'V', 'C', 0,  0, 0, 1 };
-
 // Allocate and reserve a page of flash for this test to use.  The compiler/linker will reserve this for data and not place any code here.
 //static __prog__  uint8_t flashTestPage[FLASH_ERASE_PAGE_SIZE_IN_PC_UNITS] __attribute__((space(prog),aligned(FLASH_ERASE_PAGE_SIZE_IN_PC_UNITS)));
 
@@ -174,15 +170,17 @@ void
 setupTitle()
 {
 	// setup frame headers quickly
-	memcpy(mr_buffer1 , header1, sizeof(header1));
 	r_coreInfo.frameInfo.buffer = mr_buffer1;
-	frameInit(&r_coreInfo.frameInfo);
 	r_coreInfo.mr_frameInfo1.buffer = mr_buffer1;
-	frameInit(&r_coreInfo.mr_frameInfo1);
-
-	memcpy(mr_buffer2 , header2, sizeof(header2));
 	r_coreInfo.mr_frameInfo2.buffer = mr_buffer2;
-	frameInit(&r_coreInfo.mr_frameInfo2);
+
+	frameInitTitle(&r_coreInfo.frameInfo, 0);
+	frameInitTitle(&r_coreInfo.mr_frameInfo1, 0);
+	frameInitTitle(&r_coreInfo.mr_frameInfo2, 1);
+
+	// zero everything since height may change
+	memset(mr_buffer1, 0, sizeof(mr_buffer1));
+	memset(mr_buffer2, 0, sizeof(mr_buffer2));
 
 	// copy title screen over
 
@@ -204,8 +202,6 @@ setupTitle()
 	copyFromFlash(r_coreInfo.mr_frameInfo2.colorBuf, (uint16_t)TitleColor2, lineTotal);
 	copyFromFlash(r_coreInfo.mr_frameInfo2.colorBKBuf, (uint16_t)TitleBackColor2, r_coreInfo.mr_frameInfo2.visibleLines);
 
-	memset(r_coreInfo.mr_frameInfo1.audioBuf, 0, r_coreInfo.mr_frameInfo1.totalLines);
-	memset(r_coreInfo.mr_frameInfo2.audioBuf, 0, r_coreInfo.mr_frameInfo2.totalLines);
 }
 
 void
@@ -398,6 +394,29 @@ runTitle()
 {
 	uint16_t		m_titleFrame = 300; // 5 seconds
 
+	// sample the file to see if title should be PAL format etc
+	state.io_frameNumber = 1;
+
+	waitEndFrame();
+	prepareNextFrame();
+	waitEndFrame();
+	prepareNextFrame();
+
+	int		prevVis = r_coreInfo.mr_frameInfo1.visibleLines;
+   
+
+	// now override title to file height
+
+	setupTitle();
+
+	int		diff = prevVis - r_coreInfo.mr_frameInfo1.visibleLines;
+
+	r_coreInfo.mr_frameInfo1.visibleLines += diff;
+	r_coreInfo.mr_frameInfo2.visibleLines += diff;
+
+	r_coreInfo.mr_frameInfo1.totalLines += diff;
+	r_coreInfo.mr_frameInfo2.totalLines += diff;
+
 	while(m_titleFrame--)
 	{
 		waitEndFrame();
@@ -497,13 +516,9 @@ main(void)
 
 	setupTitle();
 	setupDisk();
-
 	handleFirmwareUpdate();
-
 	updateInit();
-
 	runTitle();
-
 	runFrameLoop();
 }
 
