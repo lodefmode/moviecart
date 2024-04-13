@@ -1,0 +1,33 @@
+
+Updating content:
+
+Your MovieCart should include an sd-card with full length movie on it.
+Feel free to swap out the file with any other mvc file of your own.
+
+
+NOTES:
+
+Best performance is had when the sd-card is freshly formatted before placing the file, to make forwarding and
+rewinding smoother.
+When formatting an sd-card, it must be FAT32 format.
+
+Please note MovieCart only supports a maximum file size of 4GB.
+This translates to around 4 hours of content, so lots of room for most cases.
+
+It only plays the first regular file it finds on the card, so if you have several videos, they must all be combined
+before encoding into a single mvc file.
+
+The files below are zipped for easier download, but they must be UNZIPPED before copying to the sd-card.
+
+# George Romero's classic 1968 thriller, artificially colorized.  
+night_dead_nov23.mvc	 
+https://drive.google.com/file/d/1Dqfl3UvPZDhm9WUWdjGjJoQySyb--Gze
+
+# Same as above but encoded for PAL format (50 Hz, Atari PAL color format, 242 lines)
+https://drive.google.com/file/d/1VxRiaWOX6W1PFH5AJw6gCAL4KVbaCsg3
+night_dead_pal.mvc
+
+Cheers,
+Lodef Mode.
+
+
