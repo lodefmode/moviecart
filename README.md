@@ -1,12 +1,9 @@
 # moviecart
 Software and Hardware to create full length color movie + audio cartridges for stock Atari 2600
 
-How to update content:
-![Content](docs/How_To_Update_Content.txt)
+[How to watch different files:](docs/How_To_Update_Content.txt)
 
-Encoding tutorial:
-
-https://www.youtube.com/watch?v=WSy6kNrYDSo&list=PLHJZWs7or3edcvVHDeNzGSZABx2JN1WZH
+[How to encode your own:](https://www.youtube.com/watch?v=WSy6kNrYDSo&list=PLHJZWs7or3edcvVHDeNzGSZABx2JN1WZH)
 
 Pre-Order Kits at:
 
