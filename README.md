@@ -43,6 +43,7 @@ lodef.mode@gmail.com
 [![Video](docs/colorize_play.jpg)](https://youtu.be/7HMz1SYGolY)
 
 ![Cart](docs/inside_cart.jpg)
+![Cart](docs/orientation.jpg)
 ![Booklet](docs/instructions1.jpg)
 ![Booklet](docs/instructions2.jpg)
 
