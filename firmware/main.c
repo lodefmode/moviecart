@@ -166,6 +166,14 @@ copyFromFlash(uint8_t *dst, uint32_t src, int size)
 	}
 }
 
+extern uint16_t __attribute__((space(prog))) TitleGraph1[];
+extern uint16_t __attribute__((space(prog))) TitleColor1[];
+extern uint16_t __attribute__((space(prog))) TitleBackColor1[];
+
+extern uint16_t __attribute__((space(prog))) TitleGraph2[];
+extern uint16_t __attribute__((space(prog))) TitleColor2[];
+extern uint16_t __attribute__((space(prog))) TitleBackColor2[];
+
 void
 setupTitle()
 {
@@ -186,14 +194,6 @@ setupTitle()
 
 	int	lineTotal = r_coreInfo.mr_frameInfo1.visibleLines * 5;
 
-	extern uint16_t __attribute__((space(prog))) TitleGraph1[];
-	extern uint16_t __attribute__((space(prog))) TitleColor1[];
-	extern uint16_t __attribute__((space(prog))) TitleBackColor1[];
-
-	extern uint16_t __attribute__((space(prog))) TitleGraph2[];
-	extern uint16_t __attribute__((space(prog))) TitleColor2[];
-	extern uint16_t __attribute__((space(prog))) TitleBackColor2[];
-    
 	copyFromFlash(r_coreInfo.mr_frameInfo1.graphBuf, (uint16_t)TitleGraph1, lineTotal);
 	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBuf, (uint16_t)TitleColor1, lineTotal);
 	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBKBuf, (uint16_t)TitleBackColor1, r_coreInfo.mr_frameInfo1.visibleLines);
@@ -396,20 +396,36 @@ runTitle()
 
 	// sample the file to see if title should be PAL format etc
 	state.io_frameNumber = 1;
+	uint32_t	offset = (state.io_frameNumber * FIELD_NUM_BLOCKS);
+
+	while (!pf_seek_block(offset))
+	{
+		flash_led(4);
+		flash_led(41);
+	}
+
+	// line up to the right buffer we'll be using
+	// so its not visible on screen
 
 	waitEndFrame();
-	prepareNextFrame();
-	waitEndFrame();
-	prepareNextFrame();
+	if (!r_coreInfo.mr_bufferIndex)
+		waitEndFrame();
 
-	int		prevVis = r_coreInfo.mr_frameInfo1.visibleLines;
-   
+	// just read the first block into the colorBuf, as we don't have spare ram
+	struct frameInfo	fInfo;
+	fInfo.buffer = r_coreInfo.mr_frameInfo1.colorBuf;
+	pf_read_block(fInfo.buffer);
+
+	frameInit(&fInfo);
+	uint8_t	fileVis = fInfo.visibleLines;
+
+	// restore it as quickly as possible
+	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBuf, (uint16_t)TitleColor1, 512);
+
 
 	// now override title to file height
 
-	setupTitle();
-
-	int		diff = prevVis - r_coreInfo.mr_frameInfo1.visibleLines;
+	int				diff = fileVis - r_coreInfo.mr_frameInfo1.visibleLines;
 
 	r_coreInfo.mr_frameInfo1.visibleLines += diff;
 	r_coreInfo.mr_frameInfo2.visibleLines += diff;
