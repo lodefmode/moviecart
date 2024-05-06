@@ -10,3 +10,10 @@ Note that dsPIC33CK32MC105 is also a suitable drop in replacment at half the pro
 	DSPIC33CK64MC105-I/M4
 
 
+Todo:
+
+2.31 
+Central hole size:
+Still too narrow on some production runs, as drill tolerance varies.
+Try increasing slightly.
+
