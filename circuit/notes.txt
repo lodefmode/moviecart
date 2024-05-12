@@ -17,3 +17,11 @@ Central hole size:
 Still too narrow on some production runs, as drill tolerance varies.
 Try increasing slightly.
 
+17/64" drill bit fits perfectly.
+3.3734375 mm radius?
+
+currently its:
+3.190mm (was 3.175mm)
+
+Around 0.18 mm increase each side.
+
