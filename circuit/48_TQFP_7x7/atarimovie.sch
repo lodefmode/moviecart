@@ -201,7 +201,7 @@ by exp-lbrs.ulp</description>
 <packages>
 <package name="LONG">
 <description>&lt;B&gt;Atari 2600&lt;/B&gt; long cartridge board"</description>
-<circle x="0" y="51.435" radius="3.190" width="0.127" layer="20"/>
+<circle x="0" y="51.435" radius="3.373" width="0.127" layer="20"/>
 <wire x1="20.6375" y1="20.32" x2="20.6375" y2="34.925" width="0" layer="20"/>
 <wire x1="-20.6375" y1="20.32" x2="-20.6375" y2="34.925" width="0" layer="20"/>
 <wire x1="-20.6375" y1="20.32" x2="-16.1925" y2="15.24" width="0" layer="20"/>
@@ -303,7 +303,7 @@ by exp-lbrs.ulp</description>
 </package>
 <package name="HUGE">
 <description>&lt;B&gt;Atari 2600&lt;/B&gt;huge cartridge board"</description>
-<circle x="0" y="51.435" radius="3.190" width="0.127" layer="20"/>
+<circle x="0" y="51.435" radius="3.373" width="0.127" layer="20"/>
 <wire x1="-20.7645" y1="20.574" x2="-16.1925" y2="15.24" width="0" layer="20"/>
 <wire x1="20.7518" y1="20.574" x2="16.1925" y2="15.24" width="0" layer="20"/>
 <wire x1="-16.1925" y1="15.24" x2="-16.1925" y2="0" width="0" layer="20"/>
@@ -391,7 +391,7 @@ by exp-lbrs.ulp</description>
 </package>
 <package name="MED">
 <description>&lt;B&gt;Atari 2600&lt;/B&gt;med cartridge board"</description>
-<circle x="0" y="0.635" radius="3.190" width="0.127" layer="20"/>
+<circle x="0" y="0.635" radius="3.373" width="0.127" layer="20"/>
 <wire x1="20.6375" y1="-30.48" x2="20.6375" y2="-15.875" width="0" layer="20"/>
 <wire x1="-20.6375" y1="-30.48" x2="-20.6375" y2="-15.875" width="0" layer="20"/>
 <wire x1="-20.6375" y1="-30.48" x2="-16.1925" y2="-35.56" width="0" layer="20"/>
@@ -771,7 +771,7 @@ by exp-lbrs.ulp</description>
 </package>
 <package name="MED_TABS">
 <description>&lt;B&gt;Atari 2600&lt;/B&gt;med cartridge board tabs"</description>
-<circle x="0" y="0.635" radius="3.190" width="0.127" layer="20"/>
+<circle x="0" y="0.635" radius="3.373" width="0.127" layer="20"/>
 <wire x1="20.6375" y1="-30.48" x2="20.6375" y2="-15.875" width="0" layer="20"/>
 <wire x1="-20.6375" y1="-30.48" x2="-20.6375" y2="-15.875" width="0" layer="20"/>
 <wire x1="-20.6375" y1="-30.48" x2="-16.1925" y2="-35.56" width="0" layer="20"/>
@@ -875,7 +875,7 @@ by exp-lbrs.ulp</description>
 </package>
 <package name="MED_TABS_SHORT">
 <description>&lt;B&gt;Atari 2600&lt;/B&gt;med cartridge board tabs"</description>
-<circle x="0" y="0.635" radius="3.190" width="0.127" layer="20"/>
+<circle x="0" y="0.635" radius="3.373" width="0.127" layer="20"/>
 <wire x1="20.6375" y1="-30.48" x2="20.6375" y2="-15.875" width="0" layer="20"/>
 <wire x1="-20.6375" y1="-30.48" x2="-20.6375" y2="-15.875" width="0" layer="20"/>
 <wire x1="-20.6375" y1="-30.48" x2="-16.1925" y2="-35.56" width="0" layer="20"/>

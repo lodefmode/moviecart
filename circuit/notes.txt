@@ -25,3 +25,6 @@ currently its:
 
 Around 0.18 mm increase each side.
 
+2.32/2.42:
+  hole size increased from 3.19 to 3.373
+
