@@ -20,8 +20,8 @@ before encoding into a single mvc file.
 The files below are zipped for easier download, but they must be UNZIPPED before copying to the sd-card.
 
 # George Romero's classic 1968 thriller, artificially colorized.  
-night_dead_nov23.mvc	 
 https://drive.google.com/file/d/1Dqfl3UvPZDhm9WUWdjGjJoQySyb--Gze
+night_dead_nov23.mvc	 
 
 # Same as above but encoded for PAL format (50 Hz, Atari PAL color format, 242 lines)
 https://drive.google.com/file/d/1VxRiaWOX6W1PFH5AJw6gCAL4KVbaCsg3
@@ -32,7 +32,7 @@ https://drive.google.com/file/d/19TsIUbs40wUKhLGFbbGpvHSkD-o-Gi09
 nightdead_pal60.mvc
 
 # SECAM format (50 Hz but Atari SECAM color format, very LIMITED color)
-https://drive.google.com/file/d/1mijJnuE6SnDg26cVByiAp5dNu6ZvXVj8
+https://drive.google.com/file/d/1VsJS2MlWYCcIfghPQl9uj2oBAv7mB7TY
 nightdead_secam.mvc
 
 Cheers,
