@@ -157,7 +157,7 @@
 <text x="38.227" y="67.818" size="1.016" layer="25">SDCLK</text>
 <text x="56.0705" y="75.2475" size="1.016" layer="25">SDCS</text>
 <text x="19.1135" y="59.944" size="1.016" layer="25">SDO</text>
-<text x="55.245" y="20.955" size="1.27" layer="21" font="vector" rot="R90">LODEF.MODE</text>
+<text x="55.245" y="20.955" size="1.27" layer="21" font="vector" rot="R90">@LODEFMODE</text>
 </plain>
 <libraries>
 <library name="a26board">
@@ -3745,18 +3745,18 @@ design rules under a new name.</description>
 <signal name="CADDR9">
 <contactref element="J1" pad="21"/>
 <contactref element="U1" pad="29"/>
-<via x="40.3225" y="65.3415" extent="1-16" drill="0.35"/>
+<via x="39.878" y="65.3415" extent="1-16" drill="0.35"/>
 <wire x1="38.4048" y1="64.7065" x2="38.4048" y2="58.5216" width="0.1524" layer="16"/>
 <wire x1="39.0525" y1="65.3415" x2="38.4175" y2="64.7065" width="0.1524" layer="16"/>
-<wire x1="39.0525" y1="65.3415" x2="40.3225" y2="65.3415" width="0.1524" layer="16"/>
+<wire x1="39.0525" y1="65.3415" x2="39.878" y2="65.3415" width="0.1524" layer="16"/>
 <wire x1="38.4175" y1="64.7065" x2="38.4048" y2="64.7065" width="0.1524" layer="16"/>
 <wire x1="43.18" y1="3.81" x2="43.1292" y2="3.81" width="0.1524" layer="1"/>
 <via x="41.8592" y="42.0878" extent="1-16" drill="0.35"/>
 <wire x1="43.1292" y1="33.1978" x2="41.8592" y2="34.4678" width="0.1524" layer="1"/>
 <wire x1="41.8592" y1="34.4678" x2="41.8592" y2="42.0878" width="0.1524" layer="1"/>
 <wire x1="43.1292" y1="3.81" x2="43.1292" y2="33.1978" width="0.1524" layer="1"/>
-<wire x1="44.1452" y1="64.885" x2="40.779" y2="64.885" width="0.1524" layer="1"/>
-<wire x1="40.779" y1="64.885" x2="40.3225" y2="65.3415" width="0.1524" layer="1"/>
+<wire x1="44.1452" y1="64.885" x2="40.3345" y2="64.885" width="0.1524" layer="1"/>
+<wire x1="40.3345" y1="64.885" x2="39.878" y2="65.3415" width="0.1524" layer="1"/>
 <wire x1="41.8592" y1="55.0672" x2="41.8592" y2="42.0878" width="0.1524" layer="16"/>
 <wire x1="38.4048" y1="58.5216" x2="41.8592" y2="55.0672" width="0.1524" layer="16"/>
 </signal>
@@ -4238,10 +4238,10 @@ design rules under a new name.</description>
 <wire x1="21.5138" y1="63.6778" x2="25.8445" y2="68.0085" width="0.1524" layer="16"/>
 <wire x1="39.3065" y1="68.0085" x2="39.878" y2="67.437" width="0.1524" layer="16"/>
 <wire x1="39.3065" y1="68.0085" x2="25.8445" y2="68.0085" width="0.1524" layer="16"/>
-<wire x1="39.37" y1="66.929" x2="39.878" y2="67.437" width="0.1524" layer="1"/>
-<wire x1="39.37" y1="64.97" x2="39.37" y2="66.929" width="0.1524" layer="1"/>
-<wire x1="44.1452" y1="64.385" x2="39.955" y2="64.385" width="0.1524" layer="1"/>
-<wire x1="39.955" y1="64.385" x2="39.37" y2="64.97" width="0.1524" layer="1"/>
+<wire x1="38.989" y1="66.548" x2="39.878" y2="67.437" width="0.1524" layer="1"/>
+<wire x1="38.989" y1="64.9065" x2="38.989" y2="66.548" width="0.1524" layer="1"/>
+<wire x1="44.1452" y1="64.385" x2="39.5105" y2="64.385" width="0.1524" layer="1"/>
+<wire x1="39.5105" y1="64.385" x2="38.989" y2="64.9065" width="0.1524" layer="1"/>
 </signal>
 <signal name="SDO">
 <contactref element="U1" pad="6"/>
