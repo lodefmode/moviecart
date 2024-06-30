@@ -28,3 +28,19 @@ Around 0.18 mm increase each side.
 2.32/2.42:
   hole size increased from 3.19 to 3.373
 
+Missing 'TV/LABEL SIDE'
+
+special sdcard access version for injection molded offerings:
+ -consider moving sd card further to edge to increase access on slotted cart.
+   even widen entire top half left/right to reach edge.
+ -deepen side tabs toward center to fit
+ -consider shortening center post hole to match?
+ -consider a double tab piece that glues through rectangular slots for stability.
+
+consider:
+  tactile switch to burn/factory reset firmware updates, instead of grounding programming pins
+
+
+
+
+
