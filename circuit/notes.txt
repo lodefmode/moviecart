@@ -40,6 +40,8 @@ special sdcard access version for injection molded offerings:
 consider:
   tactile switch to burn/factory reset firmware updates, instead of grounding programming pins
 
+LED is way too bright
+
 
 
 
