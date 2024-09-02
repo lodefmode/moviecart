@@ -21,10 +21,53 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define QUEUE_SIZE  128
+#define QUEUE_SIZE  128
+#define QUEUE_MASK (QUEUE_SIZE-1)
+
+#define	DIR_Name			0
+#define	DIR_Attr			11
+#define	DIR_NTres			12
+#define	DIR_CrtTime			14
+#define	DIR_CrtDate			16
+#define	DIR_FstClusHI		20
+#define	DIR_WrtTime			22
+#define	DIR_WrtDate			24
+#define	DIR_FstClusLO		26
+#define	DIR_FileSize		28
+
+// File attribute bits for directory entry 
+
+#define	AM_RDO	0x01	// Read only 
+#define	AM_HID	0x02	// Hidden 
+#define	AM_SYS	0x04	// System 
+#define	AM_VOL	0x08	// Volume label 
+#define AM_LFN	0x0F	// LFN entry 
+#define AM_DIR	0x10	// Directory 
+#define AM_ARC	0x20	// Archive 
+#define AM_MASK	0x3F	// Mask of defined bits 
+						//
+struct queueInfo
+{
+    uint32_t    block[QUEUE_SIZE];
+    uint32_t    clust[QUEUE_SIZE];
+    uint8_t     head;
+};
+
 bool		pf_mount();							/* Mount/Unmount a logical drive */
 bool		pf_open_first(uint32_t *numFrames);	/* Open first archived non-deleted file */
 bool		pf_seek_block(uint32_t block);		/* Move file pointer of the open file */
 void        pf_read_block(uint8_t *dst);		/* Read full block*/
+
+uint32_t ld_dword (const uint8_t* ptr);
+uint32_t get_fat (uint32_t clst);   // Cluster# to get the link information
+
+
+//-----------------------------------------------------------------------
+// Get sector# from cluster# / Get cluster field from directory entry
+//-----------------------------------------------------------------------
+
+#define clust2sect(X) ((((X) - 2) << fsInfo.csize_bits) + fsInfo.database)
 
 // File system object structure 
 

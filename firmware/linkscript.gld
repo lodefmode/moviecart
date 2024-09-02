@@ -170,6 +170,72 @@ SECTIONS
         *(.lib*);
         *(.dinit);
         *(.text);
+		*(.text.updateTransport);
+		*(.text.frameInit);
+		*(.text.frameInitTitle);
+		*(.text.CLC1_Initialize);
+		*(.text.CLC1_PositiveEdge_CallBack);
+		*(.text.CLC1_NegativeEdge_CallBack);
+		*(.text.CLC1_PositiveEdge_Tasks);
+		*(.text.CLC1_NegativeEdge_Tasks);
+		*(.text.CLC1_OutputStatusGet);
+		*(.text.INTERRUPT_Initialize);
+		*(.text.CLOCK_Initialize);
+		*(.text.PIN_MANAGER_Initialize);
+		*(.text.SYSTEM_Initialize);
+		*(.text.PIN_MANAGER_enableInterrupt_On_Change);
+		*(.text.RESET_GetCause);
+		*(.text.RESET_CauseHandler);
+		*(.text.RESET_CauseClearAll);
+		*(.text.SPI1_Initialize);
+		*(.text.SPI1_HighSpeed);
+		*(.text.SPI1_Exchange);
+		*(.text.SPI1_ExchangeBuffer);
+		*(.text.SPI1_Exchange8bit);
+		*(.text.SPI1_Exchange8bitBuffer);
+		*(.text.SPI1_StatusGet);
+		*(.text.flash_led);
+		*(.text.TRAPS_halt_on_error);
+		*(.text.serialLED);
+		*(.text.copyFromFlash);
+		*(.text.setupTitle);
+		*(.text.resetNewCode);
+		*(.text.waitEndFrame);
+		*(.text.coreInit);
+		*(.text.spiRec);
+		*(.text.chipSelectHigh);
+		*(.text.chipSelectLow);
+		*(.text.sd_error);
+		*(.text.cardCommand);
+		*(.text.startBlockReady);
+		*(.text.startReadBlock);
+		*(.text.startReadBlockMulti);
+		*(.text.endReadBlockMulti);
+		*(.text.endReadBlock);
+		*(.text.disk_read_block_raw);
+		*(.text.cardAcmd);
+		*(.text.sdcard_init);
+		*(.text.disk_read_block1);
+		*(.text.disk_read_block2);
+		*(.text.disk_initialize);
+		*(.text.ld_word);
+		*(.text.ld_dword);
+		*(.text.get_fat);
+		*(.text.pf_mount);
+		*(.text.pf_seek_block);
+		*(.text.pf_open_first);
+		*(.text.setupDisk);
+		*(.text.pf_read_block);
+		*(.text.runTitle);
+		*(.text.prepareNextFrame);
+		*(.text.runFrameLoop);
+		*(.text.handleFirmwareUpdate);
+		*(.text.updateInit);
+		*(.text.main);
+		*(.text.updateVolume);
+		*(.text.updateColor);
+		*(.text.updateBuffer);
+
         *(.init.delay32);
         *(.title);
         *(.NVM_flash);
@@ -224,6 +290,8 @@ SECTIONS
   .newcode 0x4800 :
   {
         *(.newcode);
+        *(.main2);
+        *(.patchsection);
   } >program
 
   /*

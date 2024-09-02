@@ -232,6 +232,36 @@ endReadBlock()
 	chipSelectHigh();
 }
 
+bool disk_read_block_raw (
+	uint32_t sector,	/* Sector number (LBA) */
+	uint8_t* buf
+)
+{
+	startReadBlock(sector);
+
+	if (dinfo.sd_errorCode)
+	{
+		while(1)
+		{
+			flash_led(5);
+		};
+	};
+
+	while (!startBlockReady())
+	{
+	}
+
+//	for (i=0; i<512; i++)
+//		*buf++ = SPI1_Exchange8bit(0xff);
+
+    SPI1_Exchange8bitBuffer(NULL, 512, buf);
+
+    endReadBlock();
+
+	return true;
+
+}
+
 uint8_t
 cardAcmd(uint8_t cmd, uint32_t arg)
 {
@@ -339,37 +369,6 @@ sdcard_init()
 
 
 /*-----------------------------------------------------------------------*/
-
-
-static bool disk_read_block_raw (
-	uint32_t sector,	/* Sector number (LBA) */
-	uint8_t* buf
-)
-{
-	startReadBlock(sector);
-
-	if (dinfo.sd_errorCode)
-	{
-		while(1)
-		{
-			flash_led(5);
-		};
-	};
-
-	while (!startBlockReady())
-	{
-	}
-
-//	for (i=0; i<512; i++)
-//		*buf++ = SPI1_Exchange8bit(0xff);
-
-    SPI1_Exchange8bitBuffer(NULL, 512, buf);
-
-    endReadBlock();
-
-	return true;
-
-}
 
 
 uint8_t* disk_read_block1 (

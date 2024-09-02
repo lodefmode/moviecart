@@ -1,0 +1,33 @@
+
+**
+** ONLY DO THIS IF ABSOLUTELY NECESSARY AS YOU RISK BRICKING THE MOVIECART **
+**
+
+INSTALLING A NEW PATCH:
+
+Note: Installing a patch will replace any existing patches, so make sure you have the latest.
+Select the update.frm file you require and place it on an sd-card by itself with no other files.
+Insert it into the Moviecart, and insert the MovieCart into the Atari console.
+Power up the Atari.
+It should only take a few seconds to update.
+If successfully updated, the LED will flash 22..22..22..
+If unsuccessful it will flash 33..33..33..
+Turn off the Atari and remove the MovieCart PCB.
+
+FACTORY RESET (Remove any patches) :
+
+If a patch needs to be removed, use a thin wire with both ends exposed.
+A metallic sandwich twist tie, with the paper removed from each end works well.
+
+Remove any SD cards from the MovieCart PCB.
+Insert one end through the hole labelled 'PGD' and the other through the hole labelled 'GND'.
+These are holes 2 and 3 of a five hole section in the upper left hand side of the MovieCart PCB.
+Verify they are labelled 'PGD' and 'GND'.
+Verify the ends of the wire aren't making contact with any other points on the PCB.
+
+Insert the MovieCart PCB (with the wire in place) into the Atari, and power up the Atari.
+After factory reset, it will flash 44..44..44..
+Turn off the Atari and remove the wire.
+It should now power up as originally delivered.
+
+

@@ -64,6 +64,7 @@
 
 
 __attribute__((section(".newcode"),space(prog))) void main2(void);
+__attribute__((section(".patchsection"),space(prog))) void runPatch(void);
 
 void flash_led(uint8_t num);
 
@@ -538,7 +539,6 @@ main(void)
 	runFrameLoop();
 }
 
-#include "mcc_generated_files/clc1.h"
 // new updates placed here
 // must be page_erase aligned
 __attribute__((section(".newcode"),space(prog))) void main2(void)
@@ -548,51 +548,11 @@ __attribute__((section(".newcode"),space(prog))) void main2(void)
     asm("nop");
     asm("nop");
 
-	// March 25 204
-	// 7800 needs to select on A12+A11, (works for FB2 since A12 is always high)
-	// make official if successful
-    
-
-	__builtin_write_RPCON(0x0000); // unlock PPS
-	  RPINR46bits.CLCINBR = 0x003C;    //RC12->CLC1:CLCINB
-    __builtin_write_RPCON(0x0800); // lock PPS
-
-	CLC1CONL = 0x80A2 & ~(0x8000);
-	CLC1CONH = 0x0C;
-	CLC1SELL = 0x5000;
-	CLC1GLSL = 0x802;
-	CLC1GLSH = 0x00;
-    CLC1_Enable();
-
-	// same as before
-	coreInit();
-	setupTitle();
-	setupDisk();
-	handleFirmwareUpdate();
-	updateInit();
-	runTitle();
-	runFrameLoop();
-	
-	/*
-    9,217    4800          000000       main2      NOP                                           
-    9,218    4802          000000                  NOP                                           
-    9,219    4804          20FFF0                  MOV #0xFFF, W0                                
-    9,220    4806          887260                  MOV W0, CNEN1C                                
-    9,221    4808          23F000                  MOV #0x3F00, W0                               
-    9,222    480A          887210                  MOV W0, CNPUC                                 
-    9,223    480C          07EAEB                  RCALL coreInit                                
-    9,224    480E          07EA67                  RCALL setupTitle                              
-    9,225    4810          07EF3F                  RCALL setupDisk                               
-    9,226    4812          07EFC6                  RCALL handleFirmwareUpdate                    
-    9,227    4814          07F09C                  RCALL updateInit                              
-    9,228    4816          07EAC0                  RCALL runTitle                                
-    9,229    4818          37EF89                  BRA runFrameLoop                              
-	*/
-
+	const void* address = &runPatch;
+	goto *address;
 #endif
+
 }
-
-
         
 /**
  End of File

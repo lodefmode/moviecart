@@ -60,6 +60,7 @@
       <itemPath>update.c</itemPath>
       <itemPath>frame.c</itemPath>
       <itemPath>TitleScreen.s</itemPath>
+      <itemPath>patch.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -132,11 +133,11 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="expand-pragma-config" value="false"/>
         <property key="extra-include-directories" value=""/>
-        <property key="isolate-each-function" value="false"/>
+        <property key="isolate-each-function" value="true"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>
         <property key="oXC16gcc-cnsts-mauxflash" value="false"/>
-        <property key="oXC16gcc-data-sects" value="false"/>
+        <property key="oXC16gcc-data-sects" value="true"/>
         <property key="oXC16gcc-errata" value=""/>
         <property key="oXC16gcc-fillupper" value=""/>
         <property key="oXC16gcc-large-aggregate" value="false"/>
@@ -1320,6 +1321,8 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-5eff"/>
+        <property key="programmerToGoFilePath"
+                  value="C:/Users/rbair/Downloads/moviecart/firmware/debug/default/default_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>
