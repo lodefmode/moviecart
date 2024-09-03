@@ -22,10 +22,10 @@ void main()
 {
 	FILE*	output = fopen("update.frm", "wb");
 
-	char	linput[100];
+	char	linput[500];
 	while(!feof(stdin))
 	{
-		if (!fgets(linput, 100, stdin))
+		if (!fgets(linput, 500, stdin))
 			break;
 
 		uint32_t	v = 0;
