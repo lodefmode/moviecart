@@ -192,7 +192,7 @@
         <property key="enable-check-sections" value="false"/>
         <property key="enable-data-init" value="false"/>
         <property key="enable-default-isr" value="true"/>
-        <property key="enable-handles" value="true"/>
+        <property key="enable-handles" value="false"/>
         <property key="enable-pack-data" value="true"/>
         <property key="extra-lib-directories" value=""/>
         <property key="fill-flash-options-addr" value="0x8000:0xA000"/>
@@ -1321,8 +1321,6 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-5eff"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/Users/rbair/Downloads/moviecart/firmware/debug/default/default_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>

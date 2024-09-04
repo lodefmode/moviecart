@@ -165,11 +165,14 @@ SECTIONS
         *(.init);
         *(.user_init);
         KEEP (*(.handle));
+  } >program
+
+  .text2 0x64a :
+  {
         KEEP (*(.isr*));
         *(.libc) *(.libm) *(.libdsp);  /* keep together in this order */
         *(.lib*);
         *(.dinit);
-        *(.text);
 		*(.text.updateTransport);
 		*(.text.frameInit);
 		*(.text.frameInitTitle);
