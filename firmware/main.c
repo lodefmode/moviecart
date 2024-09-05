@@ -139,6 +139,7 @@ serialLED(uint8_t v)
 
 extern struct coreInfo			r_coreInfo;
 extern struct fileSystemInfo	fsInfo;
+extern struct queueInfo			qinfo;
 
 
 extern void updateInit();
@@ -452,10 +453,13 @@ runTitle()
 
 }
 
+void checkSelectVideo(int* which);
+
 void
 runFrameLoop()
 {
 	uint_fast8_t	t = 0;
+	int 			which = 1;
 
 	state.io_frameNumber = 1;
 	state.io_bits =  STATE_PLAYING;
@@ -475,10 +479,7 @@ runFrameLoop()
 			TESTA0_HIGH
         }
         
-		state.i_swcha = r_coreInfo.mr_swcha;
-		state.i_swchb = r_coreInfo.mr_swchb;
-		state.i_inpt4 = r_coreInfo.mr_inpt4;
-		state.i_inpt5 = r_coreInfo.mr_inpt5;
+		checkSelectVideo(&which);
 
 		updateTransport(&state);
 		prepareNextFrame();
@@ -553,6 +554,46 @@ __attribute__((section(".newcode"),space(prog))) void main2(void)
 #endif
 
 }
+
+__attribute__((section(".v12"),space(prog)))
+void
+checkSelectVideo(int* which)
+{
+	// select moves to next video
+	if ((state.i_swchb & 0x02) && !(r_coreInfo.mr_swchb & 0x02))
+	{
+		(*which)++;
+		while (!pf_open_many(&state.i_numFrames, (*which)))
+		{
+			(*which) = 1;
+		}
+
+		// reset rewind cache
+		qinfo.head = 0;
+		for (int i=0; i<QUEUE_SIZE; i++)
+		{
+			qinfo.block[i] = -1;
+			qinfo.clust[i] = -1;
+		}
+
+		state.io_frameNumber = 1;
+		state.io_bits |= STATE_PLAYING;
+
+		// go to black
+		memset(mr_buffer1, 0, sizeof(mr_buffer1));
+		memset(mr_buffer2, 0, sizeof(mr_buffer2));
+
+		// debounce
+		for (int i=0; i<30; i++)
+			waitEndFrame();
+	}
+
+	state.i_swcha = r_coreInfo.mr_swcha;
+	state.i_swchb = r_coreInfo.mr_swchb;
+	state.i_inpt4 = r_coreInfo.mr_inpt4;
+	state.i_inpt5 = r_coreInfo.mr_inpt5;
+}
+
         
 /**
  End of File

@@ -227,11 +227,23 @@ SECTIONS
 		*(.text.pf_mount);
 		*(.text.pf_seek_block);
 		*(.text.pf_open_first);
+  } >program
+
+  .text3 0x25a2 :
+  {
 		*(.text.setupDisk);
+  } >program
+
+  .text4 0x25d8 :
+  {
 		*(.text.pf_read_block);
 		*(.text.runTitle);
 		*(.text.prepareNextFrame);
 		*(.text.runFrameLoop);
+  } >program
+
+  .text5 0x2776 :
+  {
 		*(.text.handleFirmwareUpdate);
 		*(.text.updateInit);
 		*(.text.main);
@@ -243,12 +255,21 @@ SECTIONS
         *(.title);
         *(.NVM_flash);
 
+
   } >program
+
 #endif
 
   .const :
   {
     *(.const);
+  } >program
+
+  .v12 :
+  {
+    *(.v12);
+	*(.text.pf_open_many);
+	*(.text.runFrameLoopSelect);
   } >program
 
   /*

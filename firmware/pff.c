@@ -101,6 +101,8 @@ __attribute__((section(".fileSystemInfo"))) struct fileSystemInfo	fsInfo;
 #define ld_dword(X) ( *((uint32_t*)(X)) )
 #endif
 
+bool pf_open_many( uint32_t *numFrames, int which);
+
 uint16_t ld_word (const uint8_t* ptr)   /*   Load a 2-byte little-endian word */
 {
     uint16_t rv;
@@ -342,9 +344,20 @@ bool pf_seek_block (
 // First regular non-deleted file										 
 //-----------------------------------------------------------------------
 
-bool pf_open_first(
-		uint32_t *numFrames
-		)
+// reserve this address location
+bool __attribute__ ((noinline)) pf_open_first( uint32_t *numFrames)
+{
+	return pf_open_many(numFrames, 1);
+}
+
+void
+pf_read_block(uint8_t *dst)
+{
+	disk_read_block2(fsInfo.file_block++, dst);
+}
+
+__attribute__((section(".v12"),space(prog)))
+bool pf_open_many( uint32_t *numFrames, int num)
 {
 	bool		res = true;
 	uint8_t		c;
@@ -354,6 +367,8 @@ bool pf_open_first(
 	uint16_t	dir_index = 0;			// Current read/write index number 
 	uint32_t	dir_clust = fsInfo.dirbase;	// Current cluster 
 	uint32_t	dir_sect = clust2sect(dir_clust);	// Current sector 
+
+	int			found = 0;
 
 	*numFrames = 0;
 
@@ -392,7 +407,10 @@ bool pf_open_first(
 
 				// store 8.3 name
 				memcpy(fsInfo.name, &dir[DIR_Name], 11);
-				break;
+
+				found++;
+				if (found >= num)
+					break;
 			}
 		}
 
@@ -428,13 +446,5 @@ bool pf_open_first(
 
 	} while (res == true);
 
-	return res;
+	return (found == num);
 }
-
-
-void
-pf_read_block(uint8_t *dst)
-{
-	disk_read_block2(fsInfo.file_block++, dst);
-}
-

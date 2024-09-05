@@ -56,6 +56,7 @@ struct queueInfo
 
 bool		pf_mount();							/* Mount/Unmount a logical drive */
 bool		pf_open_first(uint32_t *numFrames);	/* Open first archived non-deleted file */
+bool		pf_open_many(uint32_t *numFrames, int num);	/* Open first 'num' archived non-deleted file */
 bool		pf_seek_block(uint32_t block);		/* Move file pointer of the open file */
 void        pf_read_block(uint8_t *dst);		/* Read full block*/
 
