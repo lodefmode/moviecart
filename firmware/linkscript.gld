@@ -169,10 +169,19 @@ SECTIONS
 
   .text2 0x64a :
   {
-        KEEP (*(.isr*));
-        *(.libc) *(.libm) *(.libdsp);  /* keep together in this order */
-        *(.lib*);
-        *(.dinit);
+        KEEP (*(.isrerror*));
+
+		*(.isr.text._CNCInterrupt); 
+
+  }
+
+  .text2a 0x15c8 :
+  {
+        KEEP (*(.isr*));		/* _DefaultInterrupt */
+
+		*(.libc) *(.libm) *(.libdsp);  /* keep together in this order */
+		*(.lib*);
+		*(.dinit);
 		*(.text.updateTransport);
 		*(.text.frameInit);
 		*(.text.frameInitTitle);
