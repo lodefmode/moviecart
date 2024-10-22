@@ -14,7 +14,9 @@ If successfully updated, the LED will flash 22..22..22..
 If unsuccessful it will flash 33..33..33..
 Turn off the Atari and remove the MovieCart PCB.
 
-FACTORY RESET (Remove any patches) :
+FACTORY RESET (Remove a patches) :
+* NOTE *  Only some patches are removable, some are permanent.
+Please read the notes associated with each patch before applying.
 
 If a patch needs to be removed, use a thin wire with both ends exposed.
 A metallic sandwich twist tie, with the paper removed from each end works well.
@@ -26,7 +28,7 @@ Verify they are labelled 'PGD' and 'GND'.
 Verify the ends of the wire aren't making contact with any other points on the PCB.
 
 Insert the MovieCart PCB (with the wire in place) into the Atari, and power up the Atari.
-After factory reset, it will flash 44..44..44..
+After factory reset, it will flash 22..22..22..
 Turn off the Atari and remove the wire.
 It should now power up as originally delivered.
 

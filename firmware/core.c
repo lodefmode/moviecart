@@ -20,6 +20,7 @@
 #define DATA_OUTPUT_DIR IO_RA3_SetLow();
 #define DATA_INPUT_DIR  IO_RA3_SetHigh();
 #define LO_ADDRESS      (PORTC & 0x1FF)
+#define LO_ADDRESS_FULL (PORTC)
 
 #define EMULATE_DONE \
     { \
@@ -118,7 +119,8 @@ void __attribute__((interrupt, no_auto_psv, context)) _CNCInterrupt(void)
 	goto *romData[LO_ADDRESS];
 
 gstore:
-	*r_coreInfo.storeAddress = LO_ADDRESS;
+	*r_coreInfo.storeAddress = LO_ADDRESS_FULL;
+	SET_DATA(0x0); // need something consistent for PAL 7800 bio startup check
 	EMULATE_DONE
 
 g0x00:
@@ -965,7 +967,7 @@ g0xc5:
 	EMULATE_DONE
 
 g0xc6:
-	SET_DATA(0x9d);  // sta   $FE00,x //	 5  first 256 bytes
+	SET_DATA(0xbd);  // lda   $FE00,x //	 4  first 256 bytes
 	EMULATE_DONE
 
 g0xc7:
@@ -990,7 +992,7 @@ g0xcb:
 	EMULATE_DONE
 
 g0xcc:
-	SET_DATA(0x9d);  // sta   $FE00,x //	 5  first 256 bytes
+	SET_DATA(0xbd);  // lda   $FE00,x //	 4  first 256 bytes
 	EMULATE_DONE
 
 g0xcd:
@@ -1012,7 +1014,7 @@ g0xd0:
 	EMULATE_DONE
 
 g0xd1:
-	SET_DATA(0x9d);  // sta   $FE00,x //	 5  first 256 bytes
+	SET_DATA(0xbd);  // lda   $FE00,x //	 4  first 256 bytes
 	EMULATE_DONE
 
 g0xd2:
@@ -1033,7 +1035,7 @@ g0xd5:
 	EMULATE_DONE
 
 g0xd6:
-	SET_DATA(0x9d);  // sta   $FE00,x //	 5  first 256 bytes
+	SET_DATA(0xbd);  // lda   $FE00,x //	 4  first 256 bytes
 	EMULATE_DONE
 
 g0xd7:
@@ -1215,84 +1217,44 @@ g0xe6:
 	EMULATE_DONE
 
 g0xe7:
-	SET_DATA(0x4c);	// jmp
-	EMULATE_DONE
-
 g0xe8:
+    SET_DATA(0xea); // nop
+    EMULATE_DONE
+
+g0xe9:
+	SET_DATA(0x4c);	// jmp
+    EMULATE_DONE
+
+g0xea:
 	SET_DATA(r_coreInfo.nextLineJump);	//	 end_lines (b7)  right_line(3e)
 	EMULATE_DONE
 
-g0xe9:
+g0xeb:
 	SET_DATA(0xff);
 	EMULATE_DONE
 
-g0xea:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
-g0xeb:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xec:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xed:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xee:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xef:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf0:
-	SET_DATA(0x00); // break
-	EMULATE_DONE
-
 g0xf1:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf2:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf3:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf4:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf5:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf6:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf7:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf8:
-	SET_DATA(0x00); // invalid
-	EMULATE_DONE
-
 g0xf9:
-	SET_DATA(0x00); // invalid
+	SET_DATA(0x00); // invalid/brak
 	EMULATE_DONE
 
    // break a number of times to make sure the system is actually stable
 
 g0xfa:
+g0xfc:
+g0xfe:
 	if (r_coreInfo.breakLoops)
 	{
 		SET_DATA(0xf0); // .word.w main_start	// NMI
@@ -1305,37 +1267,7 @@ g0xfa:
 	EMULATE_DONE
 
 g0xfb:
-	SET_DATA(0xff);
-	EMULATE_DONE
-
-g0xfc:
-	if (r_coreInfo.breakLoops)
-	{
-		SET_DATA(0xf0); // .word.w main_start	// RESET
-		r_coreInfo.breakLoops--;
-	}
-	else
-	{
-		SET_DATA(0x00); // .word.w main_start	// RESET
-	}
-	EMULATE_DONE
-
 g0xfd:
-	SET_DATA(0xff);
-	EMULATE_DONE
-
-g0xfe:
-	if (r_coreInfo.breakLoops)
-	{
-		SET_DATA(0xf0); // .word.w main_start	// IRQ/BRK
-		r_coreInfo.breakLoops--;
-	}
-	else
-	{
-		SET_DATA(0x00); // .word.w main_start	// IRQ/BRK
-	}
-	EMULATE_DONE
-
 g0xff:
 	SET_DATA(0xff);
 	EMULATE_DONE

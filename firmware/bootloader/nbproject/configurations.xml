@@ -12,7 +12,6 @@
         </logicalFolder>
         <itemPath>mcc_generated_files/pin_manager.h</itemPath>
         <itemPath>mcc_generated_files/system.h</itemPath>
-        <itemPath>mcc_generated_files/clc1.h</itemPath>
         <itemPath>mcc_generated_files/reset_types.h</itemPath>
         <itemPath>mcc_generated_files/system_types.h</itemPath>
         <itemPath>mcc_generated_files/reset.h</itemPath>
@@ -21,13 +20,7 @@
         <itemPath>mcc_generated_files/clock.h</itemPath>
         <itemPath>mcc_generated_files/traps.h</itemPath>
         <itemPath>mcc_generated_files/watchdog.h</itemPath>
-        <itemPath>mcc_generated_files/spi1.h</itemPath>
       </logicalFolder>
-      <itemPath>core.h</itemPath>
-      <itemPath>pff.h</itemPath>
-      <itemPath>sd_reader.h</itemPath>
-      <itemPath>update.h</itemPath>
-      <itemPath>frame.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -45,21 +38,14 @@
         </logicalFolder>
         <itemPath>mcc_generated_files/system.c</itemPath>
         <itemPath>mcc_generated_files/traps.c</itemPath>
-        <itemPath>mcc_generated_files/clc1.c</itemPath>
         <itemPath>mcc_generated_files/interrupt_manager.c</itemPath>
         <itemPath>mcc_generated_files/clock.c</itemPath>
         <itemPath>mcc_generated_files/mcc.c</itemPath>
         <itemPath>mcc_generated_files/pin_manager.c</itemPath>
         <itemPath>mcc_generated_files/reset.c</itemPath>
-        <itemPath>mcc_generated_files/spi1.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
-      <itemPath>core.c</itemPath>
-      <itemPath>sd_reader.c</itemPath>
-      <itemPath>pff.c</itemPath>
-      <itemPath>update.c</itemPath>
-      <itemPath>frame.c</itemPath>
-      <itemPath>TitleScreen.s</itemPath>
+      <itemPath>payload.s</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -79,7 +65,7 @@
         <targetDevice>dsPIC33CK64MC105</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>noID</platformTool>
+        <platformTool>Simulator</platformTool>
         <languageToolchain>XC16</languageToolchain>
         <languageToolchainVersion>2.10</languageToolchainVersion>
         <platform>3</platform>
@@ -118,7 +104,7 @@
         <property key="cast-align" value="false"/>
         <property key="code-model" value="small-code"/>
         <property key="const-model" value="default"/>
-        <property key="data-model" value="default"/>
+        <property key="data-model" value="small-data"/>
         <property key="disable-instruction-scheduling" value="false"/>
         <property key="enable-all-warnings" value="true"/>
         <property key="enable-ansi-std" value="false"/>
@@ -175,7 +161,7 @@
         <property key="omit-debug-dirs" value="false"/>
         <property key="omit-forms" value="false"/>
         <property key="preprocessor-macros" value=""/>
-        <property key="relax" value="false"/>
+        <property key="relax" value="true"/>
         <property key="warning-level" value="emit-warnings"/>
       </C30-AS>
       <C30-CO>

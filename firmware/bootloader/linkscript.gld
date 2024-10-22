@@ -60,7 +60,10 @@ MEMORY
   data  (a!xr)   : ORIGIN = 0x1000,        LENGTH = 0x2000
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0x1FC
-  program (xr)   : ORIGIN = 0x200,         LENGTH = 0xAD00
+  program (xr)   : ORIGIN = 0x200,         LENGTH = 0xAD00 
+/*  program (xr)   : ORIGIN = 0x5000,         LENGTH = 0x5F00 */
+/*  program (xr)   : ORIGIN = 0x4800,        LENGTH = 0x5D00 */
+
   FSEC           : ORIGIN = 0xAF00,        LENGTH = 0x2
   FBSLIM         : ORIGIN = 0xAF10,        LENGTH = 0x2
   FOSCSEL        : ORIGIN = 0xAF18,        LENGTH = 0x2
@@ -158,34 +161,53 @@ SECTIONS
   */
 #if !defined(__USE_BFA)
 
+
   /* these may be called publicly */
 
-  .magicIDSection 0x200 : 
+  .magicIDSection 0x200 :
   {
-		KEEP(*(.magicIDSection))
+        KEEP(*(.magicIDSection))
   } > program
-  .firmwareIDSection 0x204 : 
+  .firmwareIDSection 0x204 :
   {
-		KEEP(*(.firmwareIDSection))
+        KEEP(*(.firmwareIDSection))
   } > program
-  .resetNewCodeAndFlashSection 0x208 : 
+  .resetNewCodeAndFlashSection 0x208 :
   {
-		KEEP(*(.resetNewCodeAndFlashSection))
+        KEEP(*(.resetNewCodeAndFlashSection))
   } > program
+
 
   .text :
   {
-        *(.init);
+		*(.init);
+		*(.init*);
         *(.user_init);
         KEEP (*(.handle));
         KEEP (*(.isr*));
         *(.libc) *(.libm) *(.libdsp);  /* keep together in this order */
         *(.lib*);
-
-
+		*(.text.main);
+		*(.text.TRAPS_halt_on_error);
+		*(.text.CLOCK_Initialize);
+		*(.text.PIN_MANAGER_Initialize);
+		*(.text.SYSTEM_Initialize);
   } >program
-#endif
 
+  .bootloader 0x4800 :
+  {
+        *(.bootloader); 
+        *(.bootloaderExtra); 
+		*(.NVM_flash);
+        *(.init._delay32);
+  } >program
+
+  .payload 0x5000 :
+  {
+        KEEP(*(.payload)); 
+  } >program
+
+#endif
 
   /*
   ** User-Defined Section in Program Memory
@@ -226,12 +248,6 @@ SECTIONS
   ** please refer to chapter 10, 'Linker Processing'
   ** in the Assembler, Linker manual (DS51317).
   */
-
-  .newcode 0x4800 :
-  {
-        *(.newcode);
-        *(.main2);
-  } >program
 
   /*
   ** Configuration Words

@@ -64,13 +64,31 @@
 
 
 __attribute__((section(".newcode"),space(prog))) void main2(void);
-__attribute__((section(".patchsection"),space(prog))) void runPatch(void);
 
 void flash_led(uint8_t num);
 
 #include "pff.h"
 #include "core.h"
 #include "update.h"
+
+void flash_led(uint8_t num);
+void resetNewCode();
+
+__attribute__((section(".magicIDSection"),space(prog))) const uint32_t magicID = 0x1357c0de;
+__attribute__((section(".firmwareIDSection"),space(prog))) const uint32_t firmwareID = 0x000001;
+
+__attribute__((section(".resetNewCodeAndFlashSection"),space(prog)))
+void
+resetNewCodeAndFlash(void)
+{
+	resetNewCode();
+	while(1)
+	{
+		flash_led(0);
+		flash_led(2);
+		flash_led(4);
+	}
+}
 
 void
 flash_led(uint8_t num)
@@ -141,6 +159,14 @@ extern struct coreInfo			r_coreInfo;
 extern struct fileSystemInfo	fsInfo;
 extern struct queueInfo			qinfo;
 
+extern uint16_t __attribute__((space(prog))) TitleGraph1[];
+extern uint16_t __attribute__((space(prog))) TitleColor1[];
+extern uint16_t __attribute__((space(prog))) TitleBackColor1[];
+
+extern uint16_t __attribute__((space(prog))) TitleGraph2[];
+extern uint16_t __attribute__((space(prog))) TitleColor2[];
+extern uint16_t __attribute__((space(prog))) TitleBackColor2[];
+
 
 extern void updateInit();
 
@@ -168,70 +194,11 @@ copyFromFlash(uint8_t *dst, uint32_t src, int size)
 	}
 }
 
-extern uint16_t __attribute__((space(prog))) TitleGraph1[];
-extern uint16_t __attribute__((space(prog))) TitleColor1[];
-extern uint16_t __attribute__((space(prog))) TitleBackColor1[];
-
-extern uint16_t __attribute__((space(prog))) TitleGraph2[];
-extern uint16_t __attribute__((space(prog))) TitleColor2[];
-extern uint16_t __attribute__((space(prog))) TitleBackColor2[];
-
-void
-setupTitle()
-{
-	// setup frame headers quickly
-	r_coreInfo.frameInfo.buffer = mr_buffer1;
-	r_coreInfo.mr_frameInfo1.buffer = mr_buffer1;
-	r_coreInfo.mr_frameInfo2.buffer = mr_buffer2;
-
-	frameInitTitle(&r_coreInfo.frameInfo, 0);
-	frameInitTitle(&r_coreInfo.mr_frameInfo1, 0);
-	frameInitTitle(&r_coreInfo.mr_frameInfo2, 1);
-
-	// zero everything since height may change
-	memset(mr_buffer1, 0, sizeof(mr_buffer1));
-	memset(mr_buffer2, 0, sizeof(mr_buffer2));
-
-	// copy title screen over
-
-	int	lineTotal = r_coreInfo.mr_frameInfo1.visibleLines * 5;
-
-	copyFromFlash(r_coreInfo.mr_frameInfo1.graphBuf, (uint16_t)TitleGraph1, lineTotal);
-	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBuf, (uint16_t)TitleColor1, lineTotal);
-	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBKBuf, (uint16_t)TitleBackColor1, r_coreInfo.mr_frameInfo1.visibleLines);
-
-	copyFromFlash(r_coreInfo.mr_frameInfo2.graphBuf, (uint16_t)TitleGraph2, lineTotal);
-	copyFromFlash(r_coreInfo.mr_frameInfo2.colorBuf, (uint16_t)TitleColor2, lineTotal);
-	copyFromFlash(r_coreInfo.mr_frameInfo2.colorBKBuf, (uint16_t)TitleBackColor2, r_coreInfo.mr_frameInfo2.visibleLines);
-
-}
-
-void
-setupDisk()
-{
-	// now load the file
-	while (!pf_mount())
-	{
-		flash_led(4);
-	}
-
-	// first available regular file
-	state.io_frameNumber = 1;
-	state.io_bits &= ~STATE_PLAYING;
-	while (!pf_open_first(&state.i_numFrames))
-	{
-		flash_led(3);
-	}
-
-	SPI1_HighSpeed();
-}
-
 void
 resetNewCode()
 {
     FLASH_Unlock(FLASH_UNLOCK_KEY);
     FLASH_ErasePage((uint16_t)&main2);
-	FLASH_WriteDoubleWord24((uint16_t)&main2, 0xFFFFFF, 0xFFFFFF);
     FLASH_Lock();
 }
 
@@ -344,6 +311,56 @@ bad:
 }
 
 void
+setupTitle()
+{
+	// setup frame headers quickly
+	r_coreInfo.frameInfo.buffer = mr_buffer1;
+	r_coreInfo.mr_frameInfo1.buffer = mr_buffer1;
+	r_coreInfo.mr_frameInfo2.buffer = mr_buffer2;
+
+	frameInitTitle(&r_coreInfo.frameInfo, 0);
+	frameInitTitle(&r_coreInfo.mr_frameInfo1, 0);
+	frameInitTitle(&r_coreInfo.mr_frameInfo2, 1);
+
+	// zero everything since height may change
+	memset(mr_buffer1, 0, sizeof(mr_buffer1));
+	memset(mr_buffer2, 0, sizeof(mr_buffer2));
+
+	// copy title screen over
+
+	int	lineTotal = r_coreInfo.mr_frameInfo1.visibleLines * 5;
+
+	copyFromFlash(r_coreInfo.mr_frameInfo1.graphBuf, (uint16_t)TitleGraph1, lineTotal);
+	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBuf, (uint16_t)TitleColor1, lineTotal);
+	copyFromFlash(r_coreInfo.mr_frameInfo1.colorBKBuf, (uint16_t)TitleBackColor1, r_coreInfo.mr_frameInfo1.visibleLines);
+
+	copyFromFlash(r_coreInfo.mr_frameInfo2.graphBuf, (uint16_t)TitleGraph2, lineTotal);
+	copyFromFlash(r_coreInfo.mr_frameInfo2.colorBuf, (uint16_t)TitleColor2, lineTotal);
+	copyFromFlash(r_coreInfo.mr_frameInfo2.colorBKBuf, (uint16_t)TitleBackColor2, r_coreInfo.mr_frameInfo2.visibleLines);
+
+}
+
+void
+setupDisk()
+{
+	// now load the file
+	while (!pf_mount())
+	{
+		flash_led(4);
+	}
+
+	// first available regular file
+	state.io_frameNumber = 1;
+	state.io_bits &= ~STATE_PLAYING;
+	while (!pf_open_file(&state.i_numFrames, 1))
+	{
+		flash_led(3);
+	}
+
+	SPI1_HighSpeed();
+}
+
+void
 prepareNextFrame()
 {
 	struct frameInfo*	fInfo;
@@ -403,7 +420,7 @@ runTitle()
 	while (!pf_seek_block(offset))
 	{
 		flash_led(4);
-		flash_led(41);
+		flash_led(1);
 	}
 
 	// line up to the right buffer we'll be using
@@ -453,7 +470,44 @@ runTitle()
 
 }
 
-void checkSelectVideo(int* which);
+void
+checkSelectVideo(int* which)
+{
+	// select moves to next video
+	if ((state.i_swchb & 0x02) && !(r_coreInfo.mr_swchb & 0x02))
+	{
+		(*which)++;
+		while (!pf_open_file(&state.i_numFrames, (*which)))
+		{
+			(*which) = 1;
+		}
+
+		// reset rewind cache
+		qinfo.head = 0;
+		for (int i=0; i<QUEUE_SIZE; i++)
+		{
+			qinfo.block[i] = -1;
+			qinfo.clust[i] = -1;
+		}
+
+		state.io_frameNumber = 1;
+		state.io_bits |= STATE_PLAYING;
+
+		// go to black
+		memset(mr_buffer1, 0, sizeof(mr_buffer1));
+		memset(mr_buffer2, 0, sizeof(mr_buffer2));
+
+		// debounce
+		for (int i=0; i<30; i++)
+			waitEndFrame();
+	}
+
+	state.i_swcha = r_coreInfo.mr_swcha;
+	state.i_swchb = r_coreInfo.mr_swchb;
+	state.i_inpt4 = r_coreInfo.mr_inpt4;
+	state.i_inpt5 = r_coreInfo.mr_inpt5;
+}
+
 
 void
 runFrameLoop()
@@ -502,12 +556,7 @@ main(void)
 			// check for factory reset RB8(PGD) RB9(PGC) have WPU enabled
 			if (!_RB8 && _RB9)
 			{
-				resetNewCode();
-				while(1)
-				{
-					flash_led(4);
-					flash_led(4);
-				}
+				resetNewCodeAndFlash();
 			}
 			else
 			{
@@ -548,53 +597,11 @@ __attribute__((section(".newcode"),space(prog))) void main2(void)
 	// add these always since its not clear if we need to jump to main or main+2
     asm("nop");
     asm("nop");
-
-	const void* address = &runPatch;
-	goto *address;
 #endif
 
 }
 
-__attribute__((section(".v12"),space(prog)))
-void
-checkSelectVideo(int* which)
-{
-	// select moves to next video
-	if ((state.i_swchb & 0x02) && !(r_coreInfo.mr_swchb & 0x02))
-	{
-		(*which)++;
-		while (!pf_open_many(&state.i_numFrames, (*which)))
-		{
-			(*which) = 1;
-		}
 
-		// reset rewind cache
-		qinfo.head = 0;
-		for (int i=0; i<QUEUE_SIZE; i++)
-		{
-			qinfo.block[i] = -1;
-			qinfo.clust[i] = -1;
-		}
-
-		state.io_frameNumber = 1;
-		state.io_bits |= STATE_PLAYING;
-
-		// go to black
-		memset(mr_buffer1, 0, sizeof(mr_buffer1));
-		memset(mr_buffer2, 0, sizeof(mr_buffer2));
-
-		// debounce
-		for (int i=0; i<30; i++)
-			waitEndFrame();
-	}
-
-	state.i_swcha = r_coreInfo.mr_swcha;
-	state.i_swchb = r_coreInfo.mr_swchb;
-	state.i_inpt4 = r_coreInfo.mr_inpt4;
-	state.i_inpt5 = r_coreInfo.mr_inpt5;
-}
-
-        
 /**
  End of File
 */

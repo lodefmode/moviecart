@@ -344,11 +344,6 @@ bool pf_seek_block (
 // First regular non-deleted file										 
 //-----------------------------------------------------------------------
 
-// reserve this address location
-bool __attribute__ ((noinline)) pf_open_first( uint32_t *numFrames)
-{
-	return pf_open_many(numFrames, 1);
-}
 
 void
 pf_read_block(uint8_t *dst)
@@ -356,8 +351,8 @@ pf_read_block(uint8_t *dst)
 	disk_read_block2(fsInfo.file_block++, dst);
 }
 
-__attribute__((section(".v12"),space(prog)))
-bool pf_open_many( uint32_t *numFrames, int num)
+bool
+pf_open_file( uint32_t *numFrames, int num)
 {
 	bool		res = true;
 	uint8_t		c;
