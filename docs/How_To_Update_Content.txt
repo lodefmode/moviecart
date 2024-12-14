@@ -2,20 +2,21 @@
 Updating content:
 
 Your MovieCart should include an sd-card with full length movie on it.
-Feel free to swap out the file with any other mvc file of your own.
+Feel free to put any mvc files on it, including your own.
 
 
 NOTES:
 
-Best performance is had when the sd-card is freshly formatted before placing the file, to make forwarding and
-rewinding smoother.
+Best performance is had when the sd-card is freshly formatted before placing the file,
+to make forwarding and rewinding smoother.
 When formatting an sd-card, it must be FAT32 format.
 
-Please note MovieCart only supports a maximum file size of 4GB.
+MovieCart  supports a maximum file size of 4GB.
 This translates to around 4 hours of content, so lots of room for most cases.
 
-It only plays the first regular file it finds on the card, so if you have several videos, they must all be combined
-before encoding into a single mvc file.
+Early MovieCarts only play the first regular file it finds on the card, so if you have several videos,
+they must all be combined before encoding into a single mvc file, or you can update it with the latest
+upgrades, including use of the select button to switch between video files.
 
 The files below are zipped for easier download, but they must be UNZIPPED before copying to the sd-card.
 
