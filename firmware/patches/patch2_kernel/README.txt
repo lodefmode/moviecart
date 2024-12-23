@@ -12,12 +12,14 @@ Note: This requires 2 steps:
 
 Step 1:
 With the power off, insert the moviecart with the SD card containing update.frm into the Atari.
-Power up the Atari.  If successful it will flash 22..22..22..
+Power up the Atari.  If successful the red cart on the Moviecart board will flash 22..22..22..
+(Twice, twice, pause, twice, twice, pause, etc).
 It should only take a few seconds.
 
 Step 2:
 Turn off the Atari, and power it back on again.
-If successful it will now flash 24..24..24..
+If successful the LED will now flash 24..24..24..
+(Twice, four times, pause, twice, four times, pause, etc).
 It should only take a few seconds.
 
 
