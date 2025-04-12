@@ -11264,7 +11264,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="System Module" registerAlias="FBSLIM"/>
-         <value>8191</value>
+         <value>8182</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="System Module" registerAlias="FDEVOPT"/>
@@ -11308,7 +11308,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="System Module" registerAlias="FSEC"/>
-         <value>36847</value>
+         <value>4070</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="System Module" registerAlias="FWDT"/>
@@ -11332,7 +11332,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="FBSLIM" settingAlias="BSLIM"/>
-         <value>8191</value>
+         <value>8182</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="FDEVOPT" settingAlias="ALTI2C1"/>
@@ -11412,11 +11412,11 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="FSEC" settingAlias="AIVTDIS"/>
-         <value>OFF</value>
+         <value>ON</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="FSEC" settingAlias="BSEN"/>
-         <value>OFF</value>
+         <value>ON</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="FSEC" settingAlias="BSS"/>
@@ -11424,7 +11424,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="FSEC" settingAlias="BWRP"/>
-         <value>OFF</value>
+         <value>ON</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="System Module" registerAlias="FSEC" settingAlias="CSS"/>
@@ -11554,7 +11554,7 @@
       </entry>
       <entry>
          <file>mcc_generated_files\mcc.h</file>
-         <hash>70da5399f60403e64c94cc29658c5fefb88f4dbc96466fa6dd4c26339e228ab2</hash>
+         <hash>819ddc2fe275b62975225f65f2d78bdaa95ef89aaf98e92c5d263af2e0a85171</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\reset.c</file>
@@ -11586,7 +11586,7 @@
       </entry>
       <entry>
          <file>mcc_generated_files\pin_manager.c</file>
-         <hash>45aaa4f85ddda787c1b2956e919261606234e7fa662b2458b241d6b63dafdbec</hash>
+         <hash>ef84456e6fc55c4547a64e93c43f9515585f73f742351498a20e14a5b570e202</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\system.h</file>
@@ -11598,7 +11598,7 @@
       </entry>
       <entry>
          <file>mcc_generated_files\system.c</file>
-         <hash>8f5fcbf7c20f8fb8d004143032a42fb72ddb1f67668afdfb054dad6fb95702ba</hash>
+         <hash>6cc8f88d6558a489a11560d0f3b7449333828ec7efe2e874e511cdb09ba19eac</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\traps.c</file>
@@ -11633,12 +11633,12 @@
          <hash>c8cb919985961b4897d32e1706382c415549ddadde14e9b4fbe544912d9d94ac</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files\clc1.h</file>
-         <hash>3d6ee4508525d8beb50e6f5b83faafa3c6aacb0131969841ac0041aa6583c4d7</hash>
-      </entry>
-      <entry>
          <file>mcc_generated_files\watchdog.h</file>
          <hash>24d8f8798947e0a628e2a7a2ab0b506efb9df58e1333390029e6ac1d5ac8545a</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\clc1.h</file>
+         <hash>3d6ee4508525d8beb50e6f5b83faafa3c6aacb0131969841ac0041aa6583c4d7</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\reset_types.h</file>

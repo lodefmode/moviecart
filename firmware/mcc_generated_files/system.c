@@ -45,17 +45,17 @@
 // Configuration bits: selected in the GUI
 
 // FSEC
-#pragma config BWRP = OFF    //Boot Segment Write-Protect bit->Boot Segment may be written
+#pragma config BWRP = ON    //Boot Segment Write-Protect bit->Boot Segment is write protected
 #pragma config BSS = DISABLED    //Boot Segment Code-Protect Level bits->No Protection (other than BWRP)
-#pragma config BSEN = OFF    //Boot Segment Control bit->No Boot Segment
+#pragma config BSEN = ON    //Boot Segment Control bit->Boot Segment size determined by FBSLIM
 #pragma config GWRP = OFF    //General Segment Write-Protect bit->General Segment may be written
 #pragma config GSS = DISABLED    //General Segment Code-Protect Level bits->No Protection (other than GWRP)
 #pragma config CWRP = OFF    //Configuration Segment Write-Protect bit->Configuration Segment may be written
 #pragma config CSS = DISABLED    //Configuration Segment Code-Protect Level bits->No Protection (other than CWRP)
-#pragma config AIVTDIS = OFF    //Alternate Interrupt Vector Table bit->Disabled AIVT
+#pragma config AIVTDIS = ON    //Alternate Interrupt Vector Table bit->Enabled AIVT
 
 // FBSLIM
-#pragma config BSLIM = 8191    //Boot Segment Flash Page Address Limit bits->8191
+#pragma config BSLIM = 8182    //Boot Segment Flash Page Address Limit bits->8182
 
 // FOSCSEL
 #pragma config FNOSC = FRC    //Oscillator Source Selection->FRC

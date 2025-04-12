@@ -75,7 +75,7 @@ void flash_led(uint8_t num);
 void resetNewCode();
 
 __attribute__((section(".magicIDSection"),space(prog))) const uint32_t magicID = 0x1357c0de;
-__attribute__((section(".firmwareIDSection"),space(prog))) const uint32_t firmwareID = 0x000001;
+__attribute__((section(".firmwareIDSection"),space(prog))) const uint32_t firmwareID = 0x000002;
 
 __attribute__((section(".resetNewCodeAndFlashSection"),space(prog)))
 void
