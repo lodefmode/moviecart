@@ -28,6 +28,11 @@ Around 0.18 mm increase each side.
 2.32/2.42:
   hole size increased from 3.19 to 3.373
 
+-----------------
+
+SIKOR version:
+
+
 Missing 'TV/LABEL SIDE'
 
 special sdcard access version for injection molded offerings:
@@ -43,6 +48,25 @@ consider:
 LED is way too bright
 
 
+Octob 5 2024:
 
+2.42:  change name to 2.52  (2.42 is P/T version)
+a couple of vias are too close to paths:
+  top left corner of IC, c6
 
+2.52SD
+  close vias fixed
+  2.52
+  'TV SIDE'
+  deeper tabs
+  SD moved to left edge
+  tactile switch to factory reset / restore  (grounding programming pins still works)
+
+2.5SK
+
+  Reshaped for SIKOR carts (5 alignment holes)
+
+2.6SK
+
+  RT3301 reverse mounted factory reset button
 
