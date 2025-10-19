@@ -473,9 +473,11 @@ runTitle()
 void
 checkSelectVideo(int* which)
 {
-	// select moves to next video
-	if ((state.i_swchb & 0x02) && !(r_coreInfo.mr_swchb & 0x02))
+	// if at end, or select pressed go to next video
+	if ((state.io_bits & STATE_END) || ((state.i_swchb & 0x02) && !(r_coreInfo.mr_swchb & 0x02)))
 	{
+        state.io_bits &= ~STATE_END;
+
 		(*which)++;
 		while (!pf_open_file(&state.i_numFrames, (*which)))
 		{

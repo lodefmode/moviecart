@@ -87,18 +87,9 @@ updateTransport(struct stateVars *state)
 	uInfo.right = !(state->i_swcha & 0x80);
 	uInfo.left = !(state->i_swcha & 0x40);
 
-	// reset
-	if (!(state->i_swchb & 0x01))
-	{
-		state->io_frameNumber = (state->io_frameNumber) ? 0 : 1;
-		state->io_bits |= STATE_PLAYING;
-		state->io_bits |= STATE_MUTE0;
-		uInfo.drawTimeCode = OSD_FRAMES;
-		return;
-	}
 
-	// select
-	if (!(state->i_swchb & 0x02) && (uInfo.lswchb & 0x02))
+	// reset
+	if (!(state->i_swchb & 0x01) && (uInfo.lswchb & 0x01))
 	{
 		uInfo.drawTimeCode = OSD_FRAMES;
 		state->io_frameNumber -= 60 *BACK_SECONDS;
@@ -259,6 +250,7 @@ updateTransport(struct stateVars *state)
 		state->io_frameNumber = (state->io_frameNumber & 1) ? state->i_numFrames-1 : state->i_numFrames-2;
 		state->io_bits |= STATE_MUTE0;
 		state->io_bits |= STATE_MUTE1;
+		state->io_bits |= STATE_END;
 	};
 }
 
