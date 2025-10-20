@@ -1,0 +1,14 @@
+
+
+#full replacement firmware, not advised
+
+make changes to main.c
+grab output listing from 0000 to 4800
+!cl.exe code2payload.c calculatecode.c
+to create payload.s
+
+use payload.s in bootloader project, recompile
+grab output listing from 4800 to ...
+!cl.exe code2updatefrm.c calculatecode.c
+to create update.frm
+

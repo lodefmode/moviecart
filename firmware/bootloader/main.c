@@ -194,7 +194,7 @@ main2(void)
 	{
 		flash_led(0);
 		flash_led(2);
-		flash_led(2);
+		flash_led(5);
 	}
 
 	// now write it out
@@ -251,7 +251,7 @@ bad:
 	{
 		flash_led(0);
 		flash_led(2);
-		flash_led(4);	// bad
+		flash_led(3);	// bad
 	}
 }
 
