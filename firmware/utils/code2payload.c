@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <stdint.h>
 
 #if 0
    Line      Address       Opcode      Label             DisAssy          
@@ -62,6 +61,8 @@ addToCrc(uint32_t* crc, uint32_t v)
 			*crc >>= 1;
 	}
 }
+
+uint32_t calculateCode(const char* linput);
 
 void
 main(int argc, const char* argv[])
@@ -157,46 +158,30 @@ main(int argc, const char* argv[])
 			if (!fgets(linput, 500, input))
 				break;
 
-			uint32_t	v = 0;
+			uint32_t	v = calculateCode(linput);
 
-			char c = linput[27];
-			if (isxdigit(c))
+			// calculate crc
+			if (loop == 1)
+				addToCrc(&crc, v);
+
+			// print payload
+			if (loop == 2)
 			{
-				for (int i=27; i<=32; i++)
-				{
-					char c = linput[i];
+				if (len2 == 0)
+					fprintf(output, "\t.pword ");
+				else
+					fprintf(output, ",");
 
-					v *= 16;
+				fprintf(output, " 0x%06x", v);
 
-					if (c >= '0' && c <= '9')
-						v += c - '0';
-					else if (c >= 'A' && c <= 'F')
-						v += c - 'A' + 10;
-				}
-
-				// calculate crc
-				if (loop == 1)
-					addToCrc(&crc, v);
-
-				// print payload
-				if (loop == 2)
-				{
-					if (len2 == 0)
-						fprintf(output, "\t.pword ");
-					else
-						fprintf(output, ",");
-
-					fprintf(output, " 0x%06x", v);
-
-					if (len2 == 7)
-						fprintf(output, "\n");
-				}
-
-				len2++;
-				len2 %= 8;
-
-				len++;
+				if (len2 == 7)
+					fprintf(output, "\n");
 			}
+
+			len2++;
+			len2 %= 8;
+
+			len++;
 		}
 	}
 

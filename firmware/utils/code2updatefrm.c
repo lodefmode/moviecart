@@ -18,6 +18,8 @@
     9,229    4818          37FFF3                  BRA main2                  
 #endif
 
+uint32_t calculateCode(const char* linput);
+
 void main()
 {
 	FILE*	output = fopen("update.frm", "wb");
@@ -28,26 +30,10 @@ void main()
 		if (!fgets(linput, 500, stdin))
 			break;
 
-		uint32_t	v = 0;
+		uint32_t	v = calculateCode(linput);
 
-		char c = linput[27];
-		if (isxdigit(c))
-		{
-			for (int i=27; i<=32; i++)
-			{
-				char c = linput[i];
-
-				v *= 16;
-
-				if (c >= '0' && c <= '9')
-					v += c - '0';
-				else if (c >= 'A' && c <= 'F')
-					v += c - 'A' + 10;
-			}
-
-			fwrite(&v, sizeof(v), 1, output);
-			fprintf(stdout, "%06x\n", v);
-		}
+		fwrite(&v, sizeof(v), 1, output);
+		fprintf(stdout, "%06x\n", v);
 	}
 
 	fclose(output);
