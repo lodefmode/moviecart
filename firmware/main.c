@@ -75,7 +75,7 @@ void flash_led(uint8_t num);
 void resetNewCode();
 
 __attribute__((section(".magicIDSection"),space(prog))) const uint32_t magicID = 0x1357c0de;
-__attribute__((section(".firmwareIDSection"),space(prog))) const uint32_t firmwareID = 0x000002;
+__attribute__((section(".firmwareIDSection"),space(prog))) const uint32_t firmwareID = 0x000202;
 
 __attribute__((section(".resetNewCodeAndFlashSection"),space(prog)))
 void
@@ -85,8 +85,8 @@ resetNewCodeAndFlash(void)
 	while(1)
 	{
 		flash_led(0);
+		flash_led(1);
 		flash_led(2);
-		flash_led(4);
 	}
 }
 
@@ -293,8 +293,8 @@ handleFirmwareUpdate()
 	while(1)
 	{
 		flash_led(0);
-		flash_led(2);
-		flash_led(2);	// good
+		flash_led(1);
+		flash_led(3);	// good
 	}
 
 bad:
@@ -305,8 +305,8 @@ bad:
 	while(1)
 	{
 		flash_led(0);
-		flash_led(3);
-		flash_led(3);	// bad
+		flash_led(2);
+		flash_led(1);	// bad
 	}
 }
 
@@ -419,8 +419,8 @@ runTitle()
 
 	while (!pf_seek_block(offset))
 	{
-		flash_led(4);
-		flash_led(1);
+		flash_led(2);
+		flash_led(3);
 	}
 
 	// line up to the right buffer we'll be using

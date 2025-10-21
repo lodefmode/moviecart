@@ -22,6 +22,12 @@
         <itemPath>mcc_generated_files/watchdog.h</itemPath>
       </logicalFolder>
     </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="true">
+      <itemPath>Makefile</itemPath>
+      <itemPath>moviecart_smd.mc3</itemPath>
+    </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
                    projectFiles="true">
@@ -46,12 +52,6 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>payload.s</itemPath>
-    </logicalFolder>
-    <logicalFolder name="ExternalFiles"
-                   displayName="Important Files"
-                   projectFiles="false">
-      <itemPath>Makefile</itemPath>
-      <itemPath>moviecart_smd.mc3</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>

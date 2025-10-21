@@ -136,8 +136,8 @@ resetNewCodeAndFlash(void)
     while(1)
     {
         flash_led(0);
-        flash_led(2);
-        flash_led(4);
+        flash_led(3);
+        flash_led(1);
     }
 }
 
@@ -165,8 +165,8 @@ main2(void)
 	while (version != 1)
 	{
 		flash_led(0);
+		flash_led(3);
 		flash_led(2);
-		flash_led(1);
 	}
 
 	// YES this may erase critical code, but unavoidable as early firmware didn't setup AIVT etc
@@ -193,8 +193,8 @@ main2(void)
 	while (crc != expected_crc)
 	{
 		flash_led(0);
-		flash_led(2);
-		flash_led(5);
+		flash_led(3);
+		flash_led(4);
 	}
 
 	// now write it out
@@ -250,8 +250,8 @@ bad:
 	while(1)
 	{
 		flash_led(0);
-		flash_led(2);
-		flash_led(3);	// bad
+		flash_led(4);
+		flash_led(1);	// bad
 	}
 }
 

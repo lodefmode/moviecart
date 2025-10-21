@@ -3,12 +3,15 @@
 #full replacement firmware, not advised
 
 make changes to main.c
-grab output listing from 0000 to 4800
+grab output listing (output1.txt) from 0000 to 4800
 !cl.exe code2payload.c calculatecode.c
-to create payload.s
+!./code2payload.exe output1.txt payload.s
 
-use payload.s in bootloader project, recompile
-grab output listing from 4800 to ...
+use new payload.s in bootloader project, recompile
+grab output listing (output2.txt) from 4800 to somewhere before final string of 0xFFF
+should end in   "...060000 RETURN"
+
 !cl.exe code2updatefrm.c calculatecode.c
+!./code2updatefrm.exe < output2.txt
 to create update.frm
 
