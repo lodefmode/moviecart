@@ -21,7 +21,7 @@ Step 2:
 Turn off the Atari
 *** REMOVE the SD card, and put it away ***
 Turn the Atari back on again.
-The LED will now flash 2,4..2,4..2,4..
+The LED will now flash 4..4..4..
 It should only take a few seconds.
 
 
