@@ -65,17 +65,17 @@
 
 __attribute__((section(".newcode"),space(prog))) void main2(void);
 
-void flash_led(uint8_t num);
 
 #include "pff.h"
 #include "core.h"
 #include "update.h"
 
 void flash_led(uint8_t num);
+void coreInfoToState();
 void resetNewCode();
 
 __attribute__((section(".magicIDSection"),space(prog))) const uint32_t magicID = 0x1357c0de;
-__attribute__((section(".firmwareIDSection"),space(prog))) const uint32_t firmwareID = 0x000202;
+__attribute__((section(".firmwareIDSection"),space(prog))) const uint32_t firmwareID = 0x000203;
 
 __attribute__((section(".resetNewCodeAndFlashSection"),space(prog)))
 void
@@ -456,11 +456,7 @@ runTitle()
 	{
 		waitEndFrame();
 
-		state.i_swcha = r_coreInfo.mr_swcha;
-		state.i_swchb = r_coreInfo.mr_swchb;
-		state.i_inpt4 = r_coreInfo.mr_inpt4;
-		state.i_inpt5 = r_coreInfo.mr_inpt5;
-
+		coreInfoToState();
 		updateTransport(&state);
 
 		// if reset button pressed skip title frame
@@ -504,10 +500,7 @@ checkSelectVideo(int* which)
 			waitEndFrame();
 	}
 
-	state.i_swcha = r_coreInfo.mr_swcha;
-	state.i_swchb = r_coreInfo.mr_swchb;
-	state.i_inpt4 = r_coreInfo.mr_inpt4;
-	state.i_inpt5 = r_coreInfo.mr_inpt5;
+	coreInfoToState();
 }
 
 
@@ -589,6 +582,21 @@ main(void)
 	updateInit();
 	runTitle();
 	runFrameLoop();
+}
+
+void
+coreInfoToState()
+{
+	state.i_swcha = r_coreInfo.mr_swcha;
+	state.i_swchb = r_coreInfo.mr_swchb;
+	state.i_inpt4 = r_coreInfo.mr_inpt4;
+	state.i_inpt5 = r_coreInfo.mr_inpt5;
+
+	// merge left+right direction + fire button together for either joystick usage
+	// for systems that have bad controller ports
+	
+	state.i_swcha = ((state.i_swcha << 4) | (state.i_swcha & 0x0f)) & state.i_swcha;
+	state.i_inpt4 &= r_coreInfo.mr_inpt5;
 }
 
 // new updates placed here

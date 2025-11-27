@@ -17,10 +17,10 @@
 #define	TIMECODE_HEIGHT	12
 
 // state machine
-#define MODE_VOLUME     0
-#define MODE_BRIGHT     1
-#define MODE_TIME       2
-#define MODE_LAST       2
+#define MODE_TIME       0
+#define MODE_VOLUME     1
+#define MODE_BRIGHT     2
+#define MODE_LAST       3
 
 #define MAX_LEVEL       11
 #define DEFAULT_LEVEL   6
@@ -64,7 +64,7 @@ __attribute__((section(".updateInfo"))) struct updateInfo           uInfo;
 void
 updateInit()
 {
-	uInfo.mode = MODE_VOLUME;
+	uInfo.mode = MODE_TIME;
 	uInfo.drawLevelBars = 0; // expressed in frames
 	uInfo.drawTimeCode = 0; // expressed in frames
 	uInfo.volume = DEFAULT_LEVEL;
