@@ -3,9 +3,11 @@
 * WARNING *
 
 This patch is permanent.
+And only applies to early MovieCarts (version 1.x from December 2024 and earlier))
+
 Make sure power is not interrupted while the patch is being applied.
 This patch fixes writes to ROM as well as being 7800 PAL startup compatible.
-It also plays all mvc files sequentially on the SD card automatically.
+It also plays all mvc files sequentially on the SD card automatically, plus other small improvements.
 
 Intstructions:
 
@@ -27,4 +29,5 @@ It should only take a few seconds.
 
 Turn it off and on again. 
 Any subsequent powerup will be running the new firmware.
+You should see a new title screen with version 2.4 or later.
 

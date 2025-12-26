@@ -11,12 +11,12 @@ use new payload.s in bootloader project, recompile
 grab output listing (output2.txt) from 4800 to somewhere before final string of 0xFFF (strip first header line)
 (might be around 20,484)
 
-should end in   "...060000 RETURN"
-** SEARCH BACKWARDS FROM END **
 *NOTE* output2.txt should start with two NOPs for earlier 1.x 
 They are sometimes not placed at the beginnning of the function.
 
 !cl.exe code2updatefrm.c calculatecode.c
 !./code2updatefrm.exe < output2.txt
 to create update.frm
+
+update.frm might be 45072 bytes
 
