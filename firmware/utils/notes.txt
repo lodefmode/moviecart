@@ -3,13 +3,18 @@
 #full replacement firmware, not advised
 
 make changes to main.c
-grab output listing (output1.txt) from 0000 to 4800
+grab output listing (output1.txt) from 0000 to 4799 (strip first header line)
 !cl.exe code2payload.c calculatecode.c
 !./code2payload.exe output1.txt payload.s
 
 use new payload.s in bootloader project, recompile
-grab output listing (output2.txt) from 4800 to somewhere before final string of 0xFFF
+grab output listing (output2.txt) from 4800 to somewhere before final string of 0xFFF (strip first header line)
+(might be around 20,484)
+
 should end in   "...060000 RETURN"
+** SEARCH BACKWARDS FROM END **
+*NOTE* output2.txt should start with two NOPs for earlier 1.x 
+They are sometimes not placed at the beginnning of the function.
 
 !cl.exe code2updatefrm.c calculatecode.c
 !./code2updatefrm.exe < output2.txt

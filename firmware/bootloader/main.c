@@ -64,12 +64,11 @@
 
 #include "../defines.h"
 
+__attribute__((section(".bootloader"),space(prog))) void main2();
 
-__attribute__((section(".bootloader"),space(prog))) int main2();
+__attribute__((section(".bootloaderSafe"),space(prog))) void main3();
 
-
-
-__attribute__((section(".bootloaderExtra"),space(prog)))
+__attribute__((section(".bootloaderSafe"),space(prog)))
 void
 flash_led(uint8_t num)
 {
@@ -90,23 +89,28 @@ flash_led(uint8_t num)
 	__delay_ms(500);
 }
 
+__attribute__((section(".bootloaderSafe"),space(prog)))
+void
+resetNewCodeAndFlash(uint8_t num)
+{
+    FLASH_Unlock(FLASH_UNLOCK_KEY);
+    FLASH_ErasePage((uint16_t)&main2);
+//	FLASH_WriteDoubleWord24((uint16_t)&main2, 0xFFFFFF, 0xFFFFFF);
+    FLASH_Lock();
+
+    while(1)
+    {
+        flash_led(0);
+        flash_led(num);
+        flash_led(1);
+    }
+}
+
+
 /*
                          Main application
  */
 
-
-// likely overwriting current PC position
-
-
-__attribute__((section(".bootloaderExtra"),space(prog)))
-void
-resetNewCode()
-{
-    FLASH_Unlock(FLASH_UNLOCK_KEY);
-    FLASH_ErasePage((uint16_t)&main2);	// we're currently in this section.
-//	FLASH_WriteDoubleWord24((uint16_t)&main2, 0xFFFFFF, 0xFFFFFF);
-    FLASH_Lock();
-}
 
 
 // code is written to program space at this time, copy it over
@@ -118,44 +122,25 @@ resetNewCode()
 // dest:      24 bit value
 // length:    24 bit value // length in (24 bit) values following this section
 
-extern const void*	payloadData;
+//extern const void*	payloadData;
 
-void flash_led(uint8_t num);
-void resetNewCode();
+//void flash_led(uint8_t num);
+//void resetNewCode();
 
 // These will actually be overwritten with identical payload code
 __attribute__((section(".magicIDSection"),space(prog))) const uint32_t magicID = 0x1357c0de;
 __attribute__((section(".firmwareIDSection"),space(prog))) const uint32_t firmwareID = 0x000001;
 
-// will be overwritten
-__attribute__((section(".resetNewCodeAndFlashSection"),space(prog)))
+
+
+__attribute__((section(".bootloaderSafe"),space(prog)))
 void
-resetNewCodeAndFlash(void)
+main3()
 {
-    resetNewCode();
-    while(1)
-    {
-        flash_led(0);
-        flash_led(3);
-        flash_led(1);
-    }
-}
-
-
-
-__attribute__((section(".bootloader"),space(prog)))
-int
-main2(void)
-{    
-	// add these always since its not clear if we need to jump to main or main+2
-    asm("nop");
-    asm("nop");
-
-
 	INTERRUPT_GlobalDisable();
 
 //	uint32_t	src = (uint16_t)&payloadData;
-	uint32_t	src = 0x5000;
+	uint32_t	src = 0x5800;
 
 	uint32_t	expected_crc = FLASH_ReadWord24(src + 0);
 	uint32_t	version = FLASH_ReadWord24(src + 2);
@@ -238,21 +223,25 @@ main2(void)
 
 //good:
 
-
-	// this will actually be the new code, but at same location
-	resetNewCodeAndFlash();
+	resetNewCodeAndFlash(2);
 
 bad:
 
 	// not much we can do here, likely bricked..
-	resetNewCode();
+	resetNewCodeAndFlash(4);
+}
 
-	while(1)
-	{
-		flash_led(0);
-		flash_led(4);
-		flash_led(1);	// bad
-	}
+
+__attribute__((section(".bootloader"),space(prog)))
+void
+main2(void)
+{   
+    // earlier versions did goto, not call
+    asm("nop");
+    asm("nop");
+    
+	// quickly exit this section as it will be erased so regular execution doesn't find it next startup
+	main3();
 }
 
 int
@@ -262,8 +251,6 @@ main(void)
     SYSTEM_Initialize();	// not used in final, already setup
 	main2();
 }
-
-
 
 /**
  End of File

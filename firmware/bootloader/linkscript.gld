@@ -172,12 +172,6 @@ SECTIONS
   {
         KEEP(*(.firmwareIDSection))
   } > program
-  .resetNewCodeAndFlashSection 0x208 :
-  {
-        KEEP(*(.resetNewCodeAndFlashSection))
-  } > program
-
-
   .text :
   {
 		*(.init);
@@ -194,15 +188,22 @@ SECTIONS
 		*(.text.SYSTEM_Initialize);
   } >program
 
+  /*
+   * Will be erased, do not execute code in here
+   */
   .bootloader 0x4800 :
   {
         *(.bootloader); 
-        *(.bootloaderExtra); 
-		*(.NVM_flash);
-        *(.init._delay32);
   } >program
 
-  .payload 0x5000 :
+  .bootloaderSafe 0x5000 :
+  {
+		*(.NVM_flash);
+        *(.init._delay32);
+        *(.bootloaderSafe); 
+  } >program
+
+  .payload 0x5800 :
   {
         KEEP(*(.payload)); 
   } >program
